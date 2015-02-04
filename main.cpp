@@ -6,6 +6,7 @@
 #include <SFML/Graphics.hpp>
 
 #include "world_graphics.h"
+#include "world_physics.h"
 
 sf::Clock g_Clock;
 float	  g_LastTime = 0.0f;
@@ -63,15 +64,16 @@ int main()
 	glDepthFunc(GL_LESS);
 
 	WorldGraphics worldGFX;
+	WorldPhysics worldPHY;
 
-	ModelInstance* mi = worldGFX.createModel("./shaders/smooth.vsh", "./shaders/smooth.fsh",
+	ModelInstance* mi;/* = worldGFX.createModel("./shaders/smooth.vsh", "./shaders/smooth.fsh",
 											 "./models/test/test.obj",
 											 "./models/test/test_CM.png", "./models/test/test_NM.png");
 	mi->setPosition(glm::vec3(2,0,0));
 	mi = worldGFX.createModel("./shaders/normal.vsh", "./shaders/normal.fsh",
 											 "./models/test/test.obj",
 											 "./models/test/test_CM.png", "./models/test/test_NM.png");
-	mi->setPosition(glm::vec3(0,0,2));
+	mi->setPosition(glm::vec3(0,0,2));*/
 	mi = worldGFX.createModel("./shaders/smooth.vsh", "./shaders/smooth.fsh",
 											 "./models/sanic.obj",
 											 "./models/sanic.tga", "./models/normal.jpg");
@@ -81,6 +83,11 @@ int main()
 											 "./models/sanic.tga", "./models/normal.jpg");						 
 	mi->playAnimation("walk");
 	mi->setPosition(glm::vec3(0,0,-2));
+	SolidBody* floor = worldPHY.addBody(0, glm::vec3(20,1,20));
+	floor->setPosition(glm::vec3(0,-1,0));
+	SolidBody* cube = worldPHY.addBody(1.0f, glm::vec3(3, 1, 2));
+	cube->setPosition(glm::vec3(0,10,5));
+	SolidBody* sphere = worldPHY.addBody(20, 1.0f);
 
 	ModelInstance* axis = worldGFX.createModel("./shaders/fullbright.vsh", "./shaders/fullbright.fsh",
 											 "",
@@ -103,7 +110,7 @@ int main()
 	glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
 
 	Camera* cm = worldGFX.getCamera();
-	//cm->setOffset(glm::vec3(0,1,3));
+	cm->setOffset(glm::vec3(0,0,3));
 	cm->setRotation(3.14f,0.0f);
 	cm->setPosition(glm::vec3(0,1,0));
 
@@ -183,24 +190,54 @@ int main()
 		glm::vec3 newpos(0,0,0);
 		// Move forward
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)){
-			newpos.z += (g_Delta * -speed);
+			newpos.x += (g_Delta * -speed);
 		} else
 		// Move backward
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)){
-			newpos.z += (g_Delta * speed);
+			newpos.x += (g_Delta * speed);
 		}
 		// Strafe right
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)){
-			newpos.x += (g_Delta * speed);
+			newpos.z += (g_Delta * speed);
 		} else
 		// Strafe left
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)){
-			newpos.x += (g_Delta * -speed);
+			newpos.z += (g_Delta * -speed);
 		}
 
-		mi->translate(newpos);
+		newpos = newpos.z * cm->getFront() + newpos.x * cm->getRight();
+
+		//shitty test code
+		float avel = glm::length(sphere->getAngularVelocity());
+		if(avel > 0.5f)
+		{
+			glm::vec3 vel = sphere->getVelocity();
+			glm::vec2 vel2d(vel.x, -vel.z);
+			float h = 0.0f;
+			vel2d = glm::normalize(vel2d);
+			if(vel2d.x > 0 && vel2d.y > 0)
+				h = acos(vel2d.x);
+			else
+			if(vel2d.x > 0 && vel2d.y < 0)
+				h = -acos(vel2d.x);
+			else
+			if(vel2d.x < 0 && vel2d.y > 0)
+				h = 1.57 + acos(vel2d.y);
+			else
+			if(vel2d.x < 0 && vel2d.y < 0)
+				h = -1.57 - acos(-vel2d.y);
+
+			mi->setRotation(glm::vec3(0,-90.0f+h*57.3f,0));
+		}
+		sphere->setAngularVelocity(newpos*100.0f);
+		mi->setPosition(sphere->getPosition() + glm::vec3(0,-1,0));
+		cm->setPosition(sphere->getPosition());
+
+		//mi->translate(newpos);
 	
+		worldPHY.update();
 		worldGFX.render();
+		worldPHY.render(cm);
 
         window.display();
 	}

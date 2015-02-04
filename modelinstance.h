@@ -33,6 +33,7 @@ private:
 	AnimInfo		animInfo; //for convenience
 
 	friend class WorldGraphics;
+	friend class SolidBody;
 };
 
 #endif

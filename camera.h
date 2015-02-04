@@ -27,6 +27,8 @@ public:
 	void		translate(glm::vec3 addpos);
 	void		setPosition(glm::vec3 pos);
 	glm::vec3	getPosition();
+	glm::vec3	getFront() { return front; }
+	glm::vec3	getRight() { return right; }
 
 	void		setOffset(glm::vec3 _offset);
 	glm::vec3	getOffset();

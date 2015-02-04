@@ -101,7 +101,7 @@ static bool getSimilarVertexIndex(
 	std::vector<glm::vec3> & out_vertices,
 	std::vector<glm::vec2> & out_uvs,
 	std::vector<glm::vec3> & out_normals,
-	unsigned short & result
+	int & result
 ){
 	// Lame linear search
 	for ( unsigned int i=0; i<out_vertices.size(); i++ ){
@@ -131,7 +131,7 @@ static void indexVBO(
 	std::vector<glm::vec3> & in_tangents,
 	std::vector<glm::vec3> & in_bitangents,
 
-	std::vector<unsigned short> & out_indices,
+	std::vector<int> & out_indices,
 	std::vector<glm::vec3> & out_vertices,
 	std::vector<glm::vec2> & out_uvs,
 	std::vector<glm::vec3> & out_normals,
@@ -142,7 +142,7 @@ static void indexVBO(
 	for ( unsigned int i=0; i<in_vertices.size(); i++ ){
 
 		// Try to find a similar vertex in out_XXXX
-		unsigned short index;
+		int index;
 		bool found = getSimilarVertexIndex(in_vertices[i], in_uvs[i], in_normals[i],     out_vertices, out_uvs, out_normals, index);
 
 		if ( found ){ // A similar vertex is already in the VBO, use it instead !
@@ -157,7 +157,7 @@ static void indexVBO(
 			out_normals .push_back( in_normals[i]);
 			out_tangents .push_back( in_tangents[i]);
 			out_bitangents .push_back( in_bitangents[i]);
-			out_indices .push_back( (unsigned short)out_vertices.size() - 1 );
+			out_indices .push_back( (int)out_vertices.size() - 1 );
 		}
 	}
 }
@@ -195,7 +195,6 @@ Mesh::Mesh(std::string path)
 
 Mesh::~Mesh()
 {
-	frames.clear();
 	animations.clear();
 
 	if(normalbuffer)
@@ -208,6 +207,13 @@ Mesh::~Mesh()
 		glDeleteBuffers(1, &bitangentbuffer);
 	if(elembuffer)
 		glDeleteBuffers(1, &elembuffer);
+
+	if(isOk) //if not, then theese vectors are empty anyway
+	{
+		indices.clear();
+		frames[0].vertices.clear();
+	}
+	frames.clear();
 
 	if(numberOfMeshes == 1)
 	{
@@ -279,7 +285,7 @@ bool Mesh::loadModel(std::string path)
 	std::vector<glm::vec2>		uvCoords;
 	std::vector<glm::vec3>		tangents;
 	std::vector<glm::vec3>		bitangents;
-	std::vector<unsigned short>	indices;
+	//std::vector<unsigned short>	indices;
 
 	std::vector<glm::vec3> tvertices;
 	std::vector<glm::vec3> tnormals;
@@ -560,7 +566,12 @@ bool Mesh::loadModel(std::string path)
 		glGenBuffers(1, &frames[i].vertexbuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, frames[i].vertexbuffer);
 		glBufferData(GL_ARRAY_BUFFER, frames[i].vertices.size() * sizeof(glm::vec3), &frames[i].vertices[0], GL_STATIC_DRAW);
-		frames[i].vertices.clear();
+		//do not delete vertices of first frame
+		//it's used for collision generation, if asked
+		if(i != 0)
+		{
+			frames[i].vertices.clear();
+		}
 	}
 
 	glGenBuffers(1, &normalbuffer);
@@ -581,7 +592,7 @@ bool Mesh::loadModel(std::string path)
 
 	glGenBuffers(1, &elembuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elembuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short), &indices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(int), &indices[0], GL_STATIC_DRAW);
 
 	//unbind buffers
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -591,7 +602,7 @@ bool Mesh::loadModel(std::string path)
 	//unload shit from RAM, it's already in GPU memory
 	normals.clear();
 	uvCoords.clear();
-	indices.clear();
+	//indices.clear();
 	tangents.clear();
 	bitangents.clear();
 
@@ -689,7 +700,7 @@ void Mesh::render(unsigned cf, unsigned nf)
 		glDrawElements(
 			GL_TRIANGLES,      // mode
 			(isOk?indicesSize:defINSize),//indices.size(),    // count
-			GL_UNSIGNED_SHORT,   // type
+			GL_UNSIGNED_INT,   // type
 			(void*)0           // element array buffer offset
 			);
 		 

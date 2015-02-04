@@ -64,6 +64,9 @@ private:
 	unsigned tangentbuffer;
 	unsigned bitangentbuffer;
 	unsigned elembuffer;
+	
+	//keep theese for collision generation, if needed
+	std::vector<int>		indices;
 
 //AXIS model - default mesh, used when failed to load given model
 //AXIS model has only one instance
@@ -81,6 +84,8 @@ static	unsigned numberOfMeshes;
 	bool loadModel(std::string path);
 	void buildAxisModel();
 	void deleteAxisModel();
+
+	friend class SolidBody; // for collision generation out of mesh
 };
 
 #endif
