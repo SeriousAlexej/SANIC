@@ -68,9 +68,9 @@ int main()
 	LiveEntity* e = (LiveEntity*)world.createEntity((Entity*)(new LiveEntity()));
 
 	//test
-	e->setupModel("./shaders/smooth.vsh", "./shaders/smooth.fsh",
-											 "./models/sanic.obj",
-											 "./models/sanic.tga", "./models/normal.jpg");
+	//e->setupModel("./shaders/smooth.vsh", "./shaders/smooth.fsh",
+	//										 "./models/sanic.obj",
+	//										 "./models/sanic.tga", "./models/normal.jpg");
 	e->setDesiredRotation(glm::vec3(0,3.14,0));
 	e->setRotationSpeed(0.5f);
 

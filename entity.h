@@ -17,6 +17,8 @@ class World;
 typedef void (*stateCallback)(EntityEvent*,Entity*);
 typedef void STATE;
 
+//TODO: add ability to copy both position and orientation from BODY to MODEL
+
 class EntityState
 {
 public:
@@ -77,53 +79,47 @@ class Entity : public Unique, public Touchable, public FamilyTree
 public:
 			 Entity();
 	virtual ~Entity();
-
 	virtual void			initialize();
 
-	void					setupModel(std::string vertShader, std::string fragShader,
-									   std::string modelPath, std::string diffTexture, std::string normTexture);
-	void					setupCollision(float mass); //from model
-	void					setupCollision(float mass, float radius); //sphere
-	void					setupCollision(float mass, glm::vec3 halfExtents); //box
+	void					destroy();
+
+	void					sendEvent(EntityEvent* ee);
 
 	void					switchToEditorModel();
 	void					switchToModel();
 
-	void					autowait(float time, int returnIndex);
-	void					sendEvent(EntityEvent* ee);
-	void					pushState(stateCallback callback, float waitTime = 0.0f);
-	void					replaceState(stateCallback callback, float waitTime = 0.0f);
-	void					popState();
-	void					destroy();
-
+	std::string				getName() const { return name; }
+	const SolidBody*		getBody() const { return body; }//for moving purposes
+	const ModelInstance*	getModelInstance() const { return model; }//for anim playing
 	glm::vec3				getDesiredLDir() const { return desiredLinearDirection; }
 	glm::vec3				getDesiredADir() const { return desiredAngularDirection; }
 	glm::vec3				getDesiredRotation() const { return desiredRotation; }
+	float					getRotationSpeed() const { return rotationSpeed; }
+
+	void					setName(std::string newName) { name = newName; }
 	void					setDesiredLDir(glm::vec3 dir) { desiredLinearDirection = dir; }
 	void					setDesiredADir(glm::vec3 dir) { desiredAngularDirection = dir; }
 	void					setDesiredRotation(glm::vec3 rot) { desiredRotation = rot; }
-	float					getRotationSpeed() const { return rotationSpeed; }
 	void					setRotationSpeed(float speed) { if(speed >=0.0f) rotationSpeed = speed; }
 
-	void					setName(std::string newName) { name = newName; }
-	std::string				getName() const { return name; }
-
-	const SolidBody*		getBody() { return body; }//for moving purposes
-	const ModelInstance*	getModelInstance() { return model; }//for anim playing
-
-	const WorldGraphics*	getGraphicsWorld() { return wldGFX; }
-	const WorldPhysics*		getPhysicsWorld() { return wldPHY; }
-
-
-
+protected:
 	//states:
 	static STATE dummy(EntityEvent* ee, Entity* caller);
 	static STATE autowaitState(EntityEvent* ee, Entity* caller);
 
 
-protected:
-	void						syncEntitySpeed();
-	void						update();
+	void					setupModel(std::string vertShader, std::string fragShader,
+									   std::string modelPath, std::string diffTexture,
+									   std::string normTexture);
+	void					setupCollision(float mass); //from model
+	void					setupCollision(float mass, float radius); //sphere
+	void					setupCollision(float mass, glm::vec3 halfExtents); //box
+	void					autowait(float time, int returnIndex);
+	void					pushState(stateCallback callback, float waitTime = 0.0f);
+	void					replaceState(stateCallback callback, float waitTime = 0.0f);
+	void					popState(EntityEvent* ee = NULL);
+	void					syncEntitySpeed();
+	void					update();
 
 	std::stack<EntityState*>	statesObsolete;
 	std::stack<EntityState*>	states;

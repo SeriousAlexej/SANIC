@@ -147,7 +147,7 @@ void Entity::replaceState(stateCallback callback, float waitTime)
 	pushState(callback, waitTime);
 }
 
-void Entity::popState()
+void Entity::popState(EntityEvent* ee)
 {
 	if(!states.empty())
 	{
@@ -164,7 +164,12 @@ void Entity::popState()
 
 		if(retIndex != 0)
 		{
+			if(ee != NULL) delete ee;
 			sendEvent(new EventAutowaitCallback(retIndex));
+		} else
+		if(ee != NULL)
+		{
+			sendEvent(ee);
 		}
 	}
 }
