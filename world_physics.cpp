@@ -1,7 +1,29 @@
 #include "world_physics.h"
 
+extern ContactProcessedCallback		gContactProcessedCallback;
+
+static bool CustomProcessedCallback(btManifoldPoint& cp, void* body0,void* body1)
+{
+	btRigidBody* rb0 = (btRigidBody*)(body0);
+	btRigidBody* rb1 = (btRigidBody*)(body1);
+
+	void* up0 = rb0->getUserPointer();
+	void* up1 = rb1->getUserPointer();
+
+	if(up0 != NULL && up1 != NULL)
+	{
+		Touchable* t0 = (Touchable*)(up0);
+		Touchable* t1 = (Touchable*)(up1);
+		t0->touch(up1);
+		t1->touch(up0);
+	}
+	return true;
+}
+
 WorldPhysics::WorldPhysics()
 {
+	//tmLastGarbageClean = 0.0f;
+	//garbageCleanInterval = 5.0f; // remove garbage every 5 seconds
     broadphase				= new btDbvtBroadphase();
     collisionConfiguration	= new btDefaultCollisionConfiguration();
     dispatcher				= new btCollisionDispatcher(collisionConfiguration);
@@ -18,6 +40,8 @@ WorldPhysics::WorldPhysics()
 
 	debugDrawer.setDebugMode(btIDebugDraw::DBG_DrawWireframe);
 	dynamicsWorld->setDebugDrawer(&debugDrawer);
+
+	gContactProcessedCallback = CustomProcessedCallback;
 }
 
 WorldPhysics::~WorldPhysics()
@@ -26,7 +50,7 @@ WorldPhysics::~WorldPhysics()
 	{
 		for (int i=bodies.size()-1; i>=0; i--)
 		{
-			bodies[i]->removeFromWorld(dynamicsWorld);
+			bodies[i]->removeFromWorld();
 		}
 		bodies.clear();
 		delete dynamicsWorld;
@@ -39,7 +63,15 @@ WorldPhysics::~WorldPhysics()
 
 void WorldPhysics::update()
 {
-	dynamicsWorld->stepSimulation(g_Delta,10);
+	dynamicsWorld->stepSimulation(g_Delta,1);
+/*
+	tmLastGarbageClean += g_Delta;
+	if(tmLastGarbageClean > garbageCleanInterval)
+	{
+		clearGarbage();
+		tmLastGarbageClean = 0.0f;
+	}
+*/
 }
 
 SolidBody* WorldPhysics::addBody(float mass, float radius)
@@ -47,7 +79,8 @@ SolidBody* WorldPhysics::addBody(float mass, float radius)
 	SolidBody* newBody = new SolidBody(mass, radius);
 	if(!newBody || !dynamicsWorld) return NULL;
 
-	newBody->addToWorld(dynamicsWorld);
+	newBody->setWorld(dynamicsWorld);
+	newBody->addToWorld();
 	bodies.push_back(newBody);
 	return newBody;
 }
@@ -57,7 +90,8 @@ SolidBody* WorldPhysics::addBody(float mass, glm::vec3 boxHalfExtents)
 	SolidBody* newBody = new SolidBody(mass, boxHalfExtents);
 	if(!newBody || !dynamicsWorld) return NULL;
 
-	newBody->addToWorld(dynamicsWorld);
+	newBody->setWorld(dynamicsWorld);
+	newBody->addToWorld();
 	bodies.push_back(newBody);
 	return newBody;
 }
@@ -67,7 +101,8 @@ SolidBody* WorldPhysics::addBody(float mass, ModelInstance* mi)
 	SolidBody* newBody = new SolidBody(mass, mi);
 	if(!newBody || !dynamicsWorld) return NULL;
 
-	newBody->addToWorld(dynamicsWorld);
+	newBody->setWorld(dynamicsWorld);
+	newBody->addToWorld();
 	bodies.push_back(newBody);
 	return newBody;
 }
@@ -75,14 +110,12 @@ SolidBody* WorldPhysics::addBody(float mass, ModelInstance* mi)
 void WorldPhysics::remBody(SolidBody*& body)
 {
 	if(!body) return;
-
 	for(int i = bodies.size()-1; i>=0; i--)
 	{
 		if(bodies[i] == body)
 		{
+			body->removeFromWorld();
 			bodies.erase(bodies.begin() + i);
-			body->removeFromWorld(dynamicsWorld);
-			delete body;
 			body = NULL;
 			return;
 		}
@@ -102,3 +135,22 @@ void WorldPhysics::render(Camera* cam)
 	glMultMatrixf(&view[0][0]);
 	dynamicsWorld->debugDrawWorld();
 }
+/*
+void WorldPhysics::clearGarbage()
+{
+	std::vector<int> remInd;
+	int sz = bodies.size();
+	for(int i=0; i<sz; i++)
+	{
+		if(bodies[i]->removeMe)
+		{
+			remInd.push_back(i);
+		}
+	}
+	for(int i=remInd.size()-1; i>=0; i--)
+	{
+		delete bodies[remInd[i]];
+		bodies.erase(bodies.begin() + remInd[i]);
+	}
+}
+*/

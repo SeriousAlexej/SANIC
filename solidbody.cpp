@@ -3,6 +3,8 @@
 
 SolidBody::SolidBody(float _mass, float radius)
 {
+	world = NULL;
+	//removeMe = false;
 	indexVertexArrays = NULL;
 	trimeshShape = NULL;
 	if(radius < 0.01f)
@@ -17,6 +19,8 @@ SolidBody::SolidBody(float _mass, float radius)
 
 SolidBody::SolidBody(float _mass, glm::vec3 boxHalfExtents)
 {
+	world = NULL;
+	//removeMe = false;
 	indexVertexArrays = NULL;
 	trimeshShape = NULL;
 	for(int i=0; i<3; i++)
@@ -34,6 +38,8 @@ SolidBody::SolidBody(float _mass, glm::vec3 boxHalfExtents)
 
 SolidBody::SolidBody(float _mass, ModelInstance *mi)
 {
+	world = NULL;
+	//removeMe = false;
 	assert(mi != NULL);
 	Mesh* mesh = mi->pMesh;
 	assert(mesh != NULL);
@@ -117,13 +123,13 @@ void SolidBody::createBodyFromShape(btScalar _mass)
 	rigidBody->setActivationState(DISABLE_DEACTIVATION);
 }
 
-void SolidBody::addToWorld(btDiscreteDynamicsWorld* world)
+void SolidBody::addToWorld()
 {
 	if(world && rigidBody)
 		world->addRigidBody(rigidBody);
 }
 
-void SolidBody::removeFromWorld(btDiscreteDynamicsWorld *world)
+void SolidBody::removeFromWorld()
 {
 	if(world && rigidBody)
 	{
@@ -133,6 +139,7 @@ void SolidBody::removeFromWorld(btDiscreteDynamicsWorld *world)
 			delete rigidBody->getMotionState();
 		}
 	}
+	delete this;
 }
 
 void SolidBody::setPosition(glm::vec3 pos)
@@ -269,4 +276,38 @@ void SolidBody::teleport(glm::vec3 pos, glm::vec3 rot)
 	trans.setOrigin(btVector3(pos.x, pos.y, pos.z));
 	trans.setRotation(q);
 	rigidBody->setWorldTransform(trans);
+}
+
+void SolidBody::setWorld(btDiscreteDynamicsWorld *myworld)
+{
+	assert(myworld);
+	world = myworld;
+}
+
+void SolidBody::setOwner(void *owner)
+{
+	if(rigidBody)
+		rigidBody->setUserPointer(owner);
+	if(collShape)
+		collShape->setUserPointer(owner);
+}
+
+void* SolidBody::getOwner()
+{
+	if(rigidBody)
+	{
+		if(rigidBody->getUserPointer() != NULL)
+			return rigidBody->getUserPointer();
+	} else
+	if(collShape)
+	{
+		return collShape->getUserPointer();
+	}
+	return NULL;
+}
+
+void SolidBody::enableTouching()
+{
+	if(rigidBody)
+		rigidBody->setCollisionFlags(rigidBody->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
 }

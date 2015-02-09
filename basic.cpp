@@ -4,6 +4,7 @@ std::vector<int> Unique::registeredMultipasses;
 
 Movable::Movable()
 {
+	offset = glm::vec3(0,0,0);
 	posMx = glm::translate(glm::vec3(0,0,0));
 	rotMx = glm::rotate(0.0f, glm::vec3(1,0,0));
 	scaMx = glm::scale(glm::vec3(1,1,1));
@@ -12,14 +13,31 @@ Movable::Movable()
 
 Movable::~Movable() {}
 
+glm::vec3 Movable::getOffset()
+{
+	return offset;
+}
+
+void Movable::setOffset(glm::vec3 off)
+{
+	glm::vec3 pos = getPosition();
+	offset = off;
+	setPosition(pos);
+}
+
 glm::vec3 Movable::getPosition()
 {
-	return glm::vec3(posMx[3].x, posMx[3].y, posMx[3].z);
+	return glm::vec3(posMx[3].x, posMx[3].y, posMx[3].z) - offset;
 }
 
 glm::mat4 Movable::getRotation()
 {
 	return rotMx;
+}
+
+glm::quat Movable::getRotationQuat()
+{
+	return glm::quat(rotMx);
 }
 
 glm::vec3 Movable::getScale()
@@ -34,7 +52,7 @@ const glm::mat4& Movable::getMatrix()
 
 void Movable::setPosition(glm::vec3 pos)
 {
-	posMx = glm::translate(pos);
+	posMx = glm::translate(pos + offset);
 	updateModelMatrix();
 }
 
@@ -62,6 +80,7 @@ void Movable::setScale(glm::vec3 sca)
 
 void Movable::translate(glm::vec3 addpos)
 {
+	addpos += offset;
 	posMx[3].x += addpos.x;
 	posMx[3].y += addpos.y;
 	posMx[3].z += addpos.z;

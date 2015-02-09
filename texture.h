@@ -8,7 +8,7 @@ class Texture : public Unique, public Subscribable
 {
 public:
 	Texture(std::string path);
-	~Texture();
+	virtual ~Texture();
 
 	std::string	getSrcFnm() { return srcFnm; }
 

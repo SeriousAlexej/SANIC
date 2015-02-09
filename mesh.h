@@ -37,7 +37,7 @@ class Mesh : public Unique, public Subscribable
 public:
 	//every mesh must have it's model
 	Mesh(std::string path);
-	~Mesh();
+	virtual ~Mesh();
 	//cf - current frame, nf - next frame. For interpolation, received from ModelInstance
 	void		render(unsigned cf, unsigned nf);
 	float		getBoundingSphereRadius() { return boundingSphereRadius; }
@@ -64,7 +64,7 @@ private:
 	unsigned tangentbuffer;
 	unsigned bitangentbuffer;
 	unsigned elembuffer;
-	
+
 	//keep theese for collision generation, if needed
 	std::vector<int>		indices;
 

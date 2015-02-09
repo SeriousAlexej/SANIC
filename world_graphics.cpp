@@ -6,15 +6,15 @@ WorldGraphics::WorldGraphics()
 
 WorldGraphics::~WorldGraphics()
 {
-	for(int i=0; i< models.size(); i++)
+	for(int i=models.size()-1; i>=0; i--)
 		delete models[i];
-	for(int i=0; i< meshes.size(); i++)
+	for(int i=meshes.size()-1; i>=0; i--)
 		delete meshes[i];
-	for(int i=0; i< shaders.size(); i++)
+	for(int i=shaders.size()-1; i>=0; i--)
 		delete shaders[i];
-	for(int i=0; i< textures.size(); i++)
+	for(int i=textures.size()-1; i>=0; i--)
 		delete textures[i];
-	for(int i=0; i< lights.size(); i++)
+	for(int i=lights.size()-1; i>=0; i--)
 		delete lights[i];
 	models.clear();
 	meshes.clear();
@@ -27,7 +27,8 @@ void WorldGraphics::render()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	//render visible model instances
-	for(int i=0; i<models.size(); i++)
+	int sz = models.size();
+	for(int i=0; i<sz; i++)
 	{
 		if(camera.sphereIsVisible(models[i]->getRenSphere()))
 		{
@@ -50,7 +51,8 @@ ModelInstance* WorldGraphics::createModel(
 
 
 	//find shader id
-	for(int i=0; i<shaders.size(); i++)
+	int sz = shaders.size();
+	for(int i=0; i<sz; i++)
 	{
 		if(shaders[i]->getSrcVxFnm() == vertShader &&
 		   shaders[i]->getSrcFgFnm() == fragShader)
@@ -65,7 +67,8 @@ ModelInstance* WorldGraphics::createModel(
 		shaders.push_back(new Shader(vertShader, fragShader));
 	}
 	//find textures id's
-	for(int i=0; i<textures.size(); i++)
+	sz = textures.size();
+	for(int i=0; i<sz; i++)
 	{
 		if(textures[i]->getSrcFnm() == diffTexture)
 		{
@@ -88,7 +91,8 @@ ModelInstance* WorldGraphics::createModel(
 		textures.push_back(new Texture(normTexture));
 	}
 	//find mesh
-	for(int i=0; i<meshes.size(); i++)
+	sz = meshes.size();
+	for(int i=0; i<sz; i++)
 	{
 		if(meshes[i]->getSrcFnm() == modelPath)
 		{

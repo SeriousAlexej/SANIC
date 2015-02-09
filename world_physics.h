@@ -21,6 +21,8 @@ public:
 	void		render(Camera* cam);
 
 private:
+	//void		clearGarbage();
+
 	GLDebugDrawer								debugDrawer;
 
 	btBroadphaseInterface*						broadphase;
@@ -30,6 +32,8 @@ private:
 	btDiscreteDynamicsWorld*					dynamicsWorld;
 
 	std::vector<SolidBody*>			bodies;
+	//float							tmLastGarbageClean;
+	//float							garbageCleanInterval;
 };
 
 #endif

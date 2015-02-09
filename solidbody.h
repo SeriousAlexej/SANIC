@@ -12,7 +12,7 @@
 
 enum CollisionType { CollBox, CollSphere, CollMesh };
 
-class SolidBody : public Unique
+class SolidBody
 {
 public:
 	SolidBody(float _mass, float radius); // sphere
@@ -41,12 +41,18 @@ public:
 	void		stopMoving();
 	void		stopRotating();
 
+	void		setOwner(void* owner);
+	void*		getOwner();
+
+	void		enableTouching();
+
 	CollisionType	getType() { return collisionType; }
 
 private:
 	void	createBodyFromShape(btScalar _mass);
-	void	addToWorld(btDiscreteDynamicsWorld* world);
-	void	removeFromWorld(btDiscreteDynamicsWorld* world);
+	void	addToWorld();
+	void	removeFromWorld();
+	void	setWorld(btDiscreteDynamicsWorld* myworld);
 
 	CollisionType	collisionType;
 	float			mass;
@@ -55,6 +61,8 @@ private:
 	btRigidBody*				rigidBody;
 	btTriangleIndexVertexArray*	indexVertexArrays;
 	btBvhTriangleMeshShape*		trimeshShape;
+
+	btDiscreteDynamicsWorld*	world;
 
 	friend class WorldPhysics;
 };

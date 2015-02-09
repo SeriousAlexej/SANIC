@@ -14,18 +14,23 @@ class ModelInstance : public Movable
 {
 public:
 	ModelInstance(Mesh* mesh, Shader* shader, Texture* diffuse, Texture* normal);
-	~ModelInstance();
+	virtual ~ModelInstance();
 
-	void		render(Camera& cam, Light* light);
 	void		playAnimation(std::string anim);
 	glm::vec4	getRenSphere();
 
+	void		activate() { active = true; }
+	void		deactivate() { active = false; }
+
 private:
+	void		render(Camera& cam, Light* light);
+
 	Mesh*			pMesh;
 	Shader*			pShader;
 	Texture*		pDiffTexture;
 	Texture*		pNormTexture;
 
+	bool			active;
 	float			lastRender;
 	std::string		strCurrAnim;
 	unsigned		uCurrFrame;

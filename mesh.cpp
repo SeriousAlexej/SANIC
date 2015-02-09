@@ -75,10 +75,10 @@ static void computeTangentBasis(
 		glm::vec3 & n = normals[i];
 		glm::vec3 & t = tangents[i];
 		glm::vec3 & b = bitangents[i];
-		
+
 		// Gram-Schmidt orthogonalize
 		t = glm::normalize(t - n * glm::dot(n, t));
-		
+
 		// Calculate handedness
 		if (glm::dot(glm::cross(n, t), b) < 0.0f){
 			t = t * -1.0f;
@@ -94,10 +94,10 @@ static bool is_near(float v1, float v2){
 	return fabs( v1-v2 ) < 0.01f;
 }
 
-static bool getSimilarVertexIndex( 
-	glm::vec3 & in_vertex, 
-	glm::vec2 & in_uv, 
-	glm::vec3 & in_normal, 
+static bool getSimilarVertexIndex(
+	glm::vec3 & in_vertex,
+	glm::vec2 & in_uv,
+	glm::vec3 & in_normal,
 	std::vector<glm::vec3> & out_vertices,
 	std::vector<glm::vec2> & out_uvs,
 	std::vector<glm::vec3> & out_normals,
@@ -366,16 +366,18 @@ bool Mesh::loadModel(std::string path)
 	std::vector<glm::vec3> ttangents;
 	std::vector<glm::vec3> tbitangents;
 
-	for(int i=0; i<ttriangles.size(); i++)
+    {
+    int ttsz = ttriangles.size();
+	for(int i=0; i<ttsz; i++)
 	{
 		glm::vec3 vertex1(tvertices[ttriangles[i].vertex[0][0]-1]);	//    X/o/o  o/o/o   o/o/o
 		glm::vec3 vertex2(tvertices[ttriangles[i].vertex[1][0]-1]);	//    o/o/o  X/o/o   o/o/o
 		glm::vec3 vertex3(tvertices[ttriangles[i].vertex[2][0]-1]);	//    o/o/o  o/o/o   X/o/o
-		
+
 		glm::vec3 normal1(tnormals[ttriangles[i].vertex[0][2]-1]);	//    o/o/X  o/o/o   o/o/o
 		glm::vec3 normal2(tnormals[ttriangles[i].vertex[1][2]-1]);	//    o/o/o  o/o/X   o/o/o
 		glm::vec3 normal3(tnormals[ttriangles[i].vertex[2][2]-1]);	//    o/o/o  o/o/o   o/o/X
-		
+
 		glm::vec2 uvCoord1(tuvCoords[ttriangles[i].vertex[0][1]-1]);//    o/X/o  o/o/o   o/o/o
 		glm::vec2 uvCoord2(tuvCoords[ttriangles[i].vertex[1][1]-1]);//    o/o/o  o/X/o   o/o/o
 		glm::vec2 uvCoord3(tuvCoords[ttriangles[i].vertex[2][1]-1]);//    o/o/o  o/o/o   o/X/o
@@ -383,14 +385,15 @@ bool Mesh::loadModel(std::string path)
 		t2vertices.push_back(vertex1);
 		t2vertices.push_back(vertex2);
 		t2vertices.push_back(vertex3);
-		
+
 		t2normals.push_back(normal1);
 		t2normals.push_back(normal2);
 		t2normals.push_back(normal3);
-		
+
 		t2uvCoords.push_back(uvCoord1);
 		t2uvCoords.push_back(uvCoord2);
 		t2uvCoords.push_back(uvCoord3);
+	}
 	}
 
 	computeTangentBasis(t2vertices, t2uvCoords, t2normals, ttangents, tbitangents);
@@ -474,9 +477,9 @@ bool Mesh::loadModel(std::string path)
 	*/
 
 	std::vector<unsigned> origIndices;
-	for(int i=0; i<frames[0].vertices.size(); i++)
+	for(int i=frames[0].vertices.size()-1; i>=0; i--)
 	{
-		for(int j=0; j<tvertices.size(); j++)
+		for(int j=tvertices.size()-1; j>=0; j--)
 		{
 			if(frames[0].vertices[i] == tvertices[j])
 			{
@@ -487,7 +490,7 @@ bool Mesh::loadModel(std::string path)
 	}
 
 	//now scan for anims
-	unsigned found = path.find_last_of("/\\");
+	int found = path.find_last_of("/\\");
 	std::string animDir = path.substr(0,found+1) + "anims/";
 	found = animDir.find("\\");
 	while(found != -1)
@@ -499,22 +502,26 @@ bool Mesh::loadModel(std::string path)
 	{
 		int tvertSize = tvertices.size();
 		int vertSize = frames[0].vertices.size();
-		assert(vertSize == origIndices.size());
+		assert(vertSize == (int)origIndices.size());
 
 		std::vector<std::string> animDirs = GetFilesOfFormat(animDir);
-		for(int i=0; i<animDirs.size(); i++)
+		{
+		int adsz = animDirs.size();
+		for(int i=0; i<adsz; i++)
 		{
 			std::string animFolder = animDir + animDirs[i] + "/";
 			std::vector<std::string> objFrames = GetFilesOfFormat(animFolder, "obj");
 			AnimInfo ai;
 			ai.firstFrame = frames.size();
-			for(int f=0; f<objFrames.size(); f++)
+			{
+			int ofsz = objFrames.size();
+			for(int f=0; f<ofsz; f++)
 			{
 				std::ifstream frm;
 				frm.open((animFolder + objFrames[f]).c_str(), std::ios::in);
 				if(!frm.is_open())
 					continue;
-				
+
 				int vert = 0;
 				std::string line = "";
 				while(vert<tvertSize && getline(frm, line))
@@ -543,6 +550,7 @@ bool Mesh::loadModel(std::string path)
 				}
 				frames.push_back(newFrame);
 			}
+			}
 			ai.length = frames.size() - ai.firstFrame;
 
 			//load spf
@@ -558,10 +566,13 @@ bool Mesh::loadModel(std::string path)
 
 			animations[animDirs[i]] = ai;
 		}
+		}
 	}
 
 	//load model onto videocard
-	for(int i=0; i<frames.size(); i++)
+	{
+	int fsz = frames.size();
+	for(int i=0; i<fsz; i++)
 	{
 		glGenBuffers(1, &frames[i].vertexbuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, frames[i].vertexbuffer);
@@ -572,6 +583,7 @@ bool Mesh::loadModel(std::string path)
 		{
 			frames[i].vertices.clear();
 		}
+	}
 	}
 
 	glGenBuffers(1, &normalbuffer);
@@ -693,7 +705,7 @@ void Mesh::render(unsigned cf, unsigned nf)
 			0,                                // stride
 			(void*)0                          // array buffer offset
 			);
-		 
+
 		// Draw
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, (isOk?elembuffer:defElembuffer));
 
@@ -703,7 +715,7 @@ void Mesh::render(unsigned cf, unsigned nf)
 			GL_UNSIGNED_INT,   // type
 			(void*)0           // element array buffer offset
 			);
-		 
+
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(2);

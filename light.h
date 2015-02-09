@@ -6,7 +6,7 @@ class Light : public Movable
 {
 public:
 	Light();
-	~Light();
+	virtual ~Light();
 
 	void		setHotSpot(float val);
 	void		setFallOff(float val);

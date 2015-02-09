@@ -5,8 +5,7 @@
 #include <GL/glew.h>
 #include <SFML/Graphics.hpp>
 
-#include "world_graphics.h"
-#include "world_physics.h"
+#include "world.h"
 
 sf::Clock g_Clock;
 float	  g_LastTime = 0.0f;
@@ -63,17 +62,33 @@ int main()
 	glEnable(GL_CULL_FACE);
 	glDepthFunc(GL_LESS);
 
-	WorldGraphics worldGFX;
-	WorldPhysics worldPHY;
+	glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
 
-	ModelInstance* mi;/* = worldGFX.createModel("./shaders/smooth.vsh", "./shaders/smooth.fsh",
+	World world;
+	LiveEntity* e = (LiveEntity*)world.createEntity((Entity*)(new LiveEntity()));
+
+	//test
+	e->setupModel("./shaders/smooth.vsh", "./shaders/smooth.fsh",
+											 "./models/sanic.obj",
+											 "./models/sanic.tga", "./models/normal.jpg");
+	e->setDesiredRotation(glm::vec3(0,3.14,0));
+	e->setRotationSpeed(0.5f);
+
+
+//	WorldGraphics worldGFX;
+//	WorldPhysics worldPHY;
+
+	//ModelInstance* mi;
+	/* = worldGFX.createModel("./shaders/smooth.vsh", "./shaders/smooth.fsh",
 											 "./models/test/test.obj",
 											 "./models/test/test_CM.png", "./models/test/test_NM.png");
 	mi->setPosition(glm::vec3(2,0,0));
 	mi = worldGFX.createModel("./shaders/normal.vsh", "./shaders/normal.fsh",
 											 "./models/test/test.obj",
 											 "./models/test/test_CM.png", "./models/test/test_NM.png");
-	mi->setPosition(glm::vec3(0,0,2));*/
+	mi->setPosition(glm::vec3(0,0,2));
+	*/
+	/*
 	mi = worldGFX.createModel("./shaders/smooth.vsh", "./shaders/smooth.fsh",
 											 "./models/sanic.obj",
 											 "./models/sanic.tga", "./models/normal.jpg");
@@ -85,8 +100,8 @@ int main()
 	mi->setPosition(glm::vec3(0,0,-2));
 	SolidBody* floor = worldPHY.addBody(0, glm::vec3(20,1,20));
 	floor->setPosition(glm::vec3(0,-1,0));
-	SolidBody* cube = worldPHY.addBody(1.0f, glm::vec3(3, 1, 2));
-	cube->setPosition(glm::vec3(0,10,5));
+	SolidBody* cube = worldPHY.addBody(0, glm::vec3(3, 1, 2));
+	//cube->setPosition(glm::vec3(0,1,5));
 	SolidBody* sphere = worldPHY.addBody(20, 1.0f);
 
 	ModelInstance* axis = worldGFX.createModel("./shaders/fullbright.vsh", "./shaders/fullbright.fsh",
@@ -107,15 +122,16 @@ int main()
 	light->setFallOff(4.0f);
 	light->setHotSpot(3.0f);
 
-	glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
 
 	Camera* cm = worldGFX.getCamera();
 	cm->setOffset(glm::vec3(0,0,3));
 	cm->setRotation(3.14f,0.0f);
 	cm->setPosition(glm::vec3(0,1,0));
-
+*/
 	float speed = 3.0f;
 	float mouseSpeed = 0.05f;
+
+	bool wasPressed = false;
 
 	g_Clock.restart();
     // Start game loop
@@ -137,7 +153,7 @@ int main()
             if (event.type == sf::Event::Resized)
                 glViewport(0, 0, event.size.width, event.size.height);
         }
-		measureFPS();
+		//measureFPS();
 
 		float currTime = g_Clock.getElapsedTime().asSeconds();
 		g_Delta = currTime - g_LastTime;
@@ -146,63 +162,61 @@ int main()
 		sf::Vector2i mpos = sf::Mouse::getPosition(window);
 		sf::Mouse::setPosition(sf::Vector2i(1024/2,768/2), window);
 
-		cm->rotate(mouseSpeed * g_Delta * float(1024/2 - mpos.x ),
-			       mouseSpeed * g_Delta * float( 768/2 - mpos.y ));
+		//cm->rotate(mouseSpeed * g_Delta * float(1024/2 - mpos.x ),
+		//	       mouseSpeed * g_Delta * float( 768/2 - mpos.y ));
 
-		// Move forward
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)){
-			cm->moveFront(g_Delta * speed);
-		} else
-		// Move backward
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)){
-			cm->moveFront(g_Delta * -speed);
-		}
-		// Strafe right
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)){
-			cm->moveRight(g_Delta * speed);
-		} else
-		// Strafe left
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)){
-			cm->moveRight(g_Delta * -speed);
-		}
-		// Move up
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)){
-			cm->moveUp(g_Delta * speed);
-		} else
-		// Move down
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::C)){
-			cm->moveUp(g_Delta * -speed);
-		}
-		
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::E)){
-			cm->setRotation(3.14f,0.0f);
-			cm->setPosition(glm::vec3(0,1,0));
-		}
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::K)){
+			/*
 			if(axis != NULL)
 			{
 				worldGFX.deleteModel(axis);
 			}
+			if(cube)
+			{
+				worldPHY.remBody(cube);
+			}*/
+			e->switchToModel();
+			wasPressed = true;
+		} else
+		if(wasPressed)
+		{
+			e->sendEvent(new EntityEvent());
+			wasPressed = false;
 		}
 
 
 		glm::vec3 newpos(0,0,0);
 		// Move forward
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)){
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)){
 			newpos.x += (g_Delta * -speed);
 		} else
 		// Move backward
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)){
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)){
 			newpos.x += (g_Delta * speed);
 		}
 		// Strafe right
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)){
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)){
 			newpos.z += (g_Delta * speed);
 		} else
 		// Strafe left
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)){
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)){
 			newpos.z += (g_Delta * -speed);
+		}
+
+/*
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)){
+			cube->rotate(glm::vec3(3.14*g_Delta,0,0));
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)){
+			cube->rotate(glm::vec3(-3.14*g_Delta,0,0));
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::F)){
+			cube->translate(glm::vec3(0,-1*g_Delta,0));//setVelocity(glm::vec3(0,-1,0));
+		}
+
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
+			cube->translate(glm::vec3(0,1*g_Delta,0));//setVelocity(glm::vec3(0,1,0));
 		}
 
 		newpos = newpos.z * cm->getFront() + newpos.x * cm->getRight();
@@ -232,12 +246,14 @@ int main()
 		sphere->setAngularVelocity(newpos*100.0f);
 		mi->setPosition(sphere->getPosition() + glm::vec3(0,-1,0));
 		cm->setPosition(sphere->getPosition());
-
+*/
 		//mi->translate(newpos);
 	
-		worldPHY.update();
-		worldGFX.render();
-		worldPHY.render(cm);
+//		worldPHY.update();
+//		worldGFX.render();
+//		worldPHY.render(cm);
+
+		world.update();
 
         window.display();
 	}

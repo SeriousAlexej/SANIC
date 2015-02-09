@@ -14,6 +14,7 @@ ModelInstance::ModelInstance(Mesh* mesh, Shader* shader, Texture* diffuse, Textu
 	pDiffTexture->doSubscribe();
 	pNormTexture->doSubscribe();
 
+	active = true;
 	lastRender = 0.0f;
 	strCurrAnim = "default";
 	uCurrFrame = 0u; //FIX IT
@@ -47,6 +48,8 @@ void ModelInstance::playAnimation(std::string anim)
 
 void ModelInstance::render(Camera& cam, Light* light)
 {
+	if(!active) return;
+
 	float tmNow = g_Clock.getElapsedTime().asSeconds();
 	float delta = tmNow - lastRender;
 	float frameProgress = delta / animInfo.secondsPerFrame;

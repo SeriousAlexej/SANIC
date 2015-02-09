@@ -11,7 +11,7 @@ class Shader : public Unique, public Subscribable
 {
 public:
 	Shader(std::string vertex_file_path, std::string fragment_file_path);
-	~Shader();
+	virtual ~Shader();
 
 	std::string		getSrcVxFnm() { return srcVxShaFnm; }
 	std::string		getSrcFgFnm() { return srcFgShaFnm; }
