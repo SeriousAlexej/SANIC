@@ -4,37 +4,31 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <GL/glew.h>
 #include <SFML/Graphics.hpp>
+#include <AntTweakBar.h>
 
 #include "world.h"
+#include "./entities/player.h"
+#include "./entities/box.h"
+#include "./entities/pointlight.h"
+#include "./dialogs/tinyfiledialogs.h"
 
 sf::Clock g_Clock;
 float	  g_LastTime = 0.0f;
 float	  g_Delta = 0.0f;
+bool	  g_Editor = false;
 
 const static char logo[] = {
 "              _^  ^\n            _/  \\/ |\n        ___/ _/\\_\\/|\n     __/          \\|\n   _/         ====\\\\\n _/   _     //     |\n/____/     ||  ()  |\n  _/   __  ||      |\n /   _/   __\\\\____/\\()\n/___/    /__       /\n  _/     \\ \\__    /\n  /________\\_____/\n   _____ ___    _   ____________\n  / ___//   |  / | / /  _/ ____/\n  \\__ \\/ /| | /  |/ // // /     \n ___/ / ___ |/ /|  // // /___   \n/____/_/  |_/_/ |_/___/\\____/   \n"};
 
-
-void measureFPS()
+void TW_CALL CopyStdStringToClient(std::string& destinationClientString, const std::string& sourceLibraryString)
 {
-	static sf::Clock clock;
-	static int nbFrames = 0;
-	static double lastTime = clock.getElapsedTime().asSeconds();
-	double currTime = clock.getElapsedTime().asSeconds();
-	nbFrames++;
-	float delta = currTime - lastTime;
-	if(delta >= 1.0)
-	{
-#ifdef SANIC_DEBUG
-		printf("%f ms/frame\n", 1000.0/double(nbFrames));
-#endif
-		nbFrames = 0;
-		lastTime += 1.0;
-	}
+  // Copy the content of souceString handled by the AntTweakBar library to destinationClientString handled by your application
+  destinationClientString = sourceLibraryString;
 }
 
-int main()
+int main(int argc, char **argv)
 {
+	g_Editor = (argc > 1);
 	printf(logo);
 	sf::sleep(sf::seconds(1.0f));
 
@@ -43,13 +37,13 @@ int main()
 	cs.depthBits = 32;
 	cs.majorVersion = 2;
 	cs.minorVersion = 1;
-	sf::RenderWindow window(sf::VideoMode(1024, 768), "SANIC", sf::Style::Default, cs);
+	sf::RenderWindow window(sf::VideoMode(1024, 768), "SANIC", sf::Style::Default & ~sf::Style::Resize, cs);
     window.setVerticalSyncEnabled(true);
 	window.setFramerateLimit(60);
-	
+
     // Make it the active window for OpenGL calls
     window.setActive();
-	
+
 	// Initialise GLEW
 	glewExperimental=true;
 	if(glewInit() != GLEW_OK)
@@ -57,23 +51,31 @@ int main()
 		fprintf( stderr, "Failed to initialize GLEW\n" );
 		return -1;
 	}
+	TwInit(TW_OPENGL, NULL);
+	TwWindowSize(window.getSize().x,window.getSize().y);
+	TwCopyStdStringToClientFunc(CopyStdStringToClient);
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glDepthFunc(GL_LESS);
-
 	glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
 
-	World world;
-	LiveEntity* e = (LiveEntity*)world.createEntity((Entity*)(new LiveEntity()));
+	World world(&window);
+	//Player* e = (Player*)world.createEntity((Entity*)(new Player()));
+	//SolidBody* floor = world.physics.addBody(0, glm::vec3(20,1,20));
+	world.graphics.createModel("./shaders/smooth.vsh", "./shaders/smooth.fsh",
+											 "./models/sanic.obj",
+											 "./models/sanic.tga", "./models/normal.jpg");
+    Box* b1 = (Box*)world.createEntity((Entity*) new Box());
+    Box* b2 = (Box*)world.createEntity((Entity*) new Box());
+    Box* b3 = (Box*)world.createEntity((Entity*) new Box());
+    PointLight* pl1 = (PointLight*)world.createEntity((Entity*) new PointLight());
+    PointLight* pl2 = (PointLight*)world.createEntity((Entity*) new PointLight());
 
 	//test
 	//e->setupModel("./shaders/smooth.vsh", "./shaders/smooth.fsh",
 	//										 "./models/sanic.obj",
 	//										 "./models/sanic.tga", "./models/normal.jpg");
-	e->setDesiredRotation(glm::vec3(0,3.14,0));
-	e->setRotationSpeed(0.5f);
-
 
 //	WorldGraphics worldGFX;
 //	WorldPhysics worldPHY;
@@ -95,7 +97,7 @@ int main()
 	mi->setPosition(glm::vec3(-2,0,0));
 	mi = worldGFX.createModel("./shaders/normal.vsh", "./shaders/normal.fsh",
 											 "./models/sanic.obj",
-											 "./models/sanic.tga", "./models/normal.jpg");						 
+											 "./models/sanic.tga", "./models/normal.jpg");
 	mi->playAnimation("walk");
 	mi->setPosition(glm::vec3(0,0,-2));
 	SolidBody* floor = worldPHY.addBody(0, glm::vec3(20,1,20));
@@ -128,10 +130,8 @@ int main()
 	cm->setRotation(3.14f,0.0f);
 	cm->setPosition(glm::vec3(0,1,0));
 */
-	float speed = 3.0f;
-	float mouseSpeed = 0.05f;
-
-	bool wasPressed = false;
+	//TwBar *myBar;
+	//myBar = TwNewBar("NameOfMyTweakBar");
 
 	g_Clock.restart();
     // Start game loop
@@ -141,68 +141,71 @@ int main()
         sf::Event event;
         while (window.pollEvent(event))
         {
-            // Close window : exit
-            if (event.type == sf::Event::Closed)
-                window.close();
+			int handled = TwEventSFML(&event, 2, 2);
+			if(!handled)
+			{
+				world.getInputHandler()->allowCheck = true;
 
-            // Escape key : exit
-            if ((event.type == sf::Event::KeyPressed) && (event.key.code == sf::Keyboard::Escape))
-                window.close();
-
-            // Adjust the viewport when the window is resized
-            if (event.type == sf::Event::Resized)
-                glViewport(0, 0, event.size.width, event.size.height);
+				switch(event.type)
+				{
+				case sf::Event::LostFocus:
+                    {
+                        world.getInputHandler()->setFocus(false);
+                        break;
+                    }
+                case sf::Event::GainedFocus:
+                    {
+                        world.getInputHandler()->setFocus(true);
+                        break;
+                    }
+				case sf::Event::Closed:
+					{
+						window.close();
+						break;
+					}
+				case sf::Event::MouseWheelMoved:
+					{
+						world.getInputHandler()->registerWheelDelta(event.mouseWheel.delta);
+						break;
+					}
+				default: break;
+				}
+			}
+			else //if TwEventSFML handled
+			{
+				world.getInputHandler()->allowCheck = false;
+			}
         }
-		//measureFPS();
 
 		float currTime = g_Clock.getElapsedTime().asSeconds();
 		g_Delta = currTime - g_LastTime;
 		g_LastTime = currTime;
 
-		sf::Vector2i mpos = sf::Mouse::getPosition(window);
-		sf::Mouse::setPosition(sf::Vector2i(1024/2,768/2), window);
+		//sf::Vector2i mpos = sf::Mouse::getPosition(window);
 
 		//cm->rotate(mouseSpeed * g_Delta * float(1024/2 - mpos.x ),
 		//	       mouseSpeed * g_Delta * float( 768/2 - mpos.y ));
 
-
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::K)){
-			/*
-			if(axis != NULL)
-			{
-				worldGFX.deleteModel(axis);
-			}
-			if(cube)
-			{
-				worldPHY.remBody(cube);
-			}*/
-			e->switchToModel();
-			wasPressed = true;
-		} else
-		if(wasPressed)
-		{
-			e->sendEvent(new EntityEvent());
-			wasPressed = false;
-		}
-
-
+/*
 		glm::vec3 newpos(0,0,0);
 		// Move forward
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)){
-			newpos.x += (g_Delta * -speed);
+			newpos.x += (speed);
 		} else
 		// Move backward
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)){
-			newpos.x += (g_Delta * speed);
+			newpos.x += (-speed);
 		}
 		// Strafe right
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)){
-			newpos.z += (g_Delta * speed);
+			newpos.z += (speed);
 		} else
 		// Strafe left
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)){
-			newpos.z += (g_Delta * -speed);
+			newpos.z += (-speed);
 		}
+*/
+		//e->setDesiredADir(newpos);
 
 /*
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)){
@@ -248,15 +251,21 @@ int main()
 		cm->setPosition(sphere->getPosition());
 */
 		//mi->translate(newpos);
-	
+
 //		worldPHY.update();
 //		worldGFX.render();
 //		worldPHY.render(cm);
 
-		world.update();
+        if(world.getInputHandler()->isFocused())
+        {
+            world.update();
+            TwDraw();
+		}
 
         window.display();
 	}
+
+	TwTerminate();
 
 	return EXIT_SUCCESS;
 }

@@ -31,6 +31,7 @@ void WorldGraphics::render()
 	for(int i=0; i<sz; i++)
 	{
 		if(camera.sphereIsVisible(models[i]->getRenSphere()))
+		//if(camera.boxIsVisible(models[i]->getRenBoxCenter(), models[i]->getRenBoxHalfSizes()))
 		{
 			models[i]->render(camera, pickBestLight(models[i]));
 		}

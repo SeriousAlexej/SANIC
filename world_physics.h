@@ -34,6 +34,8 @@ private:
 	std::vector<SolidBody*>			bodies;
 	//float							tmLastGarbageClean;
 	//float							garbageCleanInterval;
+
+	friend class World;
 };
 
 #endif

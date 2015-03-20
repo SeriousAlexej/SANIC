@@ -16,6 +16,8 @@ public:
 	const glm::mat4&	getViewMatrix();
 
 	bool		sphereIsVisible(glm::vec4 sphere);//(glm::vec3 pos, float radius);
+	bool		pointIsVisible(glm::vec3 point);
+	bool		boxIsVisible(glm::vec3 center, glm::vec3 halfSizes);
 
 	void		rotate(float h, float v);
 	void		setRotation(float h, float v);

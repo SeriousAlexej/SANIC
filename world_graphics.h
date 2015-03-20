@@ -36,6 +36,8 @@ private:
 	std::vector<Texture*>		textures;
 
 	std::vector<Light*>			lights;
+
+	friend class World;
 };
 
 #endif

@@ -25,6 +25,8 @@ public:
 
 	void		rotate(glm::vec3 rot, bool absolute = true);
 	void		translate(glm::vec3 pos);
+	void        setOffset(glm::vec3 off);
+	glm::vec3   getOffset() const;
 	void		setPosition(glm::vec3 pos);
 	void		setRotation(glm::vec3 rot);
 	void		setRotation(float angle, glm::vec3 dir);
@@ -57,8 +59,10 @@ private:
 	CollisionType	collisionType;
 	float			mass;
 
+    btVector3                   offset;
 	btCollisionShape*			collShape;
 	btRigidBody*				rigidBody;
+	btCompoundShape*            compoundShape;
 	btTriangleIndexVertexArray*	indexVertexArrays;
 	btBvhTriangleMeshShape*		trimeshShape;
 

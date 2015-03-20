@@ -18,6 +18,8 @@ public:
 
 	void		playAnimation(std::string anim);
 	glm::vec4	getRenSphere();
+	glm::vec3	getRenBoxCenter();
+	glm::vec3	getRenBoxHalfSizes();
 
 	void		activate() { active = true; }
 	void		deactivate() { active = false; }

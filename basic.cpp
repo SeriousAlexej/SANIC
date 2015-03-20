@@ -45,7 +45,7 @@ glm::vec3 Movable::getScale()
 	return glm::vec3(scaMx[0].x, scaMx[1].y, scaMx[2].z);
 }
 
-const glm::mat4& Movable::getMatrix()
+glm::mat4 Movable::getMatrix()
 {
 	return mdlMx;
 }
@@ -69,6 +69,12 @@ void Movable::setRotation(glm::vec3 rot)
 void Movable::setRotation(float angle, glm::vec3 dir)
 {
 	rotMx = glm::rotate(angle, dir);
+	updateModelMatrix();
+}
+
+void Movable::setRotation(glm::mat4 rot)
+{
+	rotMx = rot;
 	updateModelMatrix();
 }
 

@@ -186,10 +186,13 @@ Mesh::Mesh(std::string path)
 	elembuffer = 0;
 	boundingSphereRadius = 0.0f;
 	boundingSphereCenter = glm::vec3(0,0,0);
+	boundingBoxCenter = glm::vec3(0,0,0);
+	boundingBoxHalfSizes = glm::vec3(0,0,0);
 	isOk = loadModel(path);
 	if(!isOk)
 	{
 		boundingSphereRadius = 1.0f;
+		boundingBoxHalfSizes = glm::vec3(0.5,0.5,0.5);
 	}
 };
 
@@ -344,11 +347,22 @@ bool Mesh::loadModel(std::string path)
 
 	//compute bounding sphere
 	int sz = tvertices.size();
+	float mostRight(tvertices[0].x), mostLeft(tvertices[0].x),
+		  mostUp(tvertices[0].y), mostDown(tvertices[0].y),
+		  mostFront(tvertices[0].z), mostBack(tvertices[0].z);//mostWanted
 	for(int i=0; i<sz; i++)
 	{
 		boundingSphereCenter += tvertices[i];
+		if(tvertices[i].x > mostRight) mostRight = tvertices[i].x;
+		if(tvertices[i].x < mostLeft) mostLeft = tvertices[i].x;
+		if(tvertices[i].y > mostUp) mostUp = tvertices[i].y;
+		if(tvertices[i].y < mostDown) mostDown = tvertices[i].y;
+		if(tvertices[i].z > mostFront) mostFront = tvertices[i].z;
+		if(tvertices[i].z < mostBack) mostBack = tvertices[i].z;
 	}
 	boundingSphereCenter /= (float)sz; //center is the average of all vx's positions
+	boundingBoxHalfSizes = glm::vec3(mostRight - mostLeft, mostUp - mostDown, mostFront - mostBack) * 0.5f;
+	boundingBoxCenter = glm::vec3(mostRight + mostLeft, mostUp + mostDown, mostFront + mostBack) * 0.5f;
 	for(int i=0; i<sz; i++)
 	{
 		glm::vec3 fromCenterToVx = tvertices[i] - boundingSphereCenter;

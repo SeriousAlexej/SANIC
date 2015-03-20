@@ -48,7 +48,7 @@ void ModelInstance::playAnimation(std::string anim)
 
 void ModelInstance::render(Camera& cam, Light* light)
 {
-	if(!active) return;
+	if(!active && !g_Editor) return;
 
 	float tmNow = g_Clock.getElapsedTime().asSeconds();
 	float delta = tmNow - lastRender;
@@ -88,7 +88,7 @@ void ModelInstance::render(Camera& cam, Light* light)
 	glm::mat4 View = cam.getViewMatrix();
 	glm::mat4 Model = this->getMatrix();
 	glm::mat4 MVP = Proj*View*Model;
-	
+
 	glm::mat4 ModelViewMatrix = View * Model;
 	glm::mat3 ModelView3x3Matrix = glm::mat3(ModelViewMatrix);
 
@@ -143,4 +143,14 @@ glm::vec4 ModelInstance::getRenSphere()
 	renSphere.z = bSphere.z;
 	renSphere.w = pMesh->getBoundingSphereRadius();
 	return renSphere;
+}
+
+glm::vec3 ModelInstance::getRenBoxCenter()
+{
+	return pMesh->getBoundingBoxCenter() + getPosition();
+}
+
+glm::vec3 ModelInstance::getRenBoxHalfSizes()
+{
+	return pMesh->getBoundingBoxHalfSizes();
 }

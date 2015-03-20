@@ -3,6 +3,7 @@
 
 SolidBody::SolidBody(float _mass, float radius)
 {
+    offset = btVector3(0,0,0);
 	world = NULL;
 	//removeMe = false;
 	indexVertexArrays = NULL;
@@ -19,6 +20,7 @@ SolidBody::SolidBody(float _mass, float radius)
 
 SolidBody::SolidBody(float _mass, glm::vec3 boxHalfExtents)
 {
+    offset = btVector3(0,0,0);
 	world = NULL;
 	//removeMe = false;
 	indexVertexArrays = NULL;
@@ -38,6 +40,7 @@ SolidBody::SolidBody(float _mass, glm::vec3 boxHalfExtents)
 
 SolidBody::SolidBody(float _mass, ModelInstance *mi)
 {
+    offset = btVector3(0,0,0);
 	world = NULL;
 	//removeMe = false;
 	assert(mi != NULL);
@@ -72,6 +75,7 @@ SolidBody::SolidBody(float _mass, ModelInstance *mi)
 
 SolidBody::~SolidBody()
 {
+	if(compoundShape)       delete compoundShape;
 	if(collisionType == CollMesh)
 	{
 		if(trimeshShape)	delete trimeshShape;
@@ -86,8 +90,16 @@ void SolidBody::activate()
 {
 	if(rigidBody)
 	{
-		rigidBody->setCollisionFlags(rigidBody->getCollisionFlags() & ~(btCollisionObject::CF_NO_CONTACT_RESPONSE));
-		rigidBody->setMassProps(mass, btVector3(0,0,0));
+        if(world)
+        {
+            world->removeRigidBody(rigidBody);
+            rigidBody->setCollisionFlags(rigidBody->getCollisionFlags() & ~(btCollisionObject::CF_NO_CONTACT_RESPONSE));
+            btVector3 in;
+            compoundShape->calculateLocalInertia(mass, in);
+            rigidBody->setMassProps(mass, in);
+            rigidBody->updateInertiaTensor();
+            world->addRigidBody(rigidBody);
+        }
 	}
 }
 
@@ -104,16 +116,21 @@ void SolidBody::deactivate()
 
 void SolidBody::createBodyFromShape(btScalar _mass)
 {
+	compoundShape = new btCompoundShape();
+	btTransform localTrans;
+	localTrans.setIdentity();
+	localTrans.setOrigin(offset);
+	compoundShape->addChildShape(localTrans, (collShape==NULL?trimeshShape:collShape));
 	mass = _mass;
 	btTransform startTransform;
 	startTransform.setIdentity();
 	btVector3 localInertia(0,0,0);
 	if(collisionType != CollMesh) //CollMesh doesn't support that
 	{
-		collShape->calculateLocalInertia(mass,localInertia);
+		compoundShape->calculateLocalInertia(mass,localInertia);
 	}
 	btDefaultMotionState* motionState = new btDefaultMotionState(startTransform);
-	btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,motionState,collShape,localInertia);
+	btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,motionState,compoundShape,localInertia);
 
 	rbInfo.m_friction = 1.0;
 	rbInfo.m_rollingFriction = 0.5;
@@ -212,7 +229,7 @@ void SolidBody::setRotation(float angle, glm::vec3 dir)
 {
 	if(!rigidBody) return;
 	btQuaternion q;
-	q.setRotation(btVector3(dir.x, dir.y, dir.z), angle);
+	q.setRotation(btVector3(dir.x, dir.y, dir.z), glm::radians(angle));
 	btTransform t = rigidBody->getWorldTransform();
 	t.setRotation(q);
 	rigidBody->setWorldTransform(t);
@@ -240,6 +257,21 @@ void SolidBody::translate(glm::vec3 pos)
 	btTransform t = rigidBody->getWorldTransform();
 	t.setOrigin(t.getOrigin() + btVector3(pos.x, pos.y, pos.z));
 	rigidBody->setWorldTransform(t);
+}
+
+void SolidBody::setOffset(glm::vec3 off)
+{
+    offset = btVector3(off.x, off.y, off.z);
+    if(!rigidBody || !compoundShape) return;
+    btTransform trans;
+    trans.setIdentity();
+    trans.setOrigin(offset);
+    compoundShape->updateChildTransform(0, trans);
+}
+
+glm::vec3 SolidBody::getOffset() const
+{
+    return glm::vec3(offset.getX(), offset.getY(), offset.getZ());
 }
 
 glm::vec3 SolidBody::getPosition()
@@ -288,8 +320,8 @@ void SolidBody::setOwner(void *owner)
 {
 	if(rigidBody)
 		rigidBody->setUserPointer(owner);
-	if(collShape)
-		collShape->setUserPointer(owner);
+	if(compoundShape)
+		compoundShape->setUserPointer(owner);
 }
 
 void* SolidBody::getOwner()
@@ -299,9 +331,9 @@ void* SolidBody::getOwner()
 		if(rigidBody->getUserPointer() != NULL)
 			return rigidBody->getUserPointer();
 	} else
-	if(collShape)
+	if(compoundShape)
 	{
-		return collShape->getUserPointer();
+		return compoundShape->getUserPointer();
 	}
 	return NULL;
 }

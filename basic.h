@@ -6,8 +6,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
 #include <vector>
-#include <queue>
+#include <list>
 #include <string>
+
+extern bool g_Editor;
 
 class Movable
 {
@@ -20,11 +22,12 @@ public:
 	glm::mat4	getRotation();
 	glm::quat	getRotationQuat();
 	glm::vec3	getScale();
-	const glm::mat4&	getMatrix();
+	glm::mat4	getMatrix();
 
 	void		setPosition(glm::vec3 pos);
 	void		setRotation(glm::vec3 rot);
 	void		setRotation(float angle, glm::vec3 dir);
+	void		setRotation(glm::mat4 rot);
 	void		setScale(glm::vec3 sca);
 	void		setOffset(glm::vec3 off);
 
@@ -49,12 +52,12 @@ public:
 	{
 		subscribers = 0;
 	}
-	~Subscribable()
+	virtual ~Subscribable()
 	{
 	}
 
-	void	doSubscribe() { subscribers++; }
-	void	unSubscribe()
+	virtual void	doSubscribe() { subscribers++; }
+	virtual void	unSubscribe()
 	{
 		subscribers--;
 		if(subscribers <= 0)
@@ -62,7 +65,7 @@ public:
 			allSubscribersLeft();
 		}
 	}
-	bool	hasSubscribers() { return subscribers > 0; }
+	virtual bool	hasSubscribers() { return subscribers > 0; }
 private:
 	virtual void allSubscribersLeft() {}
 	int		subscribers;
@@ -86,7 +89,7 @@ public:
 		registeredMultipasses.push_back(multipass);
 	}
 
-	~Unique()
+	virtual ~Unique()
 	{
 		int sz = registeredMultipasses.size();
 		for(int i=0; i<sz; i++)
@@ -99,7 +102,7 @@ public:
 		}
 	}
 
-	int	getMultipass() { return multipass; }
+	virtual int	getMultipass() { return multipass; }
 private:
 	static std::vector<int>	registeredMultipasses;
 	int		multipass; //LILUKORBENDALAS!
@@ -109,13 +112,13 @@ private:
 class Touchable
 {
 public:
-	Touchable() {}
-	~Touchable() { while(!whoTouchedMe.empty()) whoTouchedMe.pop(); }
-	void	touch(void* t) { if(t) whoTouchedMe.push(t); }
-	void*	popToucher() { void* r = whoTouchedMe.front(); whoTouchedMe.pop(); return r; }
-	bool	lonely() { return whoTouchedMe.empty(); }
-private:
-	std::queue<void*>	whoTouchedMe;
+	Touchable() { whoTouchedMe.clear(); }
+	virtual ~Touchable() { whoTouchedMe.clear(); }
+	virtual void	touch(void* t) { if(t) whoTouchedMe.push_back(t); }
+	virtual void*	popToucher() { void* r = whoTouchedMe.front(); whoTouchedMe.pop_front(); return r; }
+	virtual bool	lonely() { return whoTouchedMe.empty(); }
+protected:
+	std::list<void*>	whoTouchedMe;
 };
 
 //this class should help with defining entity class
@@ -123,9 +126,9 @@ class FamilyTree
 {
 public:
 	FamilyTree() : ancestorClasses(""), currentClass("") {}
-	~FamilyTree() {}
+	virtual ~FamilyTree() {}
 
-	void	setClass(std::string myClass)
+	virtual void	setClass(std::string myClass)
 	{
 		//can't have empty classname
 		//can't have classname with '&'
@@ -141,20 +144,20 @@ public:
 		currentClass = myClass;
 	}
 
-	bool	isDerivedFrom(std::string ancestor)
+	virtual bool	isDerivedFrom(std::string ancestor)
 	{
 		assert(ancestor != "");
 		return ancestorClasses.find(ancestor) != std::string::npos ||
 			currentClass == ancestor;
 	}
 
-	bool	isOfClass(std::string classname)
+	virtual bool	isOfClass(std::string classname)
 	{
 		assert(classname != "");
 		return classname == currentClass;
 	}
 
-	std::string		getClass() const { return currentClass; }
+	virtual std::string		getClass() const { return currentClass; }
 private:
 	std::string		ancestorClasses;
 	std::string		currentClass;

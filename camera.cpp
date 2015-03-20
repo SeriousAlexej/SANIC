@@ -4,7 +4,7 @@ Camera::Camera()
 {
 	this->setPerspective(90.0f, 4.0f/3.0f, 0.1f, 100.0f);
 	horizontalAngle = 0.0f;
-	verticalAngle = 0.0f;
+	verticalAngle = -0.3f;
 	position = glm::vec3(0,0,0);
 	offset = glm::translate(glm::vec3(0,0,0));
 	updateViewAngles(); //this calls updateMatrix && extractFrustum
@@ -33,12 +33,33 @@ const glm::mat4& Camera::getViewMatrix()
 bool Camera::sphereIsVisible(glm::vec4 sphere)//(glm::vec3 pos, float radius)
 {
 	int p;
-	for( p = 0; p < 6; p++ )
+	for(p=0; p<6; p++)
 		if( frustum[p][0] * sphere.x + frustum[p][1] * sphere.y + frustum[p][2] * sphere.z + frustum[p][3] <= -sphere.w)
 			return false;
 	return true;
 }
 
+bool Camera::pointIsVisible(glm::vec3 point)
+{
+	int p;
+	for(p=0; p<6; p++)
+		if( frustum[p][0] * point.x + frustum[p][1] * point.y + frustum[p][2] * point.z + frustum[p][3] <= 0 )
+			return false;
+	return true;
+}
+
+bool Camera::boxIsVisible(glm::vec3 center, glm::vec3 halfSizes)
+{
+	return pointIsVisible(center) || 
+		pointIsVisible(center + halfSizes) ||
+		pointIsVisible(center - halfSizes) ||
+		pointIsVisible(center + glm::vec3(-halfSizes.x, halfSizes.y, halfSizes.z)) ||
+		pointIsVisible(center + glm::vec3(halfSizes.x, -halfSizes.y, halfSizes.z)) ||
+		pointIsVisible(center + glm::vec3(halfSizes.x, halfSizes.y, -halfSizes.z)) ||
+		pointIsVisible(center + glm::vec3(-halfSizes.x, -halfSizes.y, halfSizes.z)) ||
+		pointIsVisible(center + glm::vec3(-halfSizes.x, halfSizes.y, -halfSizes.z)) ||
+		pointIsVisible(center + glm::vec3(halfSizes.x, -halfSizes.y, -halfSizes.z));
+}
 
 void Camera::extractFrustum()
 {

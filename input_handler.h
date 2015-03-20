@@ -12,26 +12,47 @@ public:
 	InputHandler(sf::Window* w);
 	~InputHandler();
 
+	bool	allowCheck;
+	void	registerWheelDelta(int delta);
+
+	void	update();
+
+	bool	keyJustPressed(int keyCode) const;
+	bool	keyJustReleased(int keyCode) const;
+	bool	keyPressed(int keyCode) const;
+
+	bool    cursorIsInsideWindow() const;
+
+	bool	mouseButtonJustPressed(int mouseButton) const;
+	bool	mouseButtonJustReleased(int mouseButton) const;
+	bool	mouseButtonPressed(int mouseButton) const;
+
+	void    setFocus(bool _f);
+	bool    isFocused() const;
+
+private:
 	void	registerKeyPress(int keyCode);
 	void	registerKeyRelease(int keyCode);
 	void	registerMousePress(int mouseButton);
 	void	registerMouseRelease(int mouseButton);
 
-	void	updateMouseDelta();
-
-	bool	keyPressed(int keyCode) const;
-	bool	mouseButtonPressed(int mouseButton) const;
-
-private:
 	sf::Window*		mainWindow;
 	sf::Vector2u	windowSize;
+	int				wheelDelta;
 	glm::vec2		mouseDelta;
+	sf::Vector2i    mouseOldPosition;//restore this position after exiting fly mode
+
+	bool	lockMouse;
 
 	bool	keyStatesNew[101];
 	bool	keyStatesOld[101];
 
 	bool	mouseKeysNew[5];
 	bool	mouseKeysOld[5];
+
+	bool    focus;
+
+	friend class World;
 };
 
 #endif

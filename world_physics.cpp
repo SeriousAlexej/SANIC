@@ -22,8 +22,8 @@ static bool CustomProcessedCallback(btManifoldPoint& cp, void* body0,void* body1
 
 WorldPhysics::WorldPhysics()
 {
-	//tmLastGarbageClean = 0.0f;
-	//garbageCleanInterval = 5.0f; // remove garbage every 5 seconds
+
+
     broadphase				= new btDbvtBroadphase();
     collisionConfiguration	= new btDefaultCollisionConfiguration();
     dispatcher				= new btCollisionDispatcher(collisionConfiguration);
@@ -64,14 +64,6 @@ WorldPhysics::~WorldPhysics()
 void WorldPhysics::update()
 {
 	dynamicsWorld->stepSimulation(g_Delta,1);
-/*
-	tmLastGarbageClean += g_Delta;
-	if(tmLastGarbageClean > garbageCleanInterval)
-	{
-		clearGarbage();
-		tmLastGarbageClean = 0.0f;
-	}
-*/
 }
 
 SolidBody* WorldPhysics::addBody(float mass, float radius)
@@ -135,22 +127,4 @@ void WorldPhysics::render(Camera* cam)
 	glMultMatrixf(&view[0][0]);
 	dynamicsWorld->debugDrawWorld();
 }
-/*
-void WorldPhysics::clearGarbage()
-{
-	std::vector<int> remInd;
-	int sz = bodies.size();
-	for(int i=0; i<sz; i++)
-	{
-		if(bodies[i]->removeMe)
-		{
-			remInd.push_back(i);
-		}
-	}
-	for(int i=remInd.size()-1; i>=0; i--)
-	{
-		delete bodies[remInd[i]];
-		bodies.erase(bodies.begin() + remInd[i]);
-	}
-}
-*/
+

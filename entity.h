@@ -3,6 +3,7 @@
 #include <list>
 #include <stack>
 #include <string>
+#include <AntTweakBar.h>
 #include "basic.h"
 #include "solidbody.h"
 #include "modelinstance.h"
@@ -16,8 +17,6 @@ class World;
 
 typedef void (*stateCallback)(EntityEvent*,Entity*);
 typedef void STATE;
-
-//TODO: add ability to copy both position and orientation from BODY to MODEL
 
 class EntityState
 {
@@ -74,12 +73,21 @@ private:
 	bool						holdEx;
 };
 
-class Entity : public Unique, public Touchable, public FamilyTree
+class Entity : private Touchable, public Unique, public FamilyTree
 {
 public:
+
+	enum Orientation
+	{
+		BY_BODY,
+		BY_DESIRE,
+		NONE,
+	};
+
 			 Entity();
 	virtual ~Entity();
 	virtual void			initialize();
+	virtual void			adjustMoving();
 
 	void					destroy();
 
@@ -95,18 +103,16 @@ public:
 	glm::vec3				getDesiredADir() const { return desiredAngularDirection; }
 	glm::vec3				getDesiredRotation() const { return desiredRotation; }
 	float					getRotationSpeed() const { return rotationSpeed; }
+	Orientation				getOrientationType() const { return orientationType; }
+	bool					isTranslatedByBody() const { return translatedByBody; }
 
 	void					setName(std::string newName) { name = newName; }
 	void					setDesiredLDir(glm::vec3 dir) { desiredLinearDirection = dir; }
 	void					setDesiredADir(glm::vec3 dir) { desiredAngularDirection = dir; }
 	void					setDesiredRotation(glm::vec3 rot) { desiredRotation = rot; }
 	void					setRotationSpeed(float speed) { if(speed >=0.0f) rotationSpeed = speed; }
-
-protected:
-	//states:
-	static STATE dummy(EntityEvent* ee, Entity* caller);
-	static STATE autowaitState(EntityEvent* ee, Entity* caller);
-
+	void					setOrientationType(Orientation type) { orientationType = type; }
+	void					setTranslatedByBody(bool value) { translatedByBody = value; }
 
 	void					setupModel(std::string vertShader, std::string fragShader,
 									   std::string modelPath, std::string diffTexture,
@@ -114,12 +120,32 @@ protected:
 	void					setupCollision(float mass); //from model
 	void					setupCollision(float mass, float radius); //sphere
 	void					setupCollision(float mass, glm::vec3 halfExtents); //box
+
+	void                    setParent(Entity* p);
+	Entity*                 getParent() const;
+
+protected:
+	//states:
+	static STATE dummy(EntityEvent* ee, Entity* caller);
+	static STATE autowaitState(EntityEvent* ee, Entity* caller);
+
 	void					autowait(float time, int returnIndex);
 	void					pushState(stateCallback callback, float waitTime = 0.0f);
 	void					replaceState(stateCallback callback, float waitTime = 0.0f);
 	void					popState(EntityEvent* ee = NULL);
 	void					syncEntitySpeed();
 	void					update();
+	void                    updatePosition();
+	void                    parentMoved();
+	bool                    childrenContain(Entity* e) const;
+
+    virtual Entity**        getTargetPointer();
+    virtual std::string     getPointerDescr();
+    virtual std::string     getPointersString();
+	virtual void            editorUpdate();
+	virtual void            editorSelect();
+	virtual void            editorDesselect();
+	virtual void            renderSelectionIndicator();
 
 	std::stack<EntityState*>	statesObsolete;
 	std::stack<EntityState*>	states;
@@ -130,9 +156,26 @@ protected:
 	glm::vec3					desiredRotation; //doesn't affect physics, just the visible part
 	float						rotationSpeed;
 	bool						editor;
+	Orientation					orientationType;
+	bool						translatedByBody;
 	SolidBody*					body;
 	ModelInstance*				model;
 	std::string					name;
+
+	glm::quat                   rotationQuat;
+	glm::vec3                   rotationEuler;
+	glm::quat                   rotationQuatO;
+	glm::vec3                   rotationEulerO;
+	glm::vec3                   position;
+	int                         pointerIndex;
+	int                         pointerIndexPrevious;
+	bool                        shouldClearPointer;
+	TwBar*                      entityBar;
+
+	Entity*                     parent;
+	std::vector<Entity*>        children;
+	glm::mat4                   relativeTransform;
+	glm::mat4                   oldMatrix;
 
 	WorldGraphics*				wldGFX; //fill theese
 	WorldPhysics*				wldPHY; //from class World
@@ -151,9 +194,11 @@ public:
 
 	virtual void receiveDamage(Entity* inflictor, float damage, glm::vec3 direction);
 	float		 getHealth() const { return health; }
+	float		 getMaxHealth() const { return maxHealth; }
 
 protected:
 	float	health;
+	float	maxHealth;
 };
 
 #endif

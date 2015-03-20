@@ -40,8 +40,10 @@ public:
 	virtual ~Mesh();
 	//cf - current frame, nf - next frame. For interpolation, received from ModelInstance
 	void		render(unsigned cf, unsigned nf);
-	float		getBoundingSphereRadius() { return boundingSphereRadius; }
-	glm::vec3	getBoundingSphereCenter() { return boundingSphereCenter; }
+	float		getBoundingSphereRadius() const { return boundingSphereRadius; }
+	glm::vec3	getBoundingSphereCenter() const { return boundingSphereCenter; }
+	glm::vec3	getBoundingBoxCenter() const { return boundingBoxCenter; }
+	glm::vec3	getBoundingBoxHalfSizes() const { return boundingBoxHalfSizes; }
 	AnimInfo	getAnimInfo(std::string animName) { return animations[animName]; }
 	bool		hasAnim(std::string animName) { return animations.find(animName) != animations.end(); }
 	std::string	getSrcFnm() { return srcFile; }
@@ -54,6 +56,8 @@ private:
 	//for culling purposes
 	float				boundingSphereRadius;
 	glm::vec3			boundingSphereCenter;
+	glm::vec3			boundingBoxCenter;
+	glm::vec3			boundingBoxHalfSizes;
 	//avoid calling elembuffer.size() too often
 	unsigned			indicesSize;
 	//FALSE - use AXIS model, TRUE - ??? PROFIT!
