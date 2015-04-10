@@ -30,7 +30,7 @@ glm::quat rotateTowards(glm::quat q1, glm::quat q2, float maxAngle){
 	float t = maxAngle / angle;
 	angle = maxAngle;
 	
-	glm::quat res = (sin((1.0f - t) * angle) * q1 + sin(t * angle) * q2) / sin(angle);
+    glm::quat res = (float(sin((1.0f - t) * angle)) * q1 + float(sin(t * angle)) * q2) / float(sin(angle));
 	res = glm::normalize(res);
 	return res;
 }

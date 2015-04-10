@@ -9,6 +9,8 @@ public:
 	virtual ~Box();
 	virtual void	initialize();
 	virtual void	adjustMoving();
+    virtual void    Serialize(ostream& o);
+    virtual void    Deserialize(istream& i);
 
 private:
 	//states

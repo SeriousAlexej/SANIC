@@ -4,11 +4,11 @@
 #include <glm/gtx/quaternion.hpp>
 #include "basic.h"
 #include "modelinstance.h"
-#include "btBulletDynamicsCommon.h"
-#include "btBulletCollisionCommon.h"
-#include "BulletCollision/CollisionDispatch/btInternalEdgeUtility.h"
-#include "BulletCollision/NarrowPhaseCollision/btRaycastCallback.h"
-#include "BulletCollision/CollisionShapes/btTriangleShape.h"
+#include <btBulletDynamicsCommon.h>
+#include <btBulletCollisionCommon.h>
+#include <BulletCollision/CollisionDispatch/btInternalEdgeUtility.h>
+#include <BulletCollision/NarrowPhaseCollision/btRaycastCallback.h>
+#include <BulletCollision/CollisionShapes/btTriangleShape.h>
 
 enum CollisionType { CollBox, CollSphere, CollMesh };
 

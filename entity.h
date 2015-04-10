@@ -11,6 +11,8 @@
 #include "world_graphics.h"
 #include "world_physics.h"
 #include "world.h"
+#include "properties.h"
+#include <map>
 
 class Entity;
 class World;
@@ -73,7 +75,7 @@ private:
 	bool						holdEx;
 };
 
-class Entity : private Touchable, public Unique, public FamilyTree
+class Entity : private Touchable, public Unique, public FamilyTree, public Serial
 {
 public:
 
@@ -89,6 +91,8 @@ public:
 	virtual void			initialize();
 	virtual void			adjustMoving();
 
+    virtual void            Serialize(ostream &ostr) {}
+    virtual void            Deserialize(istream& istr) {}
 	void					destroy();
 
 	void					sendEvent(EntityEvent* ee);
@@ -96,7 +100,7 @@ public:
 	void					switchToEditorModel();
 	void					switchToModel();
 
-	std::string				getName() const { return name; }
+    string getName();
 	const SolidBody*		getBody() const { return body; }//for moving purposes
 	const ModelInstance*	getModelInstance() const { return model; }//for anim playing
 	glm::vec3				getDesiredLDir() const { return desiredLinearDirection; }
@@ -106,7 +110,7 @@ public:
 	Orientation				getOrientationType() const { return orientationType; }
 	bool					isTranslatedByBody() const { return translatedByBody; }
 
-	void					setName(std::string newName) { name = newName; }
+    void					setName(std::string newName);
 	void					setDesiredLDir(glm::vec3 dir) { desiredLinearDirection = dir; }
 	void					setDesiredADir(glm::vec3 dir) { desiredAngularDirection = dir; }
 	void					setDesiredRotation(glm::vec3 rot) { desiredRotation = rot; }
@@ -160,8 +164,30 @@ protected:
 	bool						translatedByBody;
 	SolidBody*					body;
 	ModelInstance*				model;
-	std::string					name;
+    map<string, Property*>      properties;
+    std::string					name;
 
+    template<class T>
+    T&                          getProperty(std::string);
+
+    // SOME BLACK MAGIC
+    template<class C>
+    void registerProperties(string s, C* c)
+    {
+        Property* pname = Property::create<C>(c);
+        properties[s] = pname;
+    }
+
+    template<class C, class... T>
+    void registerProperties(string s, C* c, T... Args)
+    {
+        registerProperties(s, c);
+        registerProperties(Args...);
+    }
+    // END BLACK MAGIC
+
+
+protected:
 	glm::quat                   rotationQuat;
 	glm::vec3                   rotationEuler;
 	glm::quat                   rotationQuatO;
@@ -180,6 +206,7 @@ protected:
 	WorldGraphics*				wldGFX; //fill theese
 	WorldPhysics*				wldPHY; //from class World
 	World*						wld;
+    virtual void                drawProperty(string name, Property* prop);
 
 	friend class World;
 };

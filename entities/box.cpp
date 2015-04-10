@@ -25,6 +25,9 @@ void Box::adjustMoving()
 {
 }
 
+void Box::Serialize(ostream &istr) {}
+void Box::Deserialize(istream &ostr) {}
+
 Box::~Box()
 {
 }
