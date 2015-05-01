@@ -28,8 +28,8 @@ public:
     string m_name;
     size_t m_tid; // Typeid hash for our safety!
 
-    Property() {} // Private constructor
-    ~Property() { delete m_data; }
+    Property() {}; // Private constructor
+    ~Property() { };
 
 public:
     template<class T>
@@ -37,8 +37,6 @@ public:
 
     template<class T>
     void SetValue(T val);
-
-    void SetValue(int val) { SetValue<int>(val); }
 
     template<class T>
     Property();
@@ -108,11 +106,12 @@ void Property::Deserialize(istream &o)
     }
 }
 
+
 template<class T>
 T& Property::ref()
 {
     if(typeid(T).hash_code() != m_tid) throw bad_typeid();
-    T* t_data = reinterpret_cast<T*>(m_data);
+    T* t_data = reinterpret_cast<T*>(m_data); // TODO: don't work
     return *t_data;
 }
 

@@ -1,4 +1,5 @@
 #include <cstring> //memset
+#include <assert.h>
 #include "input_handler.h"
 
 InputHandler::InputHandler(sf::Window* w)

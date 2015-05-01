@@ -1,6 +1,5 @@
 #include "entity.h"
 #include "quaternion_utils.h"
-#include "tuple_util.h"
 
 STATE Entity::dummy(EntityEvent *ee, Entity* caller)
 {
@@ -126,7 +125,7 @@ std::string Entity::getName()  {
 }
 
 void Entity::setName(string newName) {
-    properties["Name"]->SetValue<std::string>(newName);
+    properties["Name"]->SetValue(newName);
 }
 
 template<class T>
