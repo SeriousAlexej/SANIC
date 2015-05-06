@@ -1,11 +1,13 @@
 #define _CRT_SECURE_NO_DEPRECATE
 #include <fstream>
+#include <algorithm>
 #include <assert.h>
 #include <string.h>
 #include <GL/glew.h>
 #include "mesh.h"
 #include "dirtools.h"
 #include "default_model.h"
+#include "modelLoader/objParser.h"
 
 unsigned Mesh::defVertexbuffer = 0;
 unsigned Mesh::defNormalbuffer = 0;
@@ -15,12 +17,6 @@ unsigned Mesh::defBitangentbuffer = 0;
 unsigned Mesh::defElembuffer = 0;
 unsigned Mesh::numberOfMeshes = 0;
 
-
-struct Triangle
-{
-public:
-	glm::uvec3 vertex[3];
-};
 
 static void computeTangentBasis(
 	// inputs
@@ -89,39 +85,27 @@ static void computeTangentBasis(
 
 }
 
+struct PackedVertex{
+	glm::vec3 position;
+	glm::vec2 uv;
+	glm::vec3 normal;
+	bool operator<(const PackedVertex that) const{
+		return memcmp((void*)this, (void*)&that, sizeof(PackedVertex))>0;
+	};
+};
 
-static bool is_near(float v1, float v2){
-	return fabs( v1-v2 ) < 0.01f;
-}
-
-static bool getSimilarVertexIndex(
-	glm::vec3 & in_vertex,
-	glm::vec2 & in_uv,
-	glm::vec3 & in_normal,
-	std::vector<glm::vec3> & out_vertices,
-	std::vector<glm::vec2> & out_uvs,
-	std::vector<glm::vec3> & out_normals,
+bool getSimilarVertexIndex_fast(
+	PackedVertex & packed,
+	std::map<PackedVertex,int> & VertexToOutIndex,
 	int & result
 ){
-	// Lame linear search
-	for ( unsigned int i=0; i<out_vertices.size(); i++ ){
-		if (
-			is_near( in_vertex.x , out_vertices[i].x ) &&
-			is_near( in_vertex.y , out_vertices[i].y ) &&
-			is_near( in_vertex.z , out_vertices[i].z ) &&
-			is_near( in_uv.x     , out_uvs     [i].x ) &&
-			is_near( in_uv.y     , out_uvs     [i].y ) &&
-			is_near( in_normal.x , out_normals [i].x ) &&
-			is_near( in_normal.y , out_normals [i].y ) &&
-			is_near( in_normal.z , out_normals [i].z )
-		){
-			result = i;
-			return true;
-		}
+	std::map<PackedVertex,int>::iterator it = VertexToOutIndex.find(packed);
+	if ( it == VertexToOutIndex.end() ){
+		return false;
+	}else{
+		result = it->second;
+		return true;
 	}
-	// No other vertex could be used instead.
-	// Looks like we'll have to add it to the VBO.
-	return false;
 }
 
 static void indexVBO(
@@ -138,12 +122,15 @@ static void indexVBO(
 	std::vector<glm::vec3> & out_tangents,
 	std::vector<glm::vec3> & out_bitangents
 ){
+	std::map<PackedVertex,int> VertexToOutIndex;
 	// For each input vertex
 	for ( unsigned int i=0; i<in_vertices.size(); i++ ){
 
+		PackedVertex packed = {in_vertices[i], in_uvs[i], in_normals[i]};
+
 		// Try to find a similar vertex in out_XXXX
 		int index;
-		bool found = getSimilarVertexIndex(in_vertices[i], in_uvs[i], in_normals[i],     out_vertices, out_uvs, out_normals, index);
+		bool found = getSimilarVertexIndex_fast( packed, VertexToOutIndex, index);
 
 		if ( found ){ // A similar vertex is already in the VBO, use it instead !
 			out_indices.push_back( index );
@@ -157,7 +144,9 @@ static void indexVBO(
 			out_normals .push_back( in_normals[i]);
 			out_tangents .push_back( in_tangents[i]);
 			out_bitangents .push_back( in_bitangents[i]);
-			out_indices .push_back( (int)out_vertices.size() - 1 );
+			int newindex = (int)out_vertices.size() - 1;
+			out_indices .push_back( newindex );
+			VertexToOutIndex[ packed ] = newindex;
 		}
 	}
 }
@@ -275,77 +264,30 @@ void Mesh::buildAxisModel()
 
 bool Mesh::loadModel(std::string path)
 {
+	std::vector<glm::vec3> tvertices;
+	std::vector<glm::vec3> tnormals;
+	std::vector<glm::vec2> tuvCoords;
+	std::vector<Triangle> ttriangles;
+
+    {
 	std::ifstream in;
 	in.open(path.c_str(), std::ios::in);
 	if(!in.is_open())
 	{
 		printf("ERROR: Model \"%s\" couldn't be loaded!\n", path.c_str());
 		return false;
-		//exit(1);
 	}
-
-	std::vector<glm::vec3>		normals;
-	std::vector<glm::vec2>		uvCoords;
-	std::vector<glm::vec3>		tangents;
-	std::vector<glm::vec3>		bitangents;
-	//std::vector<unsigned short>	indices;
-
-	std::vector<glm::vec3> tvertices;
-	std::vector<glm::vec3> tnormals;
-	std::vector<glm::vec2> tuvCoords;
-	std::vector<Triangle> ttriangles;
-
-	unsigned vMAX(0u), tMAX(0u), nMAX(0u);
-
-	std::string line = "";
-	while(getline(in, line))
-	{
-		if(line.length()<3)
-			continue;
-		float f1(0.0f), f2(0.0f), f3(0.0f);
-		unsigned u11(0u), u12(0u), u13(0u),
-			     u21(0u), u22(0u), u23(0u),
-				 u31(0u), u32(0u), u33(0u);
-		std::string type = line.substr(0, 2);
-		line = line.substr(2);
-		while(line[0]==' ')
-			line = line.substr(1);
-		if(type == "v ")
-		{
-			assert(sscanf(line.c_str(), "%f %f %f", &f1, &f2, &f3) == 3);
-			tvertices.push_back(glm::vec3(f1,f2,f3));
-		} else
-		if(type == "vn")
-		{
-			assert(sscanf(line.c_str(), "%f %f %f", &f1, &f2, &f3) == 3);
-			tnormals.push_back(glm::vec3(f1, f2, f3));
-		} else
-		if(type == "vt")
-		{
-			assert(sscanf(line.c_str(), "%f %f", &f1, &f2) == 2);
-			tuvCoords.push_back(glm::vec2(f1,1.0f-f2));
-		} else
-		if(type == "f ")
-		{
-			assert(sscanf(line.c_str(), "%u/%u/%u %u/%u/%u %u/%u/%u", &u11, &u12, &u13, &u21, &u22, &u23, &u31, &u32, &u33) == 9);
-			Triangle tr;
-			if(u11 > vMAX) vMAX = u11;
-			if(u21 > vMAX) vMAX = u21;
-			if(u31 > vMAX) vMAX = u31;
-			if(u12 > tMAX) tMAX = u12;
-			if(u22 > tMAX) tMAX = u22;
-			if(u32 > tMAX) tMAX = u32;
-			if(u13 > nMAX) nMAX = u13;
-			if(u23 > nMAX) nMAX = u23;
-			if(u33 > nMAX) nMAX = u33;
-			tr.vertex[0] = glm::uvec3(u11,u12,u13);
-			tr.vertex[1] = glm::uvec3(u21,u22,u23);
-			tr.vertex[2] = glm::uvec3(u31,u32,u33);
-			ttriangles.push_back(tr);
-		}
+    ObjParser p(in, &tvertices, &tnormals, &tuvCoords, &ttriangles);
+	if(!p.load())
+    {
+        printf("ERROR: Model \"%s\" failed to load!\n", path.c_str());
+        return false;
+    }
+	in.close();
 	}
 
 	//compute bounding sphere
+	{
 	int sz = tvertices.size();
 	float mostRight(tvertices[0].x), mostLeft(tvertices[0].x),
 		  mostUp(tvertices[0].y), mostDown(tvertices[0].y),
@@ -353,12 +295,12 @@ bool Mesh::loadModel(std::string path)
 	for(int i=0; i<sz; i++)
 	{
 		boundingSphereCenter += tvertices[i];
-		if(tvertices[i].x > mostRight) mostRight = tvertices[i].x;
-		if(tvertices[i].x < mostLeft) mostLeft = tvertices[i].x;
-		if(tvertices[i].y > mostUp) mostUp = tvertices[i].y;
-		if(tvertices[i].y < mostDown) mostDown = tvertices[i].y;
-		if(tvertices[i].z > mostFront) mostFront = tvertices[i].z;
-		if(tvertices[i].z < mostBack) mostBack = tvertices[i].z;
+		mostRight       = std::max(tvertices[i].x, mostRight);
+		mostLeft        = std::min(tvertices[i].x, mostLeft);
+		mostUp          = std::max(tvertices[i].y, mostUp);
+		mostDown        = std::min(tvertices[i].y, mostDown);
+		mostFront       = std::max(tvertices[i].z, mostFront);
+		mostBack        = std::min(tvertices[i].z, mostBack);
 	}
 	boundingSphereCenter /= (float)sz; //center is the average of all vx's positions
 	boundingBoxHalfSizes = glm::vec3(mostRight - mostLeft, mostUp - mostDown, mostFront - mostBack) * 0.5f;
@@ -369,10 +311,8 @@ bool Mesh::loadModel(std::string path)
 		float len = fromCenterToVx.length();
 		if(len > boundingSphereRadius) boundingSphereRadius = len;
 	}
+	}
 
-	in.close();
-
-	assert(ttriangles.size() > 0 && vMAX == tvertices.size() && tMAX == tuvCoords.size() && nMAX == tnormals.size());
 
 	std::vector<glm::vec3> t2vertices;
 	std::vector<glm::vec3> t2normals;
@@ -388,13 +328,13 @@ bool Mesh::loadModel(std::string path)
 		glm::vec3 vertex2(tvertices[ttriangles[i].vertex[1][0]-1]);	//    o/o/o  X/o/o   o/o/o
 		glm::vec3 vertex3(tvertices[ttriangles[i].vertex[2][0]-1]);	//    o/o/o  o/o/o   X/o/o
 
-		glm::vec3 normal1(tnormals[ttriangles[i].vertex[0][2]-1]);	//    o/o/X  o/o/o   o/o/o
-		glm::vec3 normal2(tnormals[ttriangles[i].vertex[1][2]-1]);	//    o/o/o  o/o/X   o/o/o
-		glm::vec3 normal3(tnormals[ttriangles[i].vertex[2][2]-1]);	//    o/o/o  o/o/o   o/o/X
-
 		glm::vec2 uvCoord1(tuvCoords[ttriangles[i].vertex[0][1]-1]);//    o/X/o  o/o/o   o/o/o
 		glm::vec2 uvCoord2(tuvCoords[ttriangles[i].vertex[1][1]-1]);//    o/o/o  o/X/o   o/o/o
 		glm::vec2 uvCoord3(tuvCoords[ttriangles[i].vertex[2][1]-1]);//    o/o/o  o/o/o   o/X/o
+
+		glm::vec3 normal1(tnormals[ttriangles[i].vertex[0][2]-1]);	//    o/o/X  o/o/o   o/o/o
+		glm::vec3 normal2(tnormals[ttriangles[i].vertex[1][2]-1]);	//    o/o/o  o/o/X   o/o/o
+		glm::vec3 normal3(tnormals[ttriangles[i].vertex[2][2]-1]);	//    o/o/o  o/o/o   o/o/X
 
 		t2vertices.push_back(vertex1);
 		t2vertices.push_back(vertex2);
@@ -410,85 +350,16 @@ bool Mesh::loadModel(std::string path)
 	}
 	}
 
-	computeTangentBasis(t2vertices, t2uvCoords, t2normals, ttangents, tbitangents);
+	std::vector<glm::vec3>		normals;
+	std::vector<glm::vec2>		uvCoords;
+	std::vector<glm::vec3>		tangents;
+	std::vector<glm::vec3>		bitangents;
 
 	frames.push_back(Frame());
 
+	computeTangentBasis(t2vertices, t2uvCoords, t2normals, ttangents, tbitangents);
 	indexVBO(t2vertices, t2uvCoords, t2normals, ttangents, tbitangents,
 		indices, frames[0].vertices, uvCoords, normals, tangents, bitangents);
-
-	//dump dat shit
-	/*
-	std::ofstream of;
-	of.open((path+".h").c_str());
-
-	of << "// " << frames[0].vertices.size() << "\n";
-	of << "const float defVertices[] = { "
-		<< frames[0].vertices[0].x << ", "
-		<< frames[0].vertices[0].y << ", "
-		<< frames[0].vertices[0].z;
-	for(int i=1; i<frames[0].vertices.size(); i++)
-		of	<< ", "
-		<< frames[0].vertices[i].x << ", "
-		<< frames[0].vertices[i].y << ", "
-		<< frames[0].vertices[i].z;
-	of << " };\n";
-
-	of << "// " << normals.size() << "\n";
-	of << "const float defNormals[] = { "
-		<< normals[0].x << ", "
-		<< normals[0].y << ", "
-		<< normals[0].z;
-	for(int i=1; i<normals.size(); i++)
-		of	<< ", "
-		<< normals[i].x << ", "
-		<< normals[i].y << ", "
-		<< normals[i].z;
-	of << " };\n";
-
-	of << "// " << uvCoords.size() << "\n";
-	of << "const float defUV[] = { "
-		<< uvCoords[0].x << ", "
-		<< uvCoords[0].y;
-	for(int i=1; i<uvCoords.size(); i++)
-		of	<< ", "
-		<< uvCoords[i].x << ", "
-		<< uvCoords[i].y;
-	of << " };\n";
-
-	of << "// " << tangents.size() << "\n";
-	of << "const float defTangents[] = { "
-		<< tangents[0].x << ", "
-		<< tangents[0].y << ", "
-		<< tangents[0].z;
-	for(int i=1; i<tangents.size(); i++)
-		of	<< ", "
-		<< tangents[i].x << ", "
-		<< tangents[i].y << ", "
-		<< tangents[i].z;
-	of << " };\n";
-
-	of << "// " << bitangents.size() << "\n";
-	of << "const float defBiTangents[] = { "
-		<< bitangents[0].x << ", "
-		<< bitangents[0].y << ", "
-		<< bitangents[0].z;
-	for(int i=1; i<bitangents.size(); i++)
-		of	<< ", "
-		<< bitangents[i].x << ", "
-		<< bitangents[i].y << ", "
-		<< bitangents[i].z;
-	of << " };\n";
-
-	of << "// " << indices.size() << "\n";
-	of << "const unsigned short defIndices[] = { "
-		<< indices[0];
-	for(int i=1; i<indices.size(); i++)
-		of << ", " << indices[i];
-	of << " };\n";
-
-	of.close();
-	*/
 
 	std::vector<unsigned> origIndices;
 	for(int i=frames[0].vertices.size()-1; i>=0; i--)
@@ -502,6 +373,8 @@ bool Mesh::loadModel(std::string path)
 			}
 		}
 	}
+	//xD silly me, the loops are reversed, but the logic isn't! fix this...
+	std::reverse(origIndices.begin(), origIndices.end());
 
 	//now scan for anims
 	int found = path.find_last_of("/\\");
@@ -531,30 +404,16 @@ bool Mesh::loadModel(std::string path)
 			int ofsz = objFrames.size();
 			for(int f=0; f<ofsz; f++)
 			{
+			    {
 				std::ifstream frm;
 				frm.open((animFolder + objFrames[f]).c_str(), std::ios::in);
 				if(!frm.is_open())
 					continue;
-
-				int vert = 0;
-				std::string line = "";
-				while(vert<tvertSize && getline(frm, line))
-				{
-					if(line.length()<3)
-						continue;
-					float f1(0.0f), f2(0.0f), f3(0.0f);
-					std::string type = line.substr(0, 2);
-					line = line.substr(2);
-					while(line[0]==' ')
-						line = line.substr(1);
-					if(type == "v ")
-					{
-						assert(sscanf(line.c_str(), "%f %f %f", &f1, &f2, &f3) == 3);
-						tvertices[vert] = glm::vec3(f1, f2, f3);
-						vert++;
-					}
-				}
+                ObjParser p(frm, &tvertices, NULL, NULL, NULL);
+                if(!p.load())
+                    continue;
 				frm.close();
+			    }
 
 				Frame newFrame;
 				newFrame.vertices.resize(vertSize);
@@ -592,7 +451,7 @@ bool Mesh::loadModel(std::string path)
 		glBindBuffer(GL_ARRAY_BUFFER, frames[i].vertexbuffer);
 		glBufferData(GL_ARRAY_BUFFER, frames[i].vertices.size() * sizeof(glm::vec3), &frames[i].vertices[0], GL_STATIC_DRAW);
 		//do not delete vertices of first frame
-		//it's used for collision generation, if asked
+		//they're used for collision generation, if asked
 		if(i != 0)
 		{
 			frames[i].vertices.clear();
@@ -628,7 +487,6 @@ bool Mesh::loadModel(std::string path)
 	//unload shit from RAM, it's already in GPU memory
 	normals.clear();
 	uvCoords.clear();
-	//indices.clear();
 	tangents.clear();
 	bitangents.clear();
 
@@ -647,13 +505,14 @@ bool Mesh::loadModel(std::string path)
 
 void Mesh::render(unsigned cf, unsigned nf)
 {
+    /*
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
 		glEnableVertexAttribArray(3);
 		glEnableVertexAttribArray(4);
-		glEnableVertexAttribArray(5); //for anim interpolation
-
+		glEnableVertexAttribArray(5);
+		*/
 		// 1rst attribute buffer : vertices of current frame
 		glBindBuffer(GL_ARRAY_BUFFER, (isOk?frames[cf].vertexbuffer:defVertexbuffer));
 		glVertexAttribPointer(
@@ -729,7 +588,7 @@ void Mesh::render(unsigned cf, unsigned nf)
 			GL_UNSIGNED_INT,   // type
 			(void*)0           // element array buffer offset
 			);
-
+/*
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(2);
@@ -737,6 +596,5 @@ void Mesh::render(unsigned cf, unsigned nf)
 		glDisableVertexAttribArray(4);
 		glDisableVertexAttribArray(5);
 
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		*/
 }

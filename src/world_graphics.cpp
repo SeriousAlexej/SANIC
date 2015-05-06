@@ -2,6 +2,12 @@
 
 WorldGraphics::WorldGraphics()
 {
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
+		glEnableVertexAttribArray(3);
+		glEnableVertexAttribArray(4);
+		glEnableVertexAttribArray(5);
 }
 
 WorldGraphics::~WorldGraphics()
@@ -36,7 +42,9 @@ void WorldGraphics::render()
 			models[i]->render(camera, pickBestLight(models[i]));
 		}
 	}
-	glBindTexture(GL_TEXTURE_2D, 0); //unbind texture, just in case
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindTexture(GL_TEXTURE_2D, 0); //unbind, just in case
 }
 
 ModelInstance* WorldGraphics::createModel(
