@@ -57,8 +57,8 @@ public:
 template<class T>
 T &Property::GetValue() const {
     if(typeid(T).hash_code() != m_tid) throw bad_typeid();
-    T res = *reinterpret_cast<T*>(m_data);
-    return res;
+    T* res = reinterpret_cast<T*>(m_data);
+    return *res;
 }
 
 template<class T>
