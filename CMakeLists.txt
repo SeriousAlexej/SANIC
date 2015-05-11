@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 2.8)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
@@ -21,7 +21,7 @@ set_target_properties(lLinearMath PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DI
 include_directories(${CMAKE_SOURCE_DIR}/bullet/src/)
 include_directories(${Boost_INCLUDE_DIR})
 
-file(GLOB_RECURSE SANIC_sources ./src/*.cpp ./src/*.c)
+file(GLOB_RECURSE SANIC_sources ./src/*.cpp ./src/*.c ./src/*.cc)
 
 add_executable(SANIC ${SANIC_sources})
 
