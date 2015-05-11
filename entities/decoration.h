@@ -16,12 +16,14 @@ private:
 	virtual void            editorSelect();
 	void                    updateParamsInternal();
 
-	std::string             vShaderPath;
-	std::string             fShaderPath;
+	std::string             shaderPath;
 	std::string             modelPath;
 	std::string             dTexturePath;
 	std::string             nTexturePath;
+	std::string             hTexturePath;
 
+    void    addShaderMutators();
+    void    removeShaderMutators();
 	friend void TW_CALL updateParameters(void *decorPtr);
 };
 

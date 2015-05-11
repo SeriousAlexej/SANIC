@@ -1,23 +1,28 @@
 #include "modelinstance.h"
 
-ModelInstance::ModelInstance(Mesh* mesh, Shader* shader, Texture* diffuse, Texture* normal)
+ModelInstance::ModelInstance(Mesh* mesh, Shader* shader, Texture* diffuse, Texture* normal, Texture* height)
 {
-	assert(mesh != NULL && shader != NULL && diffuse != NULL && normal != NULL);
+	assert(mesh != NULL && shader != NULL && diffuse != NULL && normal != NULL && height != NULL);
 
 	pMesh = mesh;
 	pShader = shader;
 	pDiffTexture = diffuse;
 	pNormTexture = normal;
+	pHeightTexture = height;
 
 	pMesh->doSubscribe();
 	pShader->doSubscribe();
 	pDiffTexture->doSubscribe();
 	pNormTexture->doSubscribe();
+	pHeightTexture->doSubscribe();
 
+    normalStrength = 1.0f;
+    parallaxScale = 0.03f;
+    parallaxOffset = 0.0f;
 	active = true;
 	lastRender = 0.0f;
 	strCurrAnim = "default";
-	uCurrFrame = 0u; //FIX IT
+	uCurrFrame = 0u;
 	uNextFrame = 0u;
 	animInfo.length = 1;
 	animInfo.secondsPerFrame = 1.0f;
@@ -46,7 +51,7 @@ void ModelInstance::playAnimation(std::string anim)
 	}
 }
 
-void ModelInstance::render(Camera& cam, Light* light)
+void ModelInstance::render(Camera& cam, std::vector<Light*> lights)
 {
 	if(!active && !g_Editor) return;
 
@@ -88,15 +93,11 @@ void ModelInstance::render(Camera& cam, Light* light)
 	glm::mat4 View = cam.getViewMatrix();
 	glm::mat4 Model = this->getMatrix();
 	glm::mat4 MVP = Proj*View*Model;
-
-	glm::mat4 ModelViewMatrix = View * Model;
-	glm::mat3 ModelView3x3Matrix = glm::mat3(ModelViewMatrix);
+	glm::vec3 CamPos = cam.getPosition();
 
 	glUniformMatrix4fv(pShader->getMatrixID(), 1, GL_FALSE, &MVP[0][0]);
 	glUniformMatrix4fv(pShader->getmID(), 1, GL_FALSE, &Model[0][0]);
-	glUniformMatrix4fv(pShader->getvID(), 1, GL_FALSE, &View[0][0]);
-	glUniformMatrix3fv(pShader->getModelView3x3MatrixID(), 1, GL_FALSE, &ModelView3x3Matrix[0][0]);
-	//TODO: add light support
+	glUniform3f(pShader->getCameraPositionID(), CamPos.x, CamPos.y, CamPos.z);
 
 	glActiveTexture(GL_TEXTURE0);
 	pDiffTexture->bind();
@@ -106,29 +107,41 @@ void ModelInstance::render(Camera& cam, Light* light)
 	pNormTexture->bind();
 	glUniform1i(pShader->getNormalTextureID(), 1);
 
+	glActiveTexture(GL_TEXTURE2);
+	pHeightTexture->bind();
+	glUniform1i(pShader->getHeightTextureID(), 2);
+
 	//interpolation
 	glUniform1f(pShader->getFrameProgressID(), frameProgress);
 
-	glm::vec3 lightPos = glm::vec3(0,0,0);
-	glm::vec3 lightCD = lightPos;
-	glm::vec3 lightCA = lightPos;
-	float lightFA = 1.0f;
-	float lightHS = 0.0f;
+	glUniform1f(pShader->getNormalStrengthID(), normalStrength);
+	glUniform1f(pShader->getParallaxOffsetID(), parallaxOffset);
+	glUniform1f(pShader->getParallaxScaleID(), parallaxScale);
 
-	if(light != NULL)
-	{
-		lightPos = light->getPosition();
-		lightCD = light->getDiffuseColor();
-		lightCA = light->getAmbientColor();
-		lightFA = light->getFallOff();
-		lightHS = light->getHotSpot();
-	}
+    for(int i=0; i<4; i++)
+    {
+        Light*& light = lights[i];
+        glm::vec3 lightPos = glm::vec3(0,0,0);
+        glm::vec3 lightCD = lightPos;
+        float lightFA = 0.0f;
+        float lightHS = 0.0f;
+        float lightI = 0.0f;
 
-	glUniform3f(pShader->getLightPositionID(), lightPos.x, lightPos.y, lightPos.z);
-	glUniform3f(pShader->getLightDiffuseID(), lightCD.x, lightCD.y, lightCD.z);
-	glUniform3f(pShader->getLightAmbientID(), lightCA.x, lightCA.y, lightCA.z);
-	glUniform1f(pShader->getLightFallOffID(), lightFA);
-	glUniform1f(pShader->getLightHotSpotID(), lightHS);
+        if(light != NULL)
+        {
+            lightPos = light->getPosition();
+            lightCD = light->getDiffuseColor();
+            lightFA = light->getFallOff();
+            lightHS = light->getHotSpot();
+            lightI = light->getIntensity();
+        }
+
+        glUniform3f(pShader->getLightPositionID(i), lightPos.x, lightPos.y, lightPos.z);
+        glUniform3f(pShader->getLightDiffuseID(i), lightCD.x, lightCD.y, lightCD.z);
+        glUniform1f(pShader->getLightFallOffID(i), lightFA);
+        glUniform1f(pShader->getLightHotSpotID(i), lightHS);
+        glUniform1f(pShader->getLightIntensityID(i), lightI);
+    }
 
 	pMesh->render(uCurrFrame, uNextFrame);
 }

@@ -3,7 +3,7 @@
 #define GL_DEBUG_DRAWER_H
 
 #include <GL/glew.h>
-#include <LinearMath/btIDebugDraw.h>
+#include "LinearMath/btIDebugDraw.h"
 
 
 class GLDebugDrawer : public btIDebugDraw

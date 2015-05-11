@@ -16,8 +16,8 @@ public:
 	void		render(); //renders stuff
 	Camera*		getCamera() { return &camera; }
 
-	ModelInstance*	createModel(std::string vertShader, std::string fragShader,
-		std::string modelPath, std::string diffTexture, std::string normTexture);
+	ModelInstance*	createModel(std::string shaderPath,
+		std::string modelPath, std::string diffTexture, std::string normTexture, std::string heightTexture);
 
 	void			deleteModel(ModelInstance*& mi);
 
@@ -25,7 +25,7 @@ public:
 	void			deleteLight(Light*& light);
 
 private:
-	Light*		pickBestLight(ModelInstance* mi);
+	std::vector<Light*>		pickBestLights(ModelInstance* mi);
 
 	Camera						camera;
 

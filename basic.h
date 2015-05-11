@@ -15,7 +15,7 @@ class Movable
 {
 public:
 	Movable();
-	virtual ~Movable();
+	~Movable();
 
 	glm::vec3	getOffset();
 	glm::vec3	getPosition();

@@ -5,17 +5,19 @@
 #include <GL/glew.h>
 #include <SFML/Graphics.hpp>
 #include <AntTweakBar.h>
+#include <boost/filesystem.hpp>
 
 #include "world.h"
 #include "./entities/player.h"
 #include "./entities/box.h"
+#include "./entities/decoration.h"
 #include "./entities/pointlight.h"
-#include "./dialogs/tinyfiledialogs.h"
 
 sf::Clock g_Clock;
 float	  g_LastTime = 0.0f;
 float	  g_Delta = 0.0f;
 bool	  g_Editor = false;
+std::string g_WorkingDir;
 
 const static char logo[] = {
 "              _^  ^\n            _/  \\/ |\n        ___/ _/\\_\\/|\n     __/          \\|\n   _/         ====\\\\\n _/   _     //     |\n/____/     ||  ()  |\n  _/   __  ||      |\n /   _/   __\\\\____/\\()\n/___/    /__       /\n  _/     \\ \\__    /\n  /________\\_____/\n   _____ ___    _   ____________\n  / ___//   |  / | / /  _/ ____/\n  \\__ \\/ /| | /  |/ // // /     \n ___/ / ___ |/ /|  // // /___   \n/____/_/  |_/_/ |_/___/\\____/   \n"};
@@ -28,6 +30,8 @@ void TW_CALL CopyStdStringToClient(std::string& destinationClientString, const s
 
 int main(int argc, char **argv)
 {
+    g_WorkingDir = boost::filesystem::current_path().string();
+    std::replace(g_WorkingDir.begin(), g_WorkingDir.end(), '\\', '/');
 	g_Editor = (argc > 1);
 	printf(logo);
 	sf::sleep(sf::seconds(1.0f));
@@ -39,12 +43,12 @@ int main(int argc, char **argv)
 	cs.minorVersion = 1;
 	sf::RenderWindow window(sf::VideoMode(1024, 768), "SANIC", sf::Style::Default & ~sf::Style::Resize, cs);
     window.setVerticalSyncEnabled(true);
-	window.setFramerateLimit(60);
+	//window.setFramerateLimit(60);
 
     // Make it the active window for OpenGL calls
     window.setActive();
 
-	// Initialise GLEW
+	// Initialize GLEW
 	glewExperimental=true;
 	if(glewInit() != GLEW_OK)
 	{
@@ -60,17 +64,22 @@ int main(int argc, char **argv)
 	glDepthFunc(GL_LESS);
 	glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
 
-	World world(&window);
+    World* wld = new World(&window);
+	World &world = *wld;
 	//Player* e = (Player*)world.createEntity((Entity*)(new Player()));
 	//SolidBody* floor = world.physics.addBody(0, glm::vec3(20,1,20));
-	world.graphics.createModel("./shaders/smooth.vsh", "./shaders/smooth.fsh",
+	ModelInstance* M = (ModelInstance*)world.graphics.createModel("./shaders/smooth.shader",
 											 "./models/sanic.obj",
-											 "./models/sanic.tga", "./models/normal.jpg");
-    Box* b1 = (Box*)world.createEntity((Entity*) new Box());
-    Box* b2 = (Box*)world.createEntity((Entity*) new Box());
-    Box* b3 = (Box*)world.createEntity((Entity*) new Box());
+											 "./models/sanic.tga", "", "");
+    M->playAnimation("walk");
+    //Box* b1 = (Box*)world.createEntity((Entity*) new Box());
+    //Box* b2 = (Box*)world.createEntity((Entity*) new Box());
+    //Box* b3 = (Box*)world.createEntity((Entity*) new Box());
+    Decoration* dec1 = (Decoration*)world.createEntity((Entity*) new Decoration());
     PointLight* pl1 = (PointLight*)world.createEntity((Entity*) new PointLight());
     PointLight* pl2 = (PointLight*)world.createEntity((Entity*) new PointLight());
+    PointLight* pl3 = (PointLight*)world.createEntity((Entity*) new PointLight());
+    PointLight* pl4 = (PointLight*)world.createEntity((Entity*) new PointLight());
 
 	//test
 	//e->setupModel("./shaders/smooth.vsh", "./shaders/smooth.fsh",
@@ -134,9 +143,22 @@ int main(int argc, char **argv)
 	//myBar = TwNewBar("NameOfMyTweakBar");
 
 	g_Clock.restart();
+	/*
+	double lastTime = g_Clock.getElapsedTime().asSeconds();
+    int nbFrames = 0;
+    */
     // Start game loop
     while (window.isOpen())
     {
+        /*
+        double currentTime = g_Clock.getElapsedTime().asSeconds();
+         nbFrames++;
+         if ( currentTime - lastTime >= 1.0 ){
+             printf("%f ms/frame\n", 1000.0/double(nbFrames));
+             nbFrames = 0;
+             lastTime += 1.0;
+         }
+         */
         // Process events
         sf::Event event;
         while (window.pollEvent(event))
@@ -266,6 +288,14 @@ int main(int argc, char **argv)
 	}
 
 	TwTerminate();
+
+	delete wld;
+
+    #ifdef SANIC_DEBUG
+	Mesh::printMemoryStatistics();
+	Texture::printMemoryStatistics();
+	Shader::printMemoryStatistics();
+    #endif // SANIC_DEBUG
 
 	return EXIT_SUCCESS;
 }

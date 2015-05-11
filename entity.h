@@ -11,8 +11,6 @@
 #include "world_graphics.h"
 #include "world_physics.h"
 #include "world.h"
-#include "properties.h"
-#include <map>
 
 class Entity;
 class World;
@@ -75,7 +73,7 @@ private:
 	bool						holdEx;
 };
 
-class Entity : private Touchable, public Unique, public FamilyTree, public Serial
+class Entity : private Touchable, public Unique, public FamilyTree
 {
 public:
 
@@ -91,8 +89,6 @@ public:
 	virtual void			initialize();
 	virtual void			adjustMoving();
 
-    virtual void            Serialize(ostream &ostr) {}
-    virtual void            Deserialize(istream& istr) {}
 	void					destroy();
 
 	void					sendEvent(EntityEvent* ee);
@@ -100,7 +96,7 @@ public:
 	void					switchToEditorModel();
 	void					switchToModel();
 
-    string getName();
+	std::string				getName() const { return name; }
 	const SolidBody*		getBody() const { return body; }//for moving purposes
 	const ModelInstance*	getModelInstance() const { return model; }//for anim playing
 	glm::vec3				getDesiredLDir() const { return desiredLinearDirection; }
@@ -110,7 +106,7 @@ public:
 	Orientation				getOrientationType() const { return orientationType; }
 	bool					isTranslatedByBody() const { return translatedByBody; }
 
-    void					setName(std::string newName);
+	void					setName(std::string newName) { name = newName; }
 	void					setDesiredLDir(glm::vec3 dir) { desiredLinearDirection = dir; }
 	void					setDesiredADir(glm::vec3 dir) { desiredAngularDirection = dir; }
 	void					setDesiredRotation(glm::vec3 rot) { desiredRotation = rot; }
@@ -118,9 +114,9 @@ public:
 	void					setOrientationType(Orientation type) { orientationType = type; }
 	void					setTranslatedByBody(bool value) { translatedByBody = value; }
 
-	void					setupModel(std::string vertShader, std::string fragShader,
+	void					setupModel(std::string shaderPath,
 									   std::string modelPath, std::string diffTexture,
-									   std::string normTexture);
+									   std::string normTexture, std::string heightTexture);
 	void					setupCollision(float mass); //from model
 	void					setupCollision(float mass, float radius); //sphere
 	void					setupCollision(float mass, glm::vec3 halfExtents); //box
@@ -164,30 +160,8 @@ protected:
 	bool						translatedByBody;
 	SolidBody*					body;
 	ModelInstance*				model;
-    map<string, Property*>      properties;
-    std::string					name;
+	std::string					name;
 
-    template<class T>
-    T&                          getProperty(std::string);
-
-    // SOME BLACK MAGIC
-    template<class C>
-    void registerProperties(string s, C* c)
-    {
-        Property* pname = Property::create<C>(c);
-        properties[s] = pname;
-    }
-
-    template<class C, class... T>
-    void registerProperties(string s, C* c, T... Args)
-    {
-        registerProperties(s, c);
-        registerProperties(Args...);
-    }
-    // END BLACK MAGIC
-
-
-protected:
 	glm::quat                   rotationQuat;
 	glm::vec3                   rotationEuler;
 	glm::quat                   rotationQuatO;
@@ -206,7 +180,6 @@ protected:
 	WorldGraphics*				wldGFX; //fill theese
 	WorldPhysics*				wldPHY; //from class World
 	World*						wld;
-    virtual void                drawProperty(string name, Property* prop);
 
 	friend class World;
 };

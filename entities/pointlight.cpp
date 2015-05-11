@@ -18,11 +18,10 @@ PointLight::~PointLight()
 
 void PointLight::initialize()
 {
-	setupModel("./shaders/fullbright.vsh",
-		       "./shaders/fullbright.fsh",
+	setupModel("./shaders/fullbright.shader",
 			   "./models/editor/light.obj",
 			   "./models/editor/yellow.png",
-			   "");
+			   "", "");
 	setupCollision(0.0f, glm::vec3(0.25f, 0.25f, 0.25f));
 	switchToEditorModel();
 	pushState(main);
@@ -37,7 +36,7 @@ void PointLight::adjustMoving()
     }
 }
 
-void TW_CALL pickColor(void *colorPtr)
+static void TW_CALL pickColor(void *colorPtr)
 {
     glm::vec3 &col = *(glm::vec3*)colorPtr;
     unsigned char startColor[3];
@@ -82,9 +81,6 @@ void PointLight::editorUpdate()
 void PointLight::editorSelect()
 {
     Entity::editorSelect();
-    TwAddVarRW(entityBar, "Ambient Color", TW_TYPE_COLOR3F, &(lightSource->colorAmbient[0]), "group='Color' colormode=rgb");
-    TwAddButton(entityBar, "PickAmbient", pickColor, &lightSource->colorAmbient, "group='Color' label='Pick'");
-    TwAddSeparator(entityBar, "sepCol", "group='Color'");
     TwAddVarRW(entityBar, "Diffuse Color", TW_TYPE_COLOR3F, &(lightSource->colorDiffuse[0]), "group='Color' colormode=rgb");
     TwAddButton(entityBar, "PickDiffuse", pickColor, &lightSource->colorDiffuse, "group='Color' label='Pick'");
 
@@ -92,6 +88,7 @@ void PointLight::editorSelect()
 
     TwAddVarRW(entityBar, "FallOff", TW_TYPE_FLOAT, &(lightSource->falloff), "label='Fall Off' min=0 step=0.01");
     TwAddVarRW(entityBar, "HotSpot", TW_TYPE_FLOAT, &(lightSource->hotspot), "label='Hot Spot' min=0 step=0.01");
+    TwAddVarRW(entityBar, "Intensity", TW_TYPE_FLOAT, &(lightSource->intensity), "label='Intensity' min=0 step=0.001");
 }
 
 STATE PointLight::main(EntityEvent *ee, Entity *caller)

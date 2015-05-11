@@ -13,7 +13,7 @@ extern sf::Clock g_Clock;
 class ModelInstance : public Movable
 {
 public:
-	ModelInstance(Mesh* mesh, Shader* shader, Texture* diffuse, Texture* normal);
+	ModelInstance(Mesh* mesh, Shader* shader, Texture* diffuse, Texture* normal, Texture* height);
 	virtual ~ModelInstance();
 
 	void		playAnimation(std::string anim);
@@ -24,13 +24,18 @@ public:
 	void		activate() { active = true; }
 	void		deactivate() { active = false; }
 
+    float           normalStrength;
+    float           parallaxScale;
+    float           parallaxOffset;
+
 private:
-	void		render(Camera& cam, Light* light);
+	void		render(Camera& cam, std::vector<Light*> lights);
 
 	Mesh*			pMesh;
 	Shader*			pShader;
 	Texture*		pDiffTexture;
 	Texture*		pNormTexture;
+	Texture*        pHeightTexture;
 
 	bool			active;
 	float			lastRender;

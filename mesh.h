@@ -48,7 +48,19 @@ public:
 	bool		hasAnim(std::string animName) { return animations.find(animName) != animations.end(); }
 	std::string	getSrcFnm() { return srcFile; }
 
+    #ifdef SANIC_DEBUG
+    static void  printMemoryStatistics()
+    {
+        printf("\nMESH CLASS WAS:\n\t\tCREATED %d TIMES\n\t\tDELETED %d TIMES\n", numberOfCreations, numberOfDeletions);
+    }
+    #endif // SANIC_DEBUG
+
 private:
+    #ifdef SANIC_DEBUG
+    static int numberOfCreations;
+    static int numberOfDeletions;
+    #endif // SANIC_DEBUG
+
 	std::map<std::string, AnimInfo>	animations;
 	//dat shit stores buffer indices for frames
 	std::vector<Frame>	frames;

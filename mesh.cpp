@@ -17,6 +17,10 @@ unsigned Mesh::defBitangentbuffer = 0;
 unsigned Mesh::defElembuffer = 0;
 unsigned Mesh::numberOfMeshes = 0;
 
+#ifdef SANIC_DEBUG
+int Mesh::numberOfCreations = 0;
+int Mesh::numberOfDeletions = 0;
+#endif // SANIC_DEBUG
 
 static void computeTangentBasis(
 	// inputs
@@ -154,6 +158,9 @@ static void indexVBO(
 
 Mesh::Mesh(std::string path)
 {
+    #ifdef SANIC_DEBUG
+    numberOfCreations++;
+    #endif // SANIC_DEBUG
 	srcFile = path;
 	if(numberOfMeshes == 0)
 	{
@@ -187,6 +194,9 @@ Mesh::Mesh(std::string path)
 
 Mesh::~Mesh()
 {
+    #ifdef SANIC_DEBUG
+    numberOfDeletions++;
+    #endif // SANIC_DEBUG
 	animations.clear();
 
 	if(normalbuffer)
@@ -264,6 +274,8 @@ void Mesh::buildAxisModel()
 
 bool Mesh::loadModel(std::string path)
 {
+	std::replace(path.begin(), path.end(), '\\', '/');
+
 	std::vector<glm::vec3> tvertices;
 	std::vector<glm::vec3> tnormals;
 	std::vector<glm::vec2> tuvCoords;
@@ -274,7 +286,7 @@ bool Mesh::loadModel(std::string path)
 	in.open(path.c_str(), std::ios::in);
 	if(!in.is_open())
 	{
-		printf("ERROR: Model \"%s\" couldn't be loaded!\n", path.c_str());
+		printf("ERROR: Model \"%s\" failed to open!\n", path.c_str());
 		return false;
 	}
     ObjParser p(in, &tvertices, &tnormals, &tuvCoords, &ttriangles);
@@ -309,7 +321,7 @@ bool Mesh::loadModel(std::string path)
 	{
 		glm::vec3 fromCenterToVx = tvertices[i] - boundingSphereCenter;
 		float len = fromCenterToVx.length();
-		if(len > boundingSphereRadius) boundingSphereRadius = len;
+		boundingSphereRadius = std::max(len, boundingSphereRadius);
 	}
 	}
 
@@ -377,17 +389,10 @@ bool Mesh::loadModel(std::string path)
 	std::reverse(origIndices.begin(), origIndices.end());
 
 	//now scan for anims
-	int found = path.find_last_of("/\\");
+	int found = path.find_last_of("/");
 	std::string animDir = path.substr(0,found+1) + "anims/";
-	found = animDir.find("\\");
-	while(found != -1)
-	{
-		animDir = animDir.substr(0,found) + "/" + animDir.substr(found+1);
-		found = animDir.find("\\");
-	}
 	if(DirectoryExists(animDir))
 	{
-		int tvertSize = tvertices.size();
 		int vertSize = frames[0].vertices.size();
 		assert(vertSize == (int)origIndices.size());
 

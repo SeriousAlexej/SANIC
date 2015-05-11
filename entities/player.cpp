@@ -11,11 +11,10 @@ Player::Player()
 
 void Player::initialize()
 {
-	setupModel("./shaders/smooth.vsh",
-		       "./shaders/smooth.fsh",
+	setupModel("./shaders/smooth.shader",
 			   "./models/sanic.obj",
 			   "./models/sanic.tga",
-			   "");
+			   "", "");
 	setupCollision(20.0f, 1.0f);
 	switchToModel();
 	body->enableTouching();
