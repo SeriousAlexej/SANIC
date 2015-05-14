@@ -2,6 +2,7 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/norm.hpp>
+#include <glm/detail/func_trigonometric.hpp>
 #include "quaternion_utils.h"
 
 glm::quat rotateTowards(glm::quat q1, glm::quat q2, float maxAngle){
@@ -30,7 +31,7 @@ glm::quat rotateTowards(glm::quat q1, glm::quat q2, float maxAngle){
 	float t = maxAngle / angle;
 	angle = maxAngle;
 	
-	glm::quat res = (sin((1.0f - t) * angle) * q1 + sin(t * angle) * q2) / sin(angle);
+	glm::quat res = (glm::sin((1.0f - t) * angle) * q1 + glm::sin(t * angle) * q2) / glm::sin(angle);
 	res = glm::normalize(res);
 	return res;
 }

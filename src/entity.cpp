@@ -1,5 +1,6 @@
 #include "entity.h"
 #include "quaternion_utils.h"
+#include "tuple_util.h"
 
 STATE Entity::dummy(EntityEvent *ee, Entity* caller)
 {
@@ -60,7 +61,6 @@ Entity::Entity()
 	model = NULL;
 	pushState(dummy, 0);
 	setClass("Entity");
-	name = "";
 	desiredLinearDirection = glm::vec3(0,0,0);
 	desiredAngularDirection = glm::vec3(0,0,0);
 	desiredRotation = glm::vec3(0,0,0);
@@ -76,6 +76,10 @@ Entity::Entity()
 	pointerIndex = 0;
 	pointerIndexPrevious = 0;
 	shouldClearPointer = false;
+    registerProperties(
+                "Name",             &name,
+                "Rotation Quat",    &rotationQuat
+    );
 }
 
 Entity::~Entity()
@@ -110,6 +114,20 @@ Entity::~Entity()
 	while(!statesObsolete.empty()) { delete statesObsolete.top(); statesObsolete.pop(); }
 	while(!states.empty()) { delete states.top(); states.pop(); }
 	while(!events.empty()) { delete events.front(); events.pop_front(); }
+}
+
+std::string Entity::getName()  {
+    return properties["Name"]->GetValue<std::string>();
+}
+
+void Entity::setName(string newName) {
+    properties["Name"]->SetValue<std::string>(newName);
+}
+
+template<class T>
+T& Entity::getProperty(std::string name)
+{
+    return properties[name]->GetValue<T>();
 }
 
 void Entity::sendEvent(EntityEvent *ee)
@@ -456,12 +474,18 @@ void Entity::editorSelect()
     std::string barLabel = (getClass()+"::"+getName()+idStr);
     TwDefine((" EntityBar label='"+barLabel+"' fontSize=3 ").c_str());
 
-    TwAddVarRW(entityBar, "Name", TW_TYPE_STDSTRING, &name, " label='Name' ");
+    //TwAddVarRW(entityBar, "Name", TW_TYPE_STDSTRING, properties["Name"]->m_data, " label='Name' ");
 
-    TwAddSeparator(entityBar, "sep01", "");
+    //TwAddSeparator(entityBar, "sep01", "");
 
-    TwAddVarRW(entityBar, "Quat", TW_TYPE_QUAT4F, &rotationQuat[0], " label='Quaternion' group=Rotation opened=true ");
-    TwAddVarRW(entityBar, "RotH", TW_TYPE_FLOAT, &rotationEuler[1], " label='H (Y axis)' group=Rotation precision=2 step=0.25 ");
+    for(auto kv : properties)
+    {
+        drawProperty(kv.first, kv.second);
+    }
+
+
+    //TwAddVarRW(entityBar, "Quat", TW_TYPE_QUAT4F, &rotationQuat[0], " label='Quaternion' group=Rotation opened=true ");
+    /*TwAddVarRW(entityBar, "RotH", TW_TYPE_FLOAT, &rotationEuler[1], " label='H (Y axis)' group=Rotation precision=2 step=0.25 ");
     TwAddVarRW(entityBar, "RotP", TW_TYPE_FLOAT, &rotationEuler[0], " label='P (X axis)' group=Rotation precision=2 step=0.25 ");
     TwAddVarRW(entityBar, "RotB", TW_TYPE_FLOAT, &rotationEuler[2], " label='B (Z axis)' group=Rotation precision=2 step=0.25 ");
 
@@ -480,6 +504,7 @@ void Entity::editorSelect()
     TwAddButton(entityBar, "Clear", clearPointer, &shouldClearPointer, "group='Pointers'");
 
     TwAddSeparator(entityBar, "sep03", "");
+    */
 
 }
 
