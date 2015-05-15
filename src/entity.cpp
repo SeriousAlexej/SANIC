@@ -1,6 +1,5 @@
 #include "entity.h"
 #include "quaternion_utils.h"
-#include "tuple_util.h"
 
 STATE Entity::dummy(EntityEvent *ee, Entity* caller)
 {
@@ -48,6 +47,11 @@ STATE Entity::autowaitState(EntityEvent *ee, Entity *caller)
 	caller->popState();
 }
 
+void TW_CALL clearPointer(void *boolPtr)
+{
+    (*(bool*)boolPtr) = true;
+}
+
 Entity::Entity()
 {
 	wld = NULL;
@@ -76,9 +80,40 @@ Entity::Entity()
 	pointerIndex = 0;
 	pointerIndexPrevious = 0;
 	shouldClearPointer = false;
+
     registerProperties(
-                "Name",             &name,
-                "Rotation Quat",    &rotationQuat
+                "Name",     &name,
+                "Quat",     &rotationQuat,
+                "RotH",     &rotationEuler[1],
+                "RotP",     &rotationEuler[0],
+                "RotB",     &rotationEuler[2],
+                "PosX",     &position[0],
+                "PosY",     &position[1],
+                "PosZ",     &position[2]
+    );
+
+    addDrawableElements(
+        {
+            {
+                DrawableElement{DrawableElement::PT_STRING, "Name", "label='Name' "}
+            },
+            {
+                DrawableElement{DrawableElement::PT_QUAT, "Quat", "label='Quaternion' opened=true "},
+                DrawableElement{DrawableElement::PT_FLOAT, "RotH", "label='H (Y axis)' precision=2 step=0.25 "},
+                DrawableElement{DrawableElement::PT_FLOAT, "RotP", "label='P (X axis)' precision=2 step=0.25 "},
+                DrawableElement{DrawableElement::PT_FLOAT, "RotB", "label='B (Z axis)' precision=2 step=0.25 "}
+            },
+            {
+                DrawableElement{DrawableElement::PT_FLOAT, "PosX", "label='X' precision=2 step=0.01 "},
+                DrawableElement{DrawableElement::PT_FLOAT, "PosY", "label='Y' precision=2 step=0.01 "},
+                DrawableElement{DrawableElement::PT_FLOAT, "PosZ", "label='Z' precision=2 step=0.01 "}
+            },
+            {
+                DrawableElement{DrawableElement::PT_ENUM, "Pointer", "", &pointerIndex, NULL, this->getPointersString()},
+                DrawableElement{DrawableElement::PT_BUTTON, "PointerValue", "label='"+getPointerDescr()+"'", NULL, NULL},
+                DrawableElement{DrawableElement::PT_BUTTON, "Clear", "", &shouldClearPointer, clearPointer}
+            }
+        }
     );
 }
 
@@ -459,9 +494,71 @@ void Entity::editorUpdate()
 	renderSelectionIndicator();
 }
 
-void TW_CALL clearPointer(void *boolPtr)
+void Entity::addDrawableElements(initializer_list<initializer_list<DrawableElement>> lle)
 {
-    (*(bool*)boolPtr) = true;
+    static unsigned int groupID = 0;
+    string groupName = " group=g";
+    for(auto le : lle)
+    {
+        int sz = guiElements.size();
+        guiElements.push_back(vector<DrawableElement>());
+        for(auto e : le)
+        {
+            DrawableElement em = e;
+            em.drawingHint += groupName;
+            guiElements[sz].push_back(e);
+        }
+        groupName += to_string(++groupID);
+    }
+}
+
+void Entity::drawSingleElement(DrawableElement &elem)
+{
+    switch(elem.tp)
+    {
+        case TW_TYPE_QUAT4F :
+        {
+            TwAddVarRW(entityBar, elem.name.c_str(), TW_TYPE_QUAT4F, properties[elem.name]->m_data, elem.drawingHint.c_str());
+            break;
+        }
+        case TW_TYPE_STDSTRING :
+        {
+            TwAddVarRW(entityBar, elem.name.c_str(), TW_TYPE_STDSTRING, properties[elem.name]->m_data, elem.drawingHint.c_str());
+            break;
+        }
+        case TW_TYPE_FLOAT :
+        {
+            TwAddVarRW(entityBar, elem.name.c_str(), TW_TYPE_FLOAT, properties[elem.name]->m_data, elem.drawingHint.c_str());
+            break;
+        }
+        case DrawableElement::PT_ENUM :
+        {
+            TwType pointersType = TwDefineEnumFromString((elem.name+"Types").c_str(), elem.enumTypes.c_str());
+            TwAddVarRW(entityBar, elem.name.c_str(), pointersType, elem.clientVar, elem.drawingHint.c_str());
+            break;
+        }
+        case DrawableElement::PT_BUTTON :
+        {
+            TwAddButton(entityBar, elem.name.c_str(), (elem.buttonCallback!=NULL?*elem.buttonCallback.target<void(*)(void*)>():NULL), elem.clientVar, elem.drawingHint.c_str());
+            break;
+        }
+        default : { printf("ERROR: Unknown gui element type\n"); }
+    }
+}
+
+void Entity::drawGuiElements()
+{
+    static unsigned int sepID = 0;
+    std::string sepname = "s";
+    for(std::vector<DrawableElement> &v : guiElements)
+    {
+        for(DrawableElement &d : v)
+        {
+            drawSingleElement(d);
+        }
+        TwAddSeparator(entityBar, sepname.c_str(), "");
+        sepname += std::to_string(++sepID);
+    }
 }
 
 void Entity::editorSelect()
@@ -474,38 +571,9 @@ void Entity::editorSelect()
     std::string barLabel = (getClass()+"::"+getName()+idStr);
     TwDefine((" EntityBar label='"+barLabel+"' fontSize=3 ").c_str());
 
-    //TwAddVarRW(entityBar, "Name", TW_TYPE_STDSTRING, properties["Name"]->m_data, " label='Name' ");
+    drawGuiElements();
 
-    //TwAddSeparator(entityBar, "sep01", "");
-
-    for(auto kv : properties)
-    {
-        drawProperty(kv.first, kv.second);
-    }
-
-
-    //TwAddVarRW(entityBar, "Quat", TW_TYPE_QUAT4F, &rotationQuat[0], " label='Quaternion' group=Rotation opened=true ");
-    /*TwAddVarRW(entityBar, "RotH", TW_TYPE_FLOAT, &rotationEuler[1], " label='H (Y axis)' group=Rotation precision=2 step=0.25 ");
-    TwAddVarRW(entityBar, "RotP", TW_TYPE_FLOAT, &rotationEuler[0], " label='P (X axis)' group=Rotation precision=2 step=0.25 ");
-    TwAddVarRW(entityBar, "RotB", TW_TYPE_FLOAT, &rotationEuler[2], " label='B (Z axis)' group=Rotation precision=2 step=0.25 ");
-
-    TwAddVarRW(entityBar, "PosX", TW_TYPE_FLOAT, &position[0], " label='X' group=Position precision=2 step=0.01 ");
-    TwAddVarRW(entityBar, "PosY", TW_TYPE_FLOAT, &position[1], " label='Y' group=Position precision=2 step=0.01 ");
-    TwAddVarRW(entityBar, "PosZ", TW_TYPE_FLOAT, &position[2], " label='Z' group=Position precision=2 step=0.01 ");
-
-    TwDefine(" EntityBar/Position label='Position' opened=false help='Change the object position.' ");
-    TwDefine(" EntityBar/Rotation label='Rotation' opened=false help='Change the object orientation.' ");
-
-    TwAddSeparator(entityBar, "sep02", "");
-
-    TwType pointersType = TwDefineEnumFromString("PointerType", getPointersString().c_str());
-    TwAddVarRW(entityBar, "Pointer", pointersType, &pointerIndex, "group='Pointers' label='Pointer to'");
-    TwAddButton(entityBar, "PointerValue", NULL, NULL, ("group='Pointers' label='"+getPointerDescr()+"'").c_str());
-    TwAddButton(entityBar, "Clear", clearPointer, &shouldClearPointer, "group='Pointers'");
-
-    TwAddSeparator(entityBar, "sep03", "");
-    */
-
+    pointerIndexPrevious = -1;
 }
 
 Entity** Entity::getTargetPointer()

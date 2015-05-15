@@ -3,6 +3,8 @@
 #include <list>
 #include <stack>
 #include <string>
+#include <map>
+#include <initializer_list>
 #include <AntTweakBar.h>
 #include "basic.h"
 #include "solidbody.h"
@@ -12,13 +14,38 @@
 #include "world_physics.h"
 #include "world.h"
 #include "properties.h"
-#include <map>
 
 class Entity;
 class World;
 
 typedef void (*stateCallback)(EntityEvent*,Entity*);
 typedef void STATE;
+#define DECLARE_STATE(x) \
+    static void x(EntityEvent* ee, Entity* caller)
+
+struct DrawableElement
+{
+    enum ElemType
+    {
+        //variable types
+        PT_BOOL     = TW_TYPE_BOOLCPP,
+        PT_INT      = TW_TYPE_INT32,
+        PT_FLOAT    = TW_TYPE_FLOAT,
+        PT_COLOR    = TW_TYPE_COLOR3F,
+        PT_STRING   = TW_TYPE_STDSTRING,
+        PT_QUAT     = TW_TYPE_QUAT4F,
+        PT_DIR      = TW_TYPE_DIR3F,
+        //other stuff
+        PT_BUTTON,
+        PT_ENUM
+    };
+    ElemType tp;
+    std::string name;
+    std::string drawingHint;
+    void *clientVar;
+    std::function<void TW_CALL (void *)> buttonCallback;
+    std::string enumTypes;
+};
 
 class EntityState
 {
@@ -128,8 +155,8 @@ public:
 
 protected:
 	//states:
-	static STATE dummy(EntityEvent* ee, Entity* caller);
-	static STATE autowaitState(EntityEvent* ee, Entity* caller);
+	DECLARE_STATE(dummy);
+	DECLARE_STATE(autowaitState);
 
 	void					autowait(float time, int returnIndex);
 	void					pushState(stateCallback callback, float waitTime = 0.0f);
@@ -168,6 +195,15 @@ protected:
     template<class T>
     T&                          getProperty(std::string);
 
+    virtual void Deserialize(istream& ostr) {}
+    virtual void Serialize(ostream& istr) {}
+
+    vector<vector<DrawableElement>> guiElements;
+    void    drawSingleElement(DrawableElement &elem);
+    void    drawGuiElements();
+
+    void    addDrawableElements(initializer_list<initializer_list<DrawableElement>> lle);
+
     // SOME BLACK MAGIC
     template<class C>
     void registerProperties(string s, C* c)
@@ -204,7 +240,7 @@ protected:
 	WorldGraphics*				wldGFX; //fill theese
 	WorldPhysics*				wldPHY; //from class World
 	World*						wld;
-    virtual void                drawProperty(string name, Property* prop);
+    //virtual void                drawProperty(string name, Property* prop);
 
 	friend class World;
 };
