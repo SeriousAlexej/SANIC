@@ -8,6 +8,11 @@ Box::Box()
 	orientationType = BY_BODY;
 }
 
+void Box::addProperties()
+{
+    Entity::addProperties();
+}
+
 void Box::initialize()
 {
 	setupModel("./shaders/fullbright.shader",
@@ -18,6 +23,8 @@ void Box::initialize()
 	switchToModel();
     body->setOffset(glm::vec3(0,0.5,0));
 	pushState(main);
+
+	addProperties();
 }
 
 void Box::adjustMoving()

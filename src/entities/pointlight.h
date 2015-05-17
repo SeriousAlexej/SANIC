@@ -18,6 +18,7 @@ private:
 	virtual void            editorSelect();
 	virtual void            editorUpdate();
 	virtual void            renderSelectionIndicator();
+	virtual void            addProperties();
 
     Light*                  lightSource;
 };

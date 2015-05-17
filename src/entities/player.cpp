@@ -9,6 +9,11 @@ Player::Player()
 	orientationType = NONE;
 }
 
+void Player::addProperties()
+{
+    Entity::addProperties();
+}
+
 void Player::initialize()
 {
 	setupModel("./shaders/smooth.shader",
@@ -23,6 +28,8 @@ void Player::initialize()
 	camera->setPosition(body->getPosition());
 	model->setOffset(glm::vec3(0,-1,0));
 	pushState(main);
+
+	addProperties();
 }
 
 void Player::adjustMoving()

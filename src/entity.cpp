@@ -54,6 +54,7 @@ void TW_CALL clearPointer(void *boolPtr)
 
 Entity::Entity()
 {
+    pointers = "Parent";
 	wld = NULL;
 	wldGFX = NULL;
 	wldPHY = NULL;
@@ -80,7 +81,10 @@ Entity::Entity()
 	pointerIndex = 0;
 	pointerIndexPrevious = 0;
 	shouldClearPointer = false;
+}
 
+void Entity::addProperties()
+{
     registerProperties(
                 "Name",     &name,
                 "Quat",     &rotationQuat,
@@ -109,7 +113,7 @@ Entity::Entity()
                 DrawableElement{DrawableElement::PT_FLOAT, "PosZ", "label='Z' precision=2 step=0.01 "}
             },
             {
-                DrawableElement{DrawableElement::PT_ENUM, "Pointer", "", &pointerIndex, NULL, this->getPointersString()},
+                DrawableElement{DrawableElement::PT_ENUM, "Pointer", "", &pointerIndex, NULL, pointers},
                 DrawableElement{DrawableElement::PT_BUTTON, "PointerValue", "label='"+getPointerDescr()+"'", NULL, NULL},
                 DrawableElement{DrawableElement::PT_BUTTON, "Clear", "", &shouldClearPointer, clearPointer}
             }
@@ -144,6 +148,11 @@ Entity::~Entity()
             parent->children.erase(parent->children.begin() + i);
             break;
         }
+    }
+
+    for(auto &p : properties)
+    {
+        delete p.second;
     }
 
 	while(!statesObsolete.empty()) { delete statesObsolete.top(); statesObsolete.pop(); }
@@ -516,6 +525,11 @@ void Entity::drawSingleElement(DrawableElement &elem)
 {
     switch(elem.tp)
     {
+        case TW_TYPE_COLOR3F :
+        {
+            TwAddVarRW(entityBar, elem.name.c_str(), TW_TYPE_COLOR3F, properties[elem.name]->m_data, elem.drawingHint.c_str());
+            break;
+        }
         case TW_TYPE_QUAT4F :
         {
             TwAddVarRW(entityBar, elem.name.c_str(), TW_TYPE_QUAT4F, properties[elem.name]->m_data, elem.drawingHint.c_str());
@@ -548,6 +562,7 @@ void Entity::drawSingleElement(DrawableElement &elem)
 
 void Entity::drawGuiElements()
 {
+    TwRemoveAllVars(entityBar);
     static unsigned int sepID = 0;
     std::string sepname = "s";
     for(std::vector<DrawableElement> &v : guiElements)
@@ -597,11 +612,6 @@ std::string Entity::getPointerDescr()
     return "(none)";
 }
 
-std::string Entity::getPointersString()
-{
-    return "Parent";
-}
-
 void Entity::editorDesselect()
 {
     assert(TwDeleteBar(entityBar)==1);
@@ -614,6 +624,7 @@ void Entity::adjustMoving()
 
 void Entity::initialize()
 {
+    addProperties();
 }
 
 void Entity::setupModel(std::string shaderPath,

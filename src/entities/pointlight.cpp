@@ -1,10 +1,22 @@
 #include "pointlight.h"
 #include "../dialogs/tinyfiledialogs.h"
 
+static void TW_CALL pickColor(void *colorPtr)
+{
+    glm::vec3 &col = *(glm::vec3*)colorPtr;
+    unsigned char startColor[3];
+    startColor[0] = col.x*255;
+    startColor[1] = col.y*255;
+    startColor[2] = col.z*255;
+    tinyfd_colorChooser("Pick color", NULL, startColor, startColor);
+    col.x = startColor[0]/255.0f;
+    col.y = startColor[1]/255.0f;
+    col.z = startColor[2]/255.0f;
+}
+
 PointLight::PointLight()
 {
     setClass("PointLight");
-    setName("Light");
 	setTranslatedByBody(false);
 	orientationType = NONE;
 	lightSource = NULL;
@@ -14,6 +26,32 @@ PointLight::~PointLight()
 {
     assert(wldGFX);
     wldGFX->deleteLight(lightSource);
+}
+
+void PointLight::addProperties()
+{
+    Entity::addProperties();
+    registerProperties(
+                "Diffuse Color",    &(lightSource->colorDiffuse[0]),
+                "FallOff",          &(lightSource->falloff),
+                "HotSpot",          &(lightSource->hotspot),
+                "Intensity",        &(lightSource->intensity)
+    );
+
+    addDrawableElements(
+        {
+            {
+                DrawableElement{DrawableElement::PT_COLOR, "Diffuse Color", "colormode=rgb "},
+                DrawableElement{DrawableElement::PT_BUTTON, "PickDiffuse", "label='Pick' ", &lightSource->colorDiffuse, pickColor}
+            },
+            {
+                DrawableElement{DrawableElement::PT_FLOAT, "FallOff", "label='Fall Off' min=0 step=0.01 "},
+                DrawableElement{DrawableElement::PT_FLOAT, "HotSpot", "label='Hot Spot' min=0 step=0.01 "},
+                DrawableElement{DrawableElement::PT_FLOAT, "Intensity", "label='Intensity' min=0 step=0.001 "}
+            }
+        }
+    );
+    setName("Light");
 }
 
 void PointLight::initialize()
@@ -26,6 +64,8 @@ void PointLight::initialize()
 	switchToEditorModel();
 	pushState(main);
 	lightSource = wldGFX->createLight();
+
+	addProperties();
 }
 
 void PointLight::adjustMoving()
@@ -34,19 +74,6 @@ void PointLight::adjustMoving()
     {
         lightSource->setPosition(body->getPosition());
     }
-}
-
-static void TW_CALL pickColor(void *colorPtr)
-{
-    glm::vec3 &col = *(glm::vec3*)colorPtr;
-    unsigned char startColor[3];
-    startColor[0] = col.x*255;
-    startColor[1] = col.y*255;
-    startColor[2] = col.z*255;
-    tinyfd_colorChooser("Pick color", NULL, startColor, startColor);
-    col.x = startColor[0]/255.0f;
-    col.y = startColor[1]/255.0f;
-    col.z = startColor[2]/255.0f;
 }
 
 void PointLight::renderSelectionIndicator()
@@ -81,14 +108,6 @@ void PointLight::editorUpdate()
 void PointLight::editorSelect()
 {
     Entity::editorSelect();
-    TwAddVarRW(entityBar, "Diffuse Color", TW_TYPE_COLOR3F, &(lightSource->colorDiffuse[0]), "group='Color' colormode=rgb");
-    TwAddButton(entityBar, "PickDiffuse", pickColor, &lightSource->colorDiffuse, "group='Color' label='Pick'");
-
-    TwAddSeparator(entityBar, "sep04", "");
-
-    TwAddVarRW(entityBar, "FallOff", TW_TYPE_FLOAT, &(lightSource->falloff), "label='Fall Off' min=0 step=0.01");
-    TwAddVarRW(entityBar, "HotSpot", TW_TYPE_FLOAT, &(lightSource->hotspot), "label='Hot Spot' min=0 step=0.01");
-    TwAddVarRW(entityBar, "Intensity", TW_TYPE_FLOAT, &(lightSource->intensity), "label='Intensity' min=0 step=0.001");
 }
 
 STATE PointLight::main(EntityEvent *ee, Entity *caller)

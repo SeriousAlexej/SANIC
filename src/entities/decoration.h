@@ -14,6 +14,7 @@ private:
 	static STATE main(EntityEvent* ee, Entity* caller);
 	//~states
 	virtual void            editorSelect();
+	virtual void            addProperties();
 	void                    updateParamsInternal();
 
 	std::string             shaderPath;
@@ -22,8 +23,7 @@ private:
 	std::string             nTexturePath;
 	std::string             hTexturePath;
 
-    void    addShaderMutators();
-    void    removeShaderMutators();
+    void    updateShaderMutators();
 	friend void TW_CALL updateParameters(void *decorPtr);
 };
 

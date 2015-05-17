@@ -3,32 +3,6 @@
 
 extern std::string g_WorkingDir;
 
-Decoration::Decoration()
-{
-	setClass("Decoration");
-}
-
-Decoration::~Decoration()
-{
-}
-
-void Decoration::initialize()
-{
-    shaderPath     = "./shaders/fullbright.shader";
-    modelPath       = "./models/axis/axis.obj";
-    dTexturePath    = "./models/uv_checker.jpg";
-    nTexturePath    = "";
-    hTexturePath    = "";
-    setupModel(shaderPath,
-               modelPath,
-               dTexturePath,
-               nTexturePath,
-               hTexturePath);
-    setupCollision(0.0f, glm::vec3(0.5f, 0.5f, 0.5f));
-    switchToModel();
-	pushState(main);
-}
-
 static std::string relativePath(std::string absPath)
 {
     std::replace(absPath.begin(), absPath.end(), '\\', '/');
@@ -77,24 +51,95 @@ void TW_CALL updateParameters(void *decorPtr)
     decor.updateParamsInternal();
 }
 
-void Decoration::addShaderMutators()
+Decoration::Decoration()
 {
-    TwAddVarRW(entityBar, "NStrength", TW_TYPE_FLOAT, &model->normalStrength, "label='Normal strength' step=0.01 group='Filenames'");
-    TwAddVarRW(entityBar, "HScale", TW_TYPE_FLOAT, &model->parallaxScale, "label='Parallax scale' step=0.001 group='Filenames'");
-    TwAddVarRW(entityBar, "HOffset", TW_TYPE_FLOAT, &model->parallaxOffset, "label='Parallax offset' step=0.01 group='Filenames'");
+	setClass("Decoration");
 }
 
-void Decoration::removeShaderMutators()
+Decoration::~Decoration()
 {
-    TwRemoveVar(entityBar, "NStrength");
-    TwRemoveVar(entityBar, "HScale");
-    TwRemoveVar(entityBar, "HOffset");
+}
+
+void Decoration::addProperties()
+{
+    Entity::addProperties();
+
+    registerProperties(
+                "ModelPath",     &modelPath,
+                "DTextPath",     &dTexturePath,
+                "NTextPath",     &nTexturePath,
+                "HTextPath",     &hTexturePath,
+                "ShaPath",       &shaderPath,
+                "NStrength",     &model->normalStrength,
+                "HScale",        &model->parallaxScale,
+                "HOffset",       &model->parallaxOffset
+    );
+
+    addDrawableElements(
+        {
+            {
+                DrawableElement{DrawableElement::PT_STRING, "ModelPath", "label='Model' "},
+                DrawableElement{DrawableElement::PT_BUTTON, "PickModel", "label='    Pick' ", &modelPath, pickModel}
+            },
+            {
+                DrawableElement{DrawableElement::PT_STRING, "DTextPath", "label='Diffuse map' "},
+                DrawableElement{DrawableElement::PT_BUTTON, "PickDText", "label='    Pick' ", &dTexturePath, pickTexture}
+            },
+            {
+                DrawableElement{DrawableElement::PT_STRING, "NTextPath", "label='Normal map' "},
+                DrawableElement{DrawableElement::PT_BUTTON, "PickNText", "label='    Pick' ", &nTexturePath, pickTexture}
+            },
+            {
+                DrawableElement{DrawableElement::PT_STRING, "HTextPath", "label='Height map' "},
+                DrawableElement{DrawableElement::PT_BUTTON, "PickHText", "label='    Pick' ", &hTexturePath, pickTexture}
+            },
+            {
+                DrawableElement{DrawableElement::PT_STRING, "ShaPath", "label='Shader' "},
+                DrawableElement{DrawableElement::PT_BUTTON, "PickSha", "label='    Pick' ", &shaderPath, pickShader}
+            },
+            {
+                DrawableElement{DrawableElement::PT_FLOAT, "NStrength", "label='Normal strength' step=0.01 "},
+                DrawableElement{DrawableElement::PT_FLOAT, "HScale", "label='Parallax scale' step=0.001 "},
+                DrawableElement{DrawableElement::PT_FLOAT, "HOffset", "label='Parallax offset' step=0.01 "}
+            },
+            {
+                DrawableElement{DrawableElement::PT_BUTTON, "UpdateButton", "label='Update parameters' ", this, updateParameters}
+            }
+        }
+    );
+
+    setName("Decoration");
+}
+
+void Decoration::initialize()
+{
+    shaderPath     = "./shaders/fullbright.shader";
+    modelPath       = "./models/axis/axis.obj";
+    dTexturePath    = "./models/uv_checker.jpg";
+    nTexturePath    = "";
+    hTexturePath    = "";
+    setupModel(shaderPath,
+               modelPath,
+               dTexturePath,
+               nTexturePath,
+               hTexturePath);
+    setupCollision(0.0f, glm::vec3(0.5f, 0.5f, 0.5f));
+    switchToModel();
+	pushState(main);
+
+	addProperties();
+}
+
+void Decoration::updateShaderMutators()
+{
+    properties["NStrength"]->ChangeLocation(&model->normalStrength);
+    properties["HScale"]->ChangeLocation(&model->parallaxScale);
+    properties["HOffset"]->ChangeLocation(&model->parallaxOffset);
 }
 
 void Decoration::updateParamsInternal()
 {
     glm::vec3 mutValues(model->normalStrength, model->parallaxOffset, model->parallaxScale);
-    removeShaderMutators();
     setupModel(shaderPath,
                modelPath,
                dTexturePath,
@@ -103,42 +148,14 @@ void Decoration::updateParamsInternal()
     model->normalStrength = mutValues.x;
     model->parallaxOffset = mutValues.y;
     model->parallaxScale = mutValues.z;
-    addShaderMutators();
+    updateShaderMutators();
+
+    drawGuiElements();
 }
 
 void Decoration::editorSelect()
 {
     Entity::editorSelect();
-    TwAddVarRW(entityBar, "ModelPath", TW_TYPE_STDSTRING, &modelPath, "label='Model' group='Filenames'");
-    TwAddButton(entityBar, "PickModel", pickModel, &modelPath, "label='    Pick' group='Filenames'");
-
-    TwAddSeparator(entityBar, "sep05", "group='Filenames'");
-
-    TwAddVarRW(entityBar, "DTextPath", TW_TYPE_STDSTRING, &dTexturePath, "label='Diffuse map' group='Filenames'");
-    TwAddButton(entityBar, "PickDText", pickTexture, &dTexturePath, "label='    Pick' group='Filenames'");
-
-    TwAddSeparator(entityBar, "sep06", "group='Filenames'");
-
-    TwAddVarRW(entityBar, "NTextPath", TW_TYPE_STDSTRING, &nTexturePath, "label='Normal map' group='Filenames'");
-    TwAddButton(entityBar, "PickNText", pickTexture, &nTexturePath, "label='    Pick' group='Filenames'");
-
-    TwAddSeparator(entityBar, "sep07", "group='Filenames'");
-
-    TwAddVarRW(entityBar, "HTextPath", TW_TYPE_STDSTRING, &hTexturePath, "label='Displacement map' group='Filenames'");
-    TwAddButton(entityBar, "PickHText", pickTexture, &hTexturePath, "label='    Pick' group='Filenames'");
-
-    TwAddSeparator(entityBar, "sep08", "group='Filenames'");
-
-    TwAddVarRW(entityBar, "ShaPath", TW_TYPE_STDSTRING, &shaderPath, "label='Shader' group='Filenames'");
-    TwAddButton(entityBar, "PickSha", pickShader, &shaderPath, "label='    Pick' group='Filenames'");
-
-    TwAddSeparator(entityBar, "sep09", "group='Filenames'");
-
-    addShaderMutators();
-
-    TwAddSeparator(entityBar, "sep04", "");
-
-    TwAddButton(entityBar, "UpdateButton", updateParameters, this, "label='Update parameters'");
 }
 
 STATE Decoration::main(EntityEvent* ee, Entity* caller)

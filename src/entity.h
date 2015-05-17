@@ -168,9 +168,9 @@ protected:
 	void                    parentMoved();
 	bool                    childrenContain(Entity* e) const;
 
+    std::string             pointers; //gui enum is made from this string
     virtual Entity**        getTargetPointer();
     virtual std::string     getPointerDescr();
-    virtual std::string     getPointersString();
 	virtual void            editorUpdate();
 	virtual void            editorSelect();
 	virtual void            editorDesselect();
@@ -198,6 +198,7 @@ protected:
     virtual void Deserialize(istream& ostr) {}
     virtual void Serialize(ostream& istr) {}
 
+    virtual void    addProperties();
     vector<vector<DrawableElement>> guiElements;
     void    drawSingleElement(DrawableElement &elem);
     void    drawGuiElements();

@@ -15,6 +15,7 @@ private:
 	static STATE main(EntityEvent* ee, Entity* caller);
 
 	//~states
+	virtual void            addProperties();
 
 	Camera*		camera;
 };

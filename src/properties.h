@@ -52,6 +52,9 @@ public:
 
     template<class T>
     T& ref();
+
+    template<class T>
+    void ChangeLocation(T* val);
 };
 
 template<class T>
@@ -74,6 +77,14 @@ Property* Property::create(T* val) {
     ret->m_tid = typeid(T).hash_code();
     ret->m_data = val;
     return ret;
+}
+
+template<class T>
+void Property::ChangeLocation(T* val)
+{
+    if(val == nullptr) throw invalid_argument("Property is targeted at nullptr");
+    if(typeid(T).hash_code() != m_tid) throw bad_typeid();
+    this->m_data = val;
 }
 
 template<class T>
