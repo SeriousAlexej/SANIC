@@ -9,8 +9,8 @@ World::World(sf::Window* w)
 
 	if(g_Editor)
 	{
-		entitiesList = TwNewBar("EntitiesList");
-		TwDefine(" EntitiesList label='Entities' fontSize=3 position='0 200' size='100 568'");
+		//entitiesList = TwNewBar("EntitiesList");
+		//TwDefine(" EntitiesList label='Entities' fontSize=3 position='0 200' size='100 568'");
 	}
 }
 
@@ -124,15 +124,14 @@ void World::updateEditor()
         if(selectedEntity != NULL && edMode == Idle && input->keyJustReleased(sf::Keyboard::R))
         {
             RayCastInfo ri = castRayScreen();
-            Entity** ep = selectedEntity->getTargetPointer();
-            if(ep != NULL)
+            EntityPointer* ep = selectedEntity->getTargetPointer();
+            if(ep != nullptr)
             {
-                if(ep == &selectedEntity->parent)
+                if(ep->Name() == "Parent")
                 {
                     selectedEntity->setParent(ri.enHit);
-                } else {
-                    *ep = ri.enHit;
                 }
+                (*ep) = ri.enHit;
                 selectedEntity->pointerIndexPrevious = -1; //update target info string
             }
         }

@@ -33,18 +33,7 @@ public:
 	GLuint  getParallaxScaleID() const      { return parallaxScaleID; }
 	GLuint  getParallaxOffsetID() const     { return parallaxOffsetID; }
 
-    #ifdef SANIC_DEBUG
-    static void  printMemoryStatistics()
-    {
-        printf("\nSHADER CLASS WAS:\n\t\tCREATED %d TIMES\n\t\tDELETED %d TIMES\n", numberOfCreations, numberOfDeletions);
-    }
-    #endif // SANIC_DEBUG
-
 private:
-    #ifdef SANIC_DEBUG
-    static int numberOfCreations;
-    static int numberOfDeletions;
-    #endif // SANIC_DEBUG
 
 	void loadShaders(std::string shaderPath);
 

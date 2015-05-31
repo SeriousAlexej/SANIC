@@ -38,9 +38,9 @@ int main(int argc, char **argv)
 
 	sf::ContextSettings cs;
 	cs.antialiasingLevel = 4;
-	cs.depthBits = 32;
-	cs.majorVersion = 2;
-	cs.minorVersion = 1;
+	cs.depthBits = 24;
+	cs.majorVersion = 3;
+	cs.minorVersion = 3;
 	sf::RenderWindow window(sf::VideoMode(1024, 768), "SANIC", sf::Style::Default & ~sf::Style::Resize, cs);
     window.setVerticalSyncEnabled(true);
 	//window.setFramerateLimit(60);
@@ -163,7 +163,7 @@ int main(int argc, char **argv)
         sf::Event event;
         while (window.pollEvent(event))
         {
-			int handled = TwEventSFML(&event, 2, 2);
+			int handled = TwEventSFML23(&event);
 			if(!handled)
 			{
 				world.getInputHandler()->allowCheck = true;
@@ -292,9 +292,7 @@ int main(int argc, char **argv)
 	delete wld;
 
     #ifdef SANIC_DEBUG
-	Mesh::printMemoryStatistics();
-	Texture::printMemoryStatistics();
-	Shader::printMemoryStatistics();
+	DumpUnfreed();
     #endif // SANIC_DEBUG
 
 	return EXIT_SUCCESS;

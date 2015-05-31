@@ -56,9 +56,9 @@ void PointLight::addProperties()
 
 void PointLight::initialize()
 {
-	setupModel("./shaders/fullbright.shader",
-			   "./models/editor/light.obj",
-			   "./models/editor/yellow.png",
+	setupModel("./shaders/sprite.shader",
+			   "./models/editor/sprite.obj",
+			   "./models/editor/light.png",
 			   "", "");
 	setupCollision(0.0f, glm::vec3(0.25f, 0.25f, 0.25f));
 	switchToEditorModel();

@@ -229,7 +229,7 @@ void SolidBody::setRotation(float angle, glm::vec3 dir)
 {
 	if(!rigidBody) return;
 	btQuaternion q;
-	q.setRotation(btVector3(dir.x, dir.y, dir.z), glm::radians(angle));
+	q.setRotation(btVector3(dir.x, dir.y, dir.z), angle);
 	btTransform t = rigidBody->getWorldTransform();
 	t.setRotation(q);
 	rigidBody->setWorldTransform(t);

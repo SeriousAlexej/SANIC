@@ -9,6 +9,8 @@
 #include "default_model.h"
 #include "modelLoader/objParser.h"
 
+extern std::string g_WorkingDir;
+
 unsigned Mesh::defVertexbuffer = 0;
 unsigned Mesh::defNormalbuffer = 0;
 unsigned Mesh::defUvbuffer = 0;
@@ -16,11 +18,6 @@ unsigned Mesh::defTangentbuffer = 0;
 unsigned Mesh::defBitangentbuffer = 0;
 unsigned Mesh::defElembuffer = 0;
 unsigned Mesh::numberOfMeshes = 0;
-
-#ifdef SANIC_DEBUG
-int Mesh::numberOfCreations = 0;
-int Mesh::numberOfDeletions = 0;
-#endif // SANIC_DEBUG
 
 static void computeTangentBasis(
 	// inputs
@@ -158,9 +155,6 @@ static void indexVBO(
 
 Mesh::Mesh(std::string path)
 {
-    #ifdef SANIC_DEBUG
-    numberOfCreations++;
-    #endif // SANIC_DEBUG
 	srcFile = path;
 	if(numberOfMeshes == 0)
 	{
@@ -194,9 +188,6 @@ Mesh::Mesh(std::string path)
 
 Mesh::~Mesh()
 {
-    #ifdef SANIC_DEBUG
-    numberOfDeletions++;
-    #endif // SANIC_DEBUG
 	animations.clear();
 
 	if(normalbuffer)
@@ -274,6 +265,10 @@ void Mesh::buildAxisModel()
 
 bool Mesh::loadModel(std::string path)
 {
+    if(path!="")
+    {
+        path = g_WorkingDir + path.substr(1);
+    }
 	std::replace(path.begin(), path.end(), '\\', '/');
 
 	std::vector<glm::vec3> tvertices;

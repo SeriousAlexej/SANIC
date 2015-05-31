@@ -1,15 +1,9 @@
 #include "shader.h"
 
-#ifdef SANIC_DEBUG
-int Shader::numberOfCreations = 0;
-int Shader::numberOfDeletions = 0;
-#endif // SANIC_DEBUG
+extern std::string g_WorkingDir;
 
 Shader::Shader(std::string shaderPath)
 {
-    #ifdef SANIC_DEBUG
-    numberOfCreations++;
-    #endif // SANIC_DEBUG
 	srcShaFnm = shaderPath;
 	shaderID = 0;
 	MatrixID = 0;
@@ -29,14 +23,16 @@ Shader::Shader(std::string shaderPath)
         LightHotSpotID[i] = 0;
         LightIntensityID[i] = 0;
     }
-	loadShaders(shaderPath);
+    std::string toUse = shaderPath;
+    if(toUse!="")
+    {
+        toUse = g_WorkingDir + toUse.substr(1);
+    }
+	loadShaders(toUse);
 }
 
 Shader::~Shader()
 {
-    #ifdef SANIC_DEBUG
-    numberOfDeletions++;
-    #endif // SANIC_DEBUG
 	if(shaderID)
 		glDeleteProgram(shaderID);
 }
@@ -46,8 +42,9 @@ void Shader::loadShaders(std::string shaderPath)
     GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
     GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
 
-    std::string VertexShaderCode = "#define VERTEX_SHADER\n";
-    std::string FragmentShaderCode = "#define FRAGMENT_SHADER\n";
+    std::string ShaderVersion = "#version 330\n";
+    std::string VertexShaderCode = ShaderVersion + "#define VERTEX_SHADER\n";
+    std::string FragmentShaderCode = ShaderVersion + "#define FRAGMENT_SHADER\n";
 	std::ifstream ShaderStream(shaderPath.c_str(), std::ios::in);
     if(ShaderStream.is_open())
     {
@@ -77,10 +74,10 @@ void Shader::loadShaders(std::string shaderPath)
     glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
     std::vector<char> VertexShaderErrorMessage(InfoLogLength);
     glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
+#ifdef SANIC_DEBUG
     fprintf(stdout, "%s\n", &VertexShaderErrorMessage[0]);
 
     // Compile Fragment Shader
-#ifdef SANIC_DEBUG
 	printf("Fragment shader... ");
 #endif
     char const * FragmentSourcePointer = FragmentShaderCode.c_str();

@@ -14,8 +14,10 @@
 #include "world_physics.h"
 #include "world.h"
 #include "properties.h"
+#include "entitypointer.h"
 
 class Entity;
+class EntityPointer;
 class World;
 
 typedef void (*stateCallback)(EntityEvent*,Entity*);
@@ -153,6 +155,9 @@ public:
 	void                    setParent(Entity* p);
 	Entity*                 getParent() const;
 
+	void                    pointerAdded(EntityPointer* pen);
+	void                    pointerLeft(EntityPointer* pen);
+
 protected:
 	//states:
 	DECLARE_STATE(dummy);
@@ -168,9 +173,10 @@ protected:
 	void                    parentMoved();
 	bool                    childrenContain(Entity* e) const;
 
-    std::string             pointers; //gui enum is made from this string
-    virtual Entity**        getTargetPointer();
-    virtual std::string     getPointerDescr();
+    void                    registerPointers();
+    std::string             pointersString; //gui enum is made from this string
+    EntityPointer*          getTargetPointer();
+    std::string             getPointerDescr();
 	virtual void            editorUpdate();
 	virtual void            editorSelect();
 	virtual void            editorDesselect();
@@ -197,6 +203,7 @@ protected:
 
     virtual void Deserialize(istream& ostr) {}
     virtual void Serialize(ostream& istr) {}
+    //virtual rapidjson::Value Serialize(rapidjson::Document& d);
 
     virtual void    addProperties();
     vector<vector<DrawableElement>> guiElements;
@@ -228,6 +235,9 @@ protected:
 	glm::quat                   rotationQuatO;
 	glm::vec3                   rotationEulerO;
 	glm::vec3                   position;
+	std::vector<EntityPointer>  pointers;
+	std::vector<EntityPointer*> pointAtMe;
+	virtual void                fillPointers();
 	int                         pointerIndex;
 	int                         pointerIndexPrevious;
 	bool                        shouldClearPointer;

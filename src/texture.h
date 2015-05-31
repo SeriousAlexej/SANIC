@@ -14,18 +14,7 @@ public:
 
 	void	bind();
 
-    #ifdef SANIC_DEBUG
-    static void  printMemoryStatistics()
-    {
-        printf("\nTEXTURE CLASS WAS:\n\t\tCREATED %d TIMES\n\t\tDELETED %d TIMES\n", numberOfCreations, numberOfDeletions);
-    }
-    #endif // SANIC_DEBUG
-
 private:
-    #ifdef SANIC_DEBUG
-    static int numberOfCreations;
-    static int numberOfDeletions;
-    #endif // SANIC_DEBUG
 
 	GLuint		textureID;
 	std::string	srcFnm;

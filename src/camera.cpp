@@ -50,7 +50,7 @@ bool Camera::pointIsVisible(glm::vec3 point)
 
 bool Camera::boxIsVisible(glm::vec3 center, glm::vec3 halfSizes)
 {
-	return pointIsVisible(center) || 
+	return pointIsVisible(center) ||
 		pointIsVisible(center + halfSizes) ||
 		pointIsVisible(center - halfSizes) ||
 		pointIsVisible(center + glm::vec3(-halfSizes.x, halfSizes.y, halfSizes.z)) ||
@@ -64,7 +64,7 @@ bool Camera::boxIsVisible(glm::vec3 center, glm::vec3 halfSizes)
 void Camera::extractFrustum()
 {
 	float	t;
-	
+
 	glm::mat4 clip = prjMx * viewMx;
 
 	// Extract the RIGHT clipping plane

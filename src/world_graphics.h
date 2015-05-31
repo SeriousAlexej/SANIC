@@ -1,6 +1,7 @@
 #ifndef _WORLD_GRAPHICS_H_
 #define _WORLD_GRAPHICS_H_
 #include "modelinstance.h"
+#include "sanic_memory.h"
 #include "camera.h"
 #include "mesh.h"
 #include "shader.h"

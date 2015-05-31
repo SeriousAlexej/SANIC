@@ -52,9 +52,26 @@ void TW_CALL clearPointer(void *boolPtr)
     (*(bool*)boolPtr) = true;
 }
 
+void Entity::registerPointers()
+{
+    unsigned i;
+    for(i=0; i<pointers.size()-1; i++)
+    {
+        pointersString += pointers[i].Name() + ",";
+        registerProperties(pointers[i].Name(), &pointers[i]);
+    }
+    pointersString += pointers[i].Name();
+    registerProperties(pointers[i].Name(), &pointers[i]);
+}
+
+void Entity::fillPointers()
+{
+    pointers.push_back(EntityPointer("Parent"));
+}
+
 Entity::Entity()
 {
-    pointers = "Parent";
+    pointersString = "";
 	wld = NULL;
 	wldGFX = NULL;
 	wldPHY = NULL;
@@ -81,10 +98,31 @@ Entity::Entity()
 	pointerIndex = 0;
 	pointerIndexPrevious = 0;
 	shouldClearPointer = false;
+    fillPointers();
+}
+
+void Entity::pointerLeft(EntityPointer* pen)
+{
+    for(int i=pointAtMe.size()-1; i>=0; i--)
+    {
+        if(pointAtMe[i]==pen)
+        {
+            pointAtMe.erase(pointAtMe.begin()+i);
+            break;
+        }
+    }
+}
+
+void Entity::pointerAdded(EntityPointer* pen)
+{
+    assert(pen != nullptr);
+    pointAtMe.push_back(pen);
 }
 
 void Entity::addProperties()
 {
+	registerPointers();
+
     registerProperties(
                 "Name",     &name,
                 "Quat",     &rotationQuat,
@@ -113,7 +151,7 @@ void Entity::addProperties()
                 DrawableElement{DrawableElement::PT_FLOAT, "PosZ", "label='Z' precision=2 step=0.01 "}
             },
             {
-                DrawableElement{DrawableElement::PT_ENUM, "Pointer", "", &pointerIndex, NULL, pointers},
+                DrawableElement{DrawableElement::PT_ENUM, "Pointer", "", &pointerIndex, NULL, pointersString},
                 DrawableElement{DrawableElement::PT_BUTTON, "PointerValue", "label='"+getPointerDescr()+"'", NULL, NULL},
                 DrawableElement{DrawableElement::PT_BUTTON, "Clear", "", &shouldClearPointer, clearPointer}
             }
@@ -154,6 +192,14 @@ Entity::~Entity()
     {
         delete p.second;
     }
+
+    for(auto &p : pointAtMe)
+    {
+        printf("Clearing pointer!\n");
+        (*p) = (Entity*)nullptr;
+    }
+
+    pointers.clear();
 
 	while(!statesObsolete.empty()) { delete statesObsolete.top(); statesObsolete.pop(); }
 	while(!states.empty()) { delete states.top(); states.pop(); }
@@ -460,7 +506,7 @@ void Entity::editorUpdate()
     } else
     if(rotationQuat != rotationQuatO)
     {//update euler
-        rotationEuler = glm::eulerAngles(rotationQuat);
+        rotationEuler = glm::eulerAngles(rotationQuat)*glm::one_over_pi<float>()*180.0f;
     }
     rotationEulerO = rotationEuler;
     rotationQuatO = rotationQuat;
@@ -479,15 +525,14 @@ void Entity::editorUpdate()
     if(shouldClearPointer)
     {
         shouldClearPointer = false;
-        Entity** tp = getTargetPointer();
-        if(tp)
+        EntityPointer* tp = getTargetPointer();
+        if(tp != nullptr)
         {
-            if(tp==&parent)
+            if(tp->Name()=="Parent")
             {
                 setParent(NULL);
-            } else {
-                *tp = NULL;
             }
+            (*tp) = (Entity*)nullptr;
             pointerIndexPrevious = -1;
         }
     }
@@ -591,23 +636,27 @@ void Entity::editorSelect()
     pointerIndexPrevious = -1;
 }
 
-Entity** Entity::getTargetPointer()
+EntityPointer* Entity::getTargetPointer()
 {
-    switch(pointerIndex)
+    if(pointerIndex>=0 && pointerIndex<pointers.size())
     {
-        case 0: return &parent; break;
-        default: return NULL;
+        return &pointers[pointerIndex];
     }
+    return nullptr;
 }
 
 std::string Entity::getPointerDescr()
 {
-    Entity** e = getTargetPointer();
-    if(e && *e)
+    EntityPointer* p = getTargetPointer();
+    if(p != nullptr)
     {
-        char idStr[15];
-        sprintf(idStr, "(ID=%d)", (*e)->getMultipass());
-        return (*e)->getName()+idStr;
+        Entity* e = p->Value();
+        if(e != nullptr)
+        {
+            char idStr[15];
+            sprintf(idStr, "(ID=%d)", e->getMultipass());
+            return e->getName()+idStr;
+        }
     }
     return "(none)";
 }
@@ -663,7 +712,22 @@ void Entity::setupCollision(float mass, glm::vec3 halfExtents)
 	body = wldPHY->addBody(mass, halfExtents);
 	body->setOwner((void*)this);
 }
-
+/*
+rapidjson::Value Entity::Serialize ( rapidjson::Document& d )
+{
+    using namespace rapidjson;
+    Value entity_value;
+    entity_value.SetObject();
+    for (auto kv : properties) {
+        Property* p = kv.second;
+        std::string s = kv.first;
+        Value name;
+        name.SetString(s, s.length());
+        entity_value.AddMember(name,  p->Serialize(d), d.GetAllocator());
+    }
+    return entity_value;
+}
+*/
 LiveEntity::LiveEntity()
 {
 	setClass("LiveEntity");

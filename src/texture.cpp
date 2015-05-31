@@ -1,16 +1,10 @@
 #include <SFML/Graphics.hpp>
 #include "texture.h"
 
-#ifdef SANIC_DEBUG
-int Texture::numberOfCreations = 0;
-int Texture::numberOfDeletions = 0;
-#endif // SANIC_DEBUG
+extern std::string g_WorkingDir;
 
 Texture::Texture(std::string path)
 {
-    #ifdef SANIC_DEBUG
-    numberOfCreations++;
-    #endif // SANIC_DEBUG
 	textureID = 0;
 	srcFnm = path;
 	loadTexture();
@@ -18,9 +12,6 @@ Texture::Texture(std::string path)
 
 Texture::~Texture()
 {
-    #ifdef SANIC_DEBUG
-    numberOfDeletions++;
-    #endif // SANIC_DEBUG
 	if(textureID)
 	{
 		glDeleteTextures(1, &textureID);
@@ -33,8 +24,13 @@ void Texture::bind()
 }
 void Texture::loadTexture()
 {
+    std::string toUse = srcFnm;
+    if(toUse!="")
+    {
+        toUse = g_WorkingDir + toUse.substr(1);
+    }
 	sf::Image image;
-	if (image.loadFromFile(srcFnm))
+	if (image.loadFromFile(toUse))
 	{
 		glGenTextures(1, &textureID);
 		glBindTexture(GL_TEXTURE_2D, textureID);
