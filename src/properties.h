@@ -60,14 +60,14 @@ public:
 template<class T>
 T &Property::GetValue() const {
     if(typeid(T).hash_code() != m_tid) throw bad_typeid();
-    T* res = reinterpret_cast<T*>(m_data);
+    T* res = static_cast<T*>(m_data);
     return *res;
 }
 
 template<class T>
 void Property::SetValue(T val) {
     if(typeid(T).hash_code() != m_tid) throw bad_typeid();
-    T* t_data = reinterpret_cast<T*>(m_data);
+    T* t_data = static_cast<T*>(m_data);
     *t_data = val;
 }
 
@@ -91,7 +91,7 @@ template<class T>
 void Property::Serialize(ostream &o)
 {
     if(typeid(T).hash_code() != m_tid) throw bad_typeid();
-    T* t_data = reinterpret_cast<T*>(m_data);
+    T* t_data = static_cast<T*>(m_data);
     Serial* ser;
     try {
         ser = dynamic_cast<Serial*>(t_data);
@@ -106,7 +106,7 @@ template<class T>
 void Property::Deserialize(istream &o)
 {
     if(typeid(T).hash_code() != m_tid) throw bad_typeid();
-    T* t_data = reinterpret_cast<T*>(m_data);
+    T* t_data = static_cast<T*>(m_data);
     Serial* ser;
     try {
         ser = dynamic_cast<Serial*>(t_data);
@@ -122,7 +122,7 @@ template<class T>
 T& Property::ref()
 {
     if(typeid(T).hash_code() != m_tid) throw bad_typeid();
-    T* t_data = reinterpret_cast<T*>(m_data); // TODO: don't work
+    T* t_data = static_cast<T*>(m_data); // TODO: don't work
     return *t_data;
 }
 

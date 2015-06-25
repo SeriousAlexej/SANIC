@@ -104,7 +104,7 @@ bool InputHandler::mouseButtonPressed(int mouseButton) const
 bool InputHandler::cursorIsInsideWindow() const
 {
     sf::Vector2i mpos = sf::Mouse::getPosition(*mainWindow);
-    return mpos.x > 0 && mpos.y > 0 && mpos.x < (int)windowSize.x && mpos.y < (int)windowSize.y;
+    return mpos.x > 0 && mpos.y > 0 && mpos.x < static_cast<int>(windowSize.x) && mpos.y < static_cast<int>(windowSize.y);
 }
 
 void InputHandler::setFocus(bool _f)
@@ -163,8 +163,8 @@ void InputHandler::update()
 	if(lockMouse)
 	{
 		sf::Vector2i mpos = sf::Mouse::getPosition(*mainWindow);
-		mouseDelta.x = float(windowSize.x/2 - (float)mpos.x);
-		mouseDelta.y = float(windowSize.y/2 - (float)mpos.y);
+		mouseDelta.x = float(windowSize.x/2 - float(mpos.x));
+		mouseDelta.y = float(windowSize.y/2 - float(mpos.y));
 		sf::Mouse::setPosition(sf::Vector2i(windowSize.x/2,windowSize.y/2), *mainWindow);
 	}
 }

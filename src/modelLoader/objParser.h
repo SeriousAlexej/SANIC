@@ -25,8 +25,9 @@ class ObjParser: public ObjParserBase
 	ObjParser(std::istream &in, std::vector<glm::vec3>* v,
               std::vector<glm::vec3>* n, std::vector<glm::vec2>* u,
               std::vector<Triangle>* t, std::ostream &out = std::cout)
-		: vertices(v), normals(n), uvcoords(u), maxV(0), maxN(0), maxT(0),
-		triangles(t), objectIsCorrect(true), d_scanner(in, out)
+		: vertices(v), normals(n), uvcoords(u), triangles(t), d_scanner(in, out),
+		objectIsCorrect(true),
+		maxV(0), maxN(0), maxT(0)
 		{
 		    if(v)
                 vertices->clear();
@@ -44,7 +45,7 @@ class ObjParser: public ObjParserBase
 		    if(result != 0) { objectIsCorrect = false; }
 		    if(vertices != NULL)
             {
-                if(!objectIsCorrect || (int)vertices->size() < maxV)
+                if(!objectIsCorrect || static_cast<int>(vertices->size()) < maxV)
                 {
                     vertices->clear();
                     objectIsCorrect = false;
@@ -52,7 +53,7 @@ class ObjParser: public ObjParserBase
             }
             if(normals != NULL)
             {
-                if(!objectIsCorrect || (int)normals->size() < maxN)
+                if(!objectIsCorrect || static_cast<int>(normals->size()) < maxN)
                 {
                     normals->clear();
                     objectIsCorrect = false;
@@ -60,7 +61,7 @@ class ObjParser: public ObjParserBase
             }
             if(uvcoords != NULL)
             {
-                if(!objectIsCorrect || (int)uvcoords->size() < maxT)
+                if(!objectIsCorrect || static_cast<int>(uvcoords->size()) < maxT)
                 {
                     uvcoords->clear();
                     objectIsCorrect = false;
@@ -92,15 +93,15 @@ class ObjParser: public ObjParserBase
             {
             if(triangles != NULL && vertexBuffer.size() == 3)
             {
-                maxV = std::max(maxV, (int)vertexBuffer[0][0]);
-                maxV = std::max(maxV, (int)vertexBuffer[1][0]);
-                maxV = std::max(maxV, (int)vertexBuffer[2][0]);
-                maxT = std::max(maxT, (int)vertexBuffer[0][1]);
-                maxT = std::max(maxT, (int)vertexBuffer[1][1]);
-                maxT = std::max(maxT, (int)vertexBuffer[2][1]);
-                maxN = std::max(maxN, (int)vertexBuffer[0][2]);
-                maxN = std::max(maxN, (int)vertexBuffer[1][2]);
-                maxN = std::max(maxN, (int)vertexBuffer[2][2]);
+                maxV = std::max(maxV, int(vertexBuffer[0][0]));
+                maxV = std::max(maxV, int(vertexBuffer[1][0]));
+                maxV = std::max(maxV, int(vertexBuffer[2][0]));
+                maxT = std::max(maxT, int(vertexBuffer[0][1]));
+                maxT = std::max(maxT, int(vertexBuffer[1][1]));
+                maxT = std::max(maxT, int(vertexBuffer[2][1]));
+                maxN = std::max(maxN, int(vertexBuffer[0][2]));
+                maxN = std::max(maxN, int(vertexBuffer[1][2]));
+                maxN = std::max(maxN, int(vertexBuffer[2][2]));
                 Triangle t;
                 t.vertex[0] = vertexBuffer[0];
                 t.vertex[1] = vertexBuffer[1];

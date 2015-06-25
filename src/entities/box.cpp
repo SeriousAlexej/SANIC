@@ -1,5 +1,7 @@
 #include "box.h"
 
+ADD_TO_INCUBATOR(Box);
+
 Box::Box()
 {
 	setClass("Box");

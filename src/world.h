@@ -26,7 +26,7 @@ public:
 
 	void	update();
 	void	updateEditor();
-	Entity*	createEntity(Entity* e);
+	Entity* createEntity(std::string entityName);
 	void	removeEntity(Entity* e);
 
 	RayCastInfo	castRay(glm::vec3 origin, glm::vec3 direction);
@@ -49,6 +49,10 @@ public:
 	EditorMode              edMode;
 
 	TwBar*					entitiesList;
+
+private:
+
+	Entity*	createEntity(Entity* e);
 };
 
 #endif

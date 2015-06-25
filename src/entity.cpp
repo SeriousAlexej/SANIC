@@ -18,7 +18,7 @@ STATE Entity::dummy(EntityEvent *ee, Entity* caller)
 
 	case EventCode_AutowaitCallback:
 		{
-			EventAutowaitCallback* eac = (EventAutowaitCallback*)ee;
+			EventAutowaitCallback* eac = dynamic_cast<EventAutowaitCallback*>(ee);
 			printf("autowait returned %d!\n", eac->index);
 			return;
 		}
@@ -49,7 +49,7 @@ STATE Entity::autowaitState(EntityEvent *ee, Entity *caller)
 
 void TW_CALL clearPointer(void *boolPtr)
 {
-    (*(bool*)boolPtr) = true;
+    (*static_cast<bool*>(boolPtr)) = true;
 }
 
 void Entity::registerPointers()
@@ -196,7 +196,7 @@ Entity::~Entity()
     for(auto &p : pointAtMe)
     {
         printf("Clearing pointer!\n");
-        (*p) = (Entity*)nullptr;
+        (*p) = nullptr;
     }
 
     pointers.clear();
@@ -228,13 +228,13 @@ void Entity::sendEvent(EntityEvent *ee)
 		//let's fix this by deleting duplicate touch events!
 		if(ee->eventCode == EventCode_Touch)
 		{
-			EventTouch* et = (EventTouch*)ee;
+			EventTouch* et = dynamic_cast<EventTouch*>(ee);
 			//for(int i=events.size()-1; i>=0; i--)
 			for(std::list<EntityEvent*>::iterator it=events.begin(); it != events.end(); ++it)
 			{
 				if((*it)->eventCode == EventCode_Touch)
 				{
-					EventTouch* ettest = (EventTouch*)(*it);
+					EventTouch* ettest = dynamic_cast<EventTouch*>(*it);
 					if(et->toucher == ettest->toucher)
 					{ //there is already that toucher event present!
 						delete et;
@@ -532,7 +532,7 @@ void Entity::editorUpdate()
             {
                 setParent(NULL);
             }
-            (*tp) = (Entity*)nullptr;
+            (*tp) = nullptr;
             pointerIndexPrevious = -1;
         }
     }
@@ -638,7 +638,7 @@ void Entity::editorSelect()
 
 EntityPointer* Entity::getTargetPointer()
 {
-    if(pointerIndex>=0 && pointerIndex<pointers.size())
+    if(pointerIndex>=0 && static_cast<unsigned>(pointerIndex)<pointers.size())
     {
         return &pointers[pointerIndex];
     }
@@ -692,7 +692,7 @@ void Entity::setupCollision(float mass)
 	if(body)
 		wldPHY->remBody(body);
 	body = wldPHY->addBody(mass, model); //model == NULL is handled iside the method
-	body->setOwner((void*)this);
+	body->setOwner(static_cast<void*>(this));
 }
 
 void Entity::setupCollision(float mass, float radius)
@@ -701,7 +701,7 @@ void Entity::setupCollision(float mass, float radius)
 	if(body)
 		wldPHY->remBody(body);
 	body = wldPHY->addBody(mass, radius);
-	body->setOwner((void*)this);
+	body->setOwner(static_cast<void*>(this));
 }
 
 void Entity::setupCollision(float mass, glm::vec3 halfExtents)
@@ -710,7 +710,7 @@ void Entity::setupCollision(float mass, glm::vec3 halfExtents)
 	if(body)
 		wldPHY->remBody(body);
 	body = wldPHY->addBody(mass, halfExtents);
-	body->setOwner((void*)this);
+	body->setOwner(static_cast<void*>(this));
 }
 /*
 rapidjson::Value Entity::Serialize ( rapidjson::Document& d )

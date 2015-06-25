@@ -5,6 +5,8 @@
 class Player : public Entity
 {
 public:
+    FROM_INCUBATOR(Player);
+
 	Player();
 	virtual ~Player();
 	virtual void	initialize();

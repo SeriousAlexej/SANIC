@@ -81,7 +81,7 @@ face_elements: face_element | face_elements face_element ;
 
 face_element: float { objectIsCorrect = false; } |
 	      float '/' '/' float { objectIsCorrect = false; } |
-	      float '/' float '/' float { if(!objectIsCorrect){return;} vertexBuffer.push_back(glm::uvec3((unsigned int)$1,(unsigned int)$3,(unsigned int)$5)); } ;
+	      float '/' float '/' float { if(!objectIsCorrect){return;} vertexBuffer.push_back(glm::uvec3(unsigned($1),unsigned($3),unsigned($5))); } ;
 
 smth_line: SMOOTH smth_value ;
 

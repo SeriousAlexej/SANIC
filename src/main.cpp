@@ -68,18 +68,18 @@ int main(int argc, char **argv)
 	World &world = *wld;
 	//Player* e = (Player*)world.createEntity((Entity*)(new Player()));
 	//SolidBody* floor = world.physics.addBody(0, glm::vec3(20,1,20));
-	ModelInstance* M = (ModelInstance*)world.graphics.createModel("./shaders/smooth.shader",
+	ModelInstance* M = world.graphics.createModel("./shaders/smooth.shader",
 											 "./models/sanic.obj",
 											 "./models/sanic.tga", "", "");
     M->playAnimation("walk");
     //Box* b1 = (Box*)world.createEntity((Entity*) new Box());
     //Box* b2 = (Box*)world.createEntity((Entity*) new Box());
     //Box* b3 = (Box*)world.createEntity((Entity*) new Box());
-    Decoration* dec1 = (Decoration*)world.createEntity((Entity*) new Decoration());
-    PointLight* pl1 = (PointLight*)world.createEntity((Entity*) new PointLight());
-    PointLight* pl2 = (PointLight*)world.createEntity((Entity*) new PointLight());
-    PointLight* pl3 = (PointLight*)world.createEntity((Entity*) new PointLight());
-    PointLight* pl4 = (PointLight*)world.createEntity((Entity*) new PointLight());
+    world.createEntity("Decoration");
+    world.createEntity("PointLight");
+    world.createEntity("PointLight");
+    world.createEntity("PointLight");
+    world.createEntity("PointLight");
 
 	//test
 	//e->setupModel("./shaders/smooth.vsh", "./shaders/smooth.fsh",
@@ -290,10 +290,6 @@ int main(int argc, char **argv)
 	TwTerminate();
 
 	delete wld;
-
-    #ifdef SANIC_DEBUG
-	DumpUnfreed();
-    #endif // SANIC_DEBUG
 
 	return EXIT_SUCCESS;
 }

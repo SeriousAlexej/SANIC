@@ -1,4 +1,5 @@
 #include "world.h"
+#include "entities/incubator.h"
 
 World::World(sf::Window* w)
 {
@@ -18,9 +19,13 @@ World::~World()
 {
 	for(int i=entities.size()-1; i>=0; i--)
 	{
-		delete entities[i];
+		//delete entities[i];
+        void* ptr = (dynamic_cast<FromIncubator*>(entities[i]))->ptr;
+        entities[i]->~Entity();
+        ::operator delete(ptr);
 	}
 	entities.clear();
+	Incubator::deleteInstance();
 	delete input;
 }
 
@@ -40,7 +45,7 @@ void World::update()
 	{
 		physics.render(graphics.getCamera());
 		updateEditor();
-		if(selectedEntity != NULL)
+		if(selectedEntity != nullptr)
 		{
             selectedEntity->editorUpdate();
 		}
@@ -176,8 +181,8 @@ void World::updateEditor()
             glm::mat4 camMat = graphics.getCamera()->getProjectionMatrix() * graphics.getCamera()->getViewMatrix();
             glm::vec4 entPos = glm::vec4(selectedEntity->position.x, selectedEntity->position.y, selectedEntity->position.z, 1.0f);
             entPos =  camMat * entPos; entPos/=entPos.w;
-            mposOffsetMoving = glm::vec2(entPos.x - ((float)mpos.x/(float)input->windowSize.x)*2.0f + 1.0f,
-                                         entPos.y - ((float)mpos.y/(float)input->windowSize.y)*2.0f + 1.0f);
+            mposOffsetMoving = glm::vec2(entPos.x - (float(mpos.x)/float(input->windowSize.x))*2.0f + 1.0f,
+                                         entPos.y - (float(mpos.y)/float(input->windowSize.y))*2.0f + 1.0f);
 		}
 
 		if(edMode == Moving)
@@ -188,8 +193,8 @@ void World::updateEditor()
             entPos =  camMat * entPos;
             sf::Vector2i mpos = sf::Mouse::getPosition(*input->mainWindow);
             mpos.y = input->windowSize.y - mpos.y;
-            glm::vec4 endPosNDC = glm::vec4( ((float)mpos.x/(float)input->windowSize.x)*2.0f - 1.0f + mposOffsetMoving.x,
-                                             ((float)mpos.y/(float)input->windowSize.y)*2.0f - 1.0f + mposOffsetMoving.y,
+            glm::vec4 endPosNDC = glm::vec4( (float(mpos.x)/float(input->windowSize.x))*2.0f - 1.0f + mposOffsetMoving.x,
+                                             (float(mpos.y)/float(input->windowSize.y))*2.0f - 1.0f + mposOffsetMoving.y,
                                              entPos.z/entPos.w,
                                              1.0f);
             glm::vec4 endPosWLD = glm::inverse(camMat) * endPosNDC; endPosWLD/=endPosWLD.w;
@@ -231,10 +236,15 @@ void World::updateEditor()
 	}
 }
 
+Entity* World::createEntity(std::string entityName)
+{
+    return createEntity(static_cast<Entity*>(Incubator::Create(entityName)));
+}
+
 Entity* World::createEntity(Entity* e)
 {
 	//can't add already added or null entity
-	assert(e != NULL && e->wldGFX == NULL && e->wldPHY == NULL && e->wld == NULL);
+	assert(e != nullptr && e->wldGFX == nullptr && e->wldPHY == nullptr && e->wld == nullptr);
 	e->wldGFX = &graphics;
 	e->wldPHY = &physics;
 	e->wld = this;
@@ -251,7 +261,10 @@ void World::removeEntity(Entity *e)
 		{
 			if(entities[i]==e)
 			{
-				delete e;
+				//delete e;
+				void* ptr = (dynamic_cast<FromIncubator*>(e))->ptr;
+				e->~Entity();
+				::operator delete(ptr);
 				entities.erase(entities.begin() + i);
 				return;
 			}
@@ -281,9 +294,9 @@ RayCastInfo World::castRay(glm::vec3 origin, glm::vec3 direction)
 		RayCallback
 		);
 
-	if(RayCallback.hasHit() && RayCallback.m_collisionObject->getUserPointer() != NULL)
+	if(RayCallback.hasHit() && RayCallback.m_collisionObject->getUserPointer() != nullptr)
 	{
-		rci.enHit = (Entity*)RayCallback.m_collisionObject->getUserPointer();
+		rci.enHit = static_cast<Entity*>(RayCallback.m_collisionObject->getUserPointer());
 		btVector3 &hw = RayCallback.m_hitPointWorld;
 		btVector3 &nw = RayCallback.m_hitNormalWorld;
 		rci.normHit = glm::vec3(nw.getX(), nw.getY(), nw.getZ());
@@ -307,14 +320,14 @@ RayCastInfo World::castRayScreen(bool fromCenter)
 	int mouseX = mp.x, mouseY = mp.y;
 
 	glm::vec4 lRayStart_NDC(
-		((float)mouseX/(float)screenWidth  - 0.5f) * 2.0f,
-		((float)mouseY/(float)screenHeight - 0.5f) * 2.0f,
+		(float(mouseX)/float(screenWidth)  - 0.5f) * 2.0f,
+		(float(mouseY)/float(screenHeight) - 0.5f) * 2.0f,
 		-1.0,
 		1.0f
 		);
 	glm::vec4 lRayEnd_NDC(
-		((float)mouseX/(float)screenWidth  - 0.5f) * 2.0f,
-		((float)mouseY/(float)screenHeight - 0.5f) * 2.0f,
+		(float(mouseX)/float(screenWidth)  - 0.5f) * 2.0f,
+		(float(mouseY)/float(screenHeight) - 0.5f) * 2.0f,
 		1.0,
 		1.0f
 		);

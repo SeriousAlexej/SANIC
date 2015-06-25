@@ -5,6 +5,8 @@
 class Box : public Entity
 {
 public:
+    FROM_INCUBATOR(Box);
+
 	Box();
 	virtual ~Box();
 	virtual void	initialize();

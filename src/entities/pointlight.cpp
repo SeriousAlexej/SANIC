@@ -1,9 +1,11 @@
 #include "pointlight.h"
 #include "../dialogs/tinyfiledialogs.h"
 
+ADD_TO_INCUBATOR(PointLight);
+
 static void TW_CALL pickColor(void *colorPtr)
 {
-    glm::vec3 &col = *(glm::vec3*)colorPtr;
+    glm::vec3 &col = *static_cast<glm::vec3*>(colorPtr);
     unsigned char startColor[3];
     startColor[0] = col.x*255;
     startColor[1] = col.y*255;

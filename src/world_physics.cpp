@@ -1,19 +1,20 @@
 #include "world_physics.h"
+#include "entity.h"
 
 extern ContactProcessedCallback		gContactProcessedCallback;
 
 static bool CustomProcessedCallback(btManifoldPoint& cp, void* body0,void* body1)
 {
-	btRigidBody* rb0 = (btRigidBody*)(body0);
-	btRigidBody* rb1 = (btRigidBody*)(body1);
+	btRigidBody* rb0 = static_cast<btRigidBody*>(body0);
+	btRigidBody* rb1 = static_cast<btRigidBody*>(body1);
 
 	void* up0 = rb0->getUserPointer();
 	void* up1 = rb1->getUserPointer();
 
 	if(up0 != NULL && up1 != NULL)
 	{
-		Touchable* t0 = (Touchable*)(up0);
-		Touchable* t1 = (Touchable*)(up1);
+		Entity* t0 = static_cast<Entity*>(up0);
+		Entity* t1 = static_cast<Entity*>(up1);
 		t0->touch(up1);
 		t1->touch(up0);
 	}

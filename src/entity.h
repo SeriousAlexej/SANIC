@@ -15,6 +15,7 @@
 #include "world.h"
 #include "properties.h"
 #include "entitypointer.h"
+#include "entities/incubator.h"
 
 class Entity;
 class EntityPointer;
@@ -104,7 +105,7 @@ private:
 	bool						holdEx;
 };
 
-class Entity : private Touchable, public Unique, public FamilyTree, public Serial
+class Entity : public Touchable, public Unique, public FamilyTree, public Serial, protected FromIncubator
 {
 public:
 

@@ -106,7 +106,7 @@ void Camera::extractFrustum()
 	// Normalize it
 	for(int i=0; i<6; ++i)
 	{
-		t = (float) sqrt( frustum[i][0] * frustum[i][0] + frustum[i][1] * frustum[i][1] + frustum[i][2] * frustum[i][2] );
+		t = sqrtf( frustum[i][0] * frustum[i][0] + frustum[i][1] * frustum[i][1] + frustum[i][2] * frustum[i][2] );
 		frustum[i][0] /= t;
 		frustum[i][1] /= t;
 		frustum[i][2] /= t;

@@ -91,7 +91,7 @@ struct PackedVertex{
 	glm::vec2 uv;
 	glm::vec3 normal;
 	bool operator<(const PackedVertex that) const{
-		return memcmp((void*)this, (void*)&that, sizeof(PackedVertex))>0;
+		return memcmp((this), (&that), sizeof(PackedVertex))>0;
 	};
 };
 
@@ -145,7 +145,7 @@ static void indexVBO(
 			out_normals .push_back( in_normals[i]);
 			out_tangents .push_back( in_tangents[i]);
 			out_bitangents .push_back( in_bitangents[i]);
-			int newindex = (int)out_vertices.size() - 1;
+			int newindex = int(out_vertices.size()) - 1;
 			out_indices .push_back( newindex );
 			VertexToOutIndex[ packed ] = newindex;
 		}
@@ -309,7 +309,7 @@ bool Mesh::loadModel(std::string path)
 		mostFront       = std::max(tvertices[i].z, mostFront);
 		mostBack        = std::min(tvertices[i].z, mostBack);
 	}
-	boundingSphereCenter /= (float)sz; //center is the average of all vx's positions
+	boundingSphereCenter /= float(sz); //center is the average of all vx's positions
 	boundingBoxHalfSizes = glm::vec3(mostRight - mostLeft, mostUp - mostDown, mostFront - mostBack) * 0.5f;
 	boundingBoxCenter = glm::vec3(mostRight + mostLeft, mostUp + mostDown, mostFront + mostBack) * 0.5f;
 	for(int i=0; i<sz; i++)
@@ -375,7 +375,7 @@ bool Mesh::loadModel(std::string path)
 		{
 			if(frames[0].vertices[i] == tvertices[j])
 			{
-				origIndices.push_back((unsigned)j);
+				origIndices.push_back(unsigned(j));
 				break;
 			}
 		}
@@ -389,7 +389,7 @@ bool Mesh::loadModel(std::string path)
 	if(DirectoryExists(animDir))
 	{
 		int vertSize = frames[0].vertices.size();
-		assert(vertSize == (int)origIndices.size());
+		assert(vertSize == int(origIndices.size()));
 
 		std::vector<std::string> animDirs = GetFilesOfFormat(animDir);
 		{
@@ -521,7 +521,7 @@ void Mesh::render(unsigned cf, unsigned nf)
 		   GL_FLOAT,           // type
 		   GL_FALSE,           // normalized?
 		   0,                  // stride
-		   (void*)0            // array buffer offset
+		   nullptr            // array buffer offset
 		   );
 
 		// 5th attribute buffer : vertices of next frame for interpolation
@@ -532,7 +532,7 @@ void Mesh::render(unsigned cf, unsigned nf)
 		   GL_FLOAT,           // type
 		   GL_FALSE,           // normalized?
 		   0,                  // stride
-		   (void*)0            // array buffer offset
+		   nullptr            // array buffer offset
 		   );
 
 		// 2nd attribute buffer : uv coords
@@ -543,7 +543,7 @@ void Mesh::render(unsigned cf, unsigned nf)
 			GL_FLOAT,						// type
 			GL_FALSE,						// normalized?
 			0,								// stride
-			(void*)0						// array buffer offset
+			nullptr						// array buffer offset
 			);
 
 		// 3rd attribute buffer : normals
@@ -554,7 +554,7 @@ void Mesh::render(unsigned cf, unsigned nf)
 			GL_FLOAT,                         // type
 			GL_FALSE,                         // normalized?
 			0,                                // stride
-			(void*)0                          // array buffer offset
+			nullptr                          // array buffer offset
 			);
 
 		// 4th attribute buffer : tangents
@@ -565,7 +565,7 @@ void Mesh::render(unsigned cf, unsigned nf)
 			GL_FLOAT,                         // type
 			GL_FALSE,                         // normalized?
 			0,                                // stride
-			(void*)0                          // array buffer offset
+			nullptr                          // array buffer offset
 			);
 
 		// 5th attribute buffer : bitangents
@@ -576,7 +576,7 @@ void Mesh::render(unsigned cf, unsigned nf)
 			GL_FLOAT,                         // type
 			GL_FALSE,                         // normalized?
 			0,                                // stride
-			(void*)0                          // array buffer offset
+			nullptr                          // array buffer offset
 			);
 
 		// Draw
@@ -586,7 +586,7 @@ void Mesh::render(unsigned cf, unsigned nf)
 			GL_TRIANGLES,      // mode
 			(isOk?indicesSize:defINSize),//indices.size(),    // count
 			GL_UNSIGNED_INT,   // type
-			(void*)0           // element array buffer offset
+			nullptr           // element array buffer offset
 			);
 /*
 		glDisableVertexAttribArray(0);

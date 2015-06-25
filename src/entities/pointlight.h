@@ -6,6 +6,8 @@
 class PointLight : public Entity
 {
 public:
+    FROM_INCUBATOR(PointLight);
+
     PointLight();
     virtual ~PointLight();
 	virtual void	initialize();

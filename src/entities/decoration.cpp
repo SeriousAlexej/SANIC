@@ -1,6 +1,8 @@
 #include "decoration.h"
 #include "../dialogs/tinyfiledialogs.h"
 
+ADD_TO_INCUBATOR(Decoration);
+
 extern std::string g_WorkingDir;
 
 static std::string relativePath(std::string absPath)
@@ -19,7 +21,7 @@ static std::string relativePath(std::string absPath)
 
 static void TW_CALL pickShader(void *stringPtr)
 {
-    std::string &path = *(std::string*)stringPtr;
+    std::string &path = *static_cast<std::string*>(stringPtr);
     const char* filter[] = { "*.shader" };
     const char * result = tinyfd_openFileDialog("Select shader","./",1,filter,0);
     if(result) {
@@ -28,7 +30,7 @@ static void TW_CALL pickShader(void *stringPtr)
 }
 static void TW_CALL pickTexture(void *stringPtr)
 {
-    std::string &path = *(std::string*)stringPtr;
+    std::string &path = *static_cast<std::string*>(stringPtr);
     const char* filter[] = { "*.jpg", "*.png", "*.tga" };
     const char * result = tinyfd_openFileDialog("Select Texture","./",3,filter,0);
     if(result) {
@@ -37,7 +39,7 @@ static void TW_CALL pickTexture(void *stringPtr)
 }
 static void TW_CALL pickModel(void *stringPtr)
 {
-    std::string &path = *(std::string*)stringPtr;
+    std::string &path = *static_cast<std::string*>(stringPtr);
     const char* filter[] = { "*.obj" };
     const char * result = tinyfd_openFileDialog("Select Model","./",1,filter,0);
     if(result) {
@@ -47,7 +49,7 @@ static void TW_CALL pickModel(void *stringPtr)
 
 void TW_CALL updateParameters(void *decorPtr)
 {
-    Decoration &decor = *(Decoration*)decorPtr;
+    Decoration &decor = *static_cast<Decoration*>(decorPtr);
     decor.updateParamsInternal();
 }
 

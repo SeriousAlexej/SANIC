@@ -328,14 +328,14 @@ void* SolidBody::getOwner()
 {
 	if(rigidBody)
 	{
-		if(rigidBody->getUserPointer() != NULL)
+		if(rigidBody->getUserPointer() != nullptr)
 			return rigidBody->getUserPointer();
 	} else
 	if(compoundShape)
 	{
 		return compoundShape->getUserPointer();
 	}
-	return NULL;
+	return nullptr;
 }
 
 void SolidBody::enableTouching()

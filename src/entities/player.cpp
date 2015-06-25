@@ -1,6 +1,8 @@
 #include <glm/gtx/vector_angle.hpp>
 #include "player.h"
 
+ADD_TO_INCUBATOR(Player);
+
 Player::Player()
 {
 	setClass("Player");
