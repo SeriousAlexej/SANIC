@@ -1,4 +1,5 @@
 #include "entitypointer.h"
+#include <rapidjson/document.h>
 
 EntityPointer::EntityPointer()
 {
@@ -80,4 +81,20 @@ EntityPointer& EntityPointer::operator=(Entity* other)
         enID = -1;
     }
     return *this;
+}
+
+rapidjson::Value EntityPointer::Serialize(rapidjson::Document& d)
+{
+	using JsonValue = rapidjson::Value;
+	JsonValue val;
+	val.SetObject();
+
+	JsonValue name, enid;
+	name.SetString(Name().c_str(), Name().length());
+	enid.SetInt(enID);
+
+	val.AddMember("name", name, d.GetAllocator());
+	val.AddMember("enID", enid, d.GetAllocator());
+
+	return val;
 }

@@ -21,8 +21,8 @@ public:
     EntityPointer& operator=(Entity* other);
 
 
-    virtual void Deserialize(istream& ostr) {}
-    virtual void Serialize(ostream& istr) {}
+    virtual void Deserialize(rapidjson::Document& d) {}
+    virtual rapidjson::Value Serialize(rapidjson::Document& d);
 private:
     Entity*       penTarget;
     int           enID;

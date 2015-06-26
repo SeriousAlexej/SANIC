@@ -1,12 +1,15 @@
 #ifndef PROPERTIES
 #define PROPERTIES
 
+#define if_type(X) if(typeid(X).hash_code() ==  m_tid)
+
 #include <iostream>
 #include <string>
 #include <map>
 #include <exception>
 #include <typeindex>
 #include <thread>
+#include <rapidjson/document.h>
 
 using namespace std;
 
@@ -14,8 +17,8 @@ typedef float quatfirst_t;
 
 class Serial {
 public:
-    virtual void Deserialize(istream& ostr) = 0;
-    virtual void Serialize(ostream& istr) = 0;
+    virtual void Deserialize(rapidjson::Document& d) = 0;
+    virtual rapidjson::Value Serialize(rapidjson::Document& d) = 0;
 
     virtual ~Serial() {}
 };
@@ -43,12 +46,9 @@ public:
 
     template<class T>
     static Property* create(T* val);
-
-    template<class T>
-    void Serialize(ostream& o);
-
-    template<class T>
-    void Deserialize(istream& o);
+    
+    rapidjson::Value Serialize(rapidjson::Document& d);
+                void Deserialize(rapidjson::Document& d);
 
     template<class T>
     T& ref();
@@ -86,37 +86,6 @@ void Property::ChangeLocation(T* val)
     if(typeid(T).hash_code() != m_tid) throw bad_typeid();
     this->m_data = val;
 }
-
-template<class T>
-void Property::Serialize(ostream &o)
-{
-    if(typeid(T).hash_code() != m_tid) throw bad_typeid();
-    T* t_data = static_cast<T*>(m_data);
-    Serial* ser;
-    try {
-        ser = dynamic_cast<Serial*>(t_data);
-        ser->Serialize(o);
-    }
-    catch(exception& e) {
-        cout << "Property is not serial!" << endl;
-    }
-}
-
-template<class T>
-void Property::Deserialize(istream &o)
-{
-    if(typeid(T).hash_code() != m_tid) throw bad_typeid();
-    T* t_data = static_cast<T*>(m_data);
-    Serial* ser;
-    try {
-        ser = dynamic_cast<Serial*>(t_data);
-        ser->Deserialize(o);
-    }
-    catch(exception& e) {
-        cout << "Property is not serial!" << endl;
-    }
-}
-
 
 template<class T>
 T& Property::ref()

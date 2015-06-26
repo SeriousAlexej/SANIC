@@ -712,7 +712,7 @@ void Entity::setupCollision(float mass, glm::vec3 halfExtents)
 	body = wldPHY->addBody(mass, halfExtents);
 	body->setOwner(static_cast<void*>(this));
 }
-/*
+
 rapidjson::Value Entity::Serialize ( rapidjson::Document& d )
 {
     using namespace rapidjson;
@@ -722,12 +722,12 @@ rapidjson::Value Entity::Serialize ( rapidjson::Document& d )
         Property* p = kv.second;
         std::string s = kv.first;
         Value name;
-        name.SetString(s, s.length());
+        name.SetString(s.c_str(), s.length());
         entity_value.AddMember(name,  p->Serialize(d), d.GetAllocator());
     }
     return entity_value;
 }
-*/
+
 LiveEntity::LiveEntity()
 {
 	setClass("LiveEntity");

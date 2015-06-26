@@ -202,9 +202,8 @@ protected:
     template<class T>
     T&                          getProperty(std::string);
 
-    virtual void Deserialize(istream& ostr) {}
-    virtual void Serialize(ostream& istr) {}
-    //virtual rapidjson::Value Serialize(rapidjson::Document& d);
+    virtual void Deserialize(rapidjson::Document& d) {}
+    virtual rapidjson::Value Serialize(rapidjson::Document& d);
 
     virtual void    addProperties();
     vector<vector<DrawableElement>> guiElements;

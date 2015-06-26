@@ -7,7 +7,6 @@ find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(SFML COMPONENTS system window graphics REQUIRED)
-find_package(AntTweakBar REQUIRED)
 
 add_library(lBulletDynamics SHARED IMPORTED)
 set_target_properties(lBulletDynamics PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/bullet/src/BulletDynamics/libBulletDynamics.a)
@@ -18,13 +17,17 @@ set_target_properties(lBulletCollision PROPERTIES IMPORTED_LOCATION ${CMAKE_SOUR
 add_library(lLinearMath SHARED IMPORTED)
 set_target_properties(lLinearMath PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/bullet/src/LinearMath/libLinearMath.a)
 
+add_library(lAntTweakBar SHARED IMPORTED)
+set_target_properties(lAntTweakBar PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/deps/lib/libAntTweakBar.so)
+
 include_directories(${CMAKE_SOURCE_DIR}/bullet/src/)
 include_directories(${Boost_INCLUDE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/deps/include/)
 
 file(GLOB_RECURSE SANIC_sources ./src/*.cpp ./src/*.c ./src/*.cc)
 
 add_executable(SANIC ${SANIC_sources})
 
-target_link_libraries(SANIC lBulletDynamics lBulletCollision lLinearMath ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${Boost_LIBRARIES} ${SFML_LIBRARIES} ${ANT_TWEAK_BAR_LIBRARY})
+target_link_libraries(SANIC lBulletDynamics lBulletCollision lLinearMath lAntTweakBar ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${Boost_LIBRARIES} ${SFML_LIBRARIES})
 
 set_property(TARGET SANIC PROPERTY CXX_STANDARD 11)
