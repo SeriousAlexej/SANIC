@@ -34,7 +34,7 @@ void PointLight::addProperties()
 {
     Entity::addProperties();
     registerProperties(
-                "Diffuse Color",    &(lightSource->colorDiffuse[0]),
+                "Diffuse Color",    &(lightSource->colorDiffuse),
                 "FallOff",          &(lightSource->falloff),
                 "HotSpot",          &(lightSource->hotspot),
                 "Intensity",        &(lightSource->intensity)

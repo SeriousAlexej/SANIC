@@ -128,6 +128,9 @@ public:
 	void					switchToEditorModel();
 	void					switchToModel();
 
+    virtual void Deserialize(rapidjson::Value& d);
+    virtual rapidjson::Value Serialize(rapidjson::Document& d);
+
     string getName();
 	const SolidBody*		getBody() const { return body; }//for moving purposes
 	const ModelInstance*	getModelInstance() const { return model; }//for anim playing
@@ -201,9 +204,6 @@ protected:
 
     template<class T>
     T&                          getProperty(std::string);
-
-    virtual void Deserialize(rapidjson::Document& d) {}
-    virtual rapidjson::Value Serialize(rapidjson::Document& d);
 
     virtual void    addProperties();
     vector<vector<DrawableElement>> guiElements;

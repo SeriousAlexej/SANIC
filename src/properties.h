@@ -17,13 +17,13 @@ typedef float quatfirst_t;
 
 class Serial {
 public:
-    virtual void Deserialize(rapidjson::Document& d) = 0;
+    virtual void Deserialize(rapidjson::Value& d) = 0;
     virtual rapidjson::Value Serialize(rapidjson::Document& d) = 0;
 
     virtual ~Serial() {}
 };
 
-class Property {
+class Property : Serial {
 private:
 
 public:
@@ -48,7 +48,7 @@ public:
     static Property* create(T* val);
     
     rapidjson::Value Serialize(rapidjson::Document& d);
-                void Deserialize(rapidjson::Document& d);
+                void Deserialize(rapidjson::Value& d);
 
     template<class T>
     T& ref();

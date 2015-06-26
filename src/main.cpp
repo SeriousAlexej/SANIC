@@ -75,6 +75,7 @@ int main(int argc, char **argv)
     //Box* b1 = (Box*)world.createEntity((Entity*) new Box());
     //Box* b2 = (Box*)world.createEntity((Entity*) new Box());
     //Box* b3 = (Box*)world.createEntity((Entity*) new Box());
+
     world.createEntity("Decoration");
     world.createEntity("PointLight");
     world.createEntity("PointLight");

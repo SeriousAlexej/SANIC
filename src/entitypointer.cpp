@@ -98,3 +98,11 @@ rapidjson::Value EntityPointer::Serialize(rapidjson::Document& d)
 
 	return val;
 }
+
+void EntityPointer::Deserialize(rapidjson::Value& d)
+{
+	using JsonValue = rapidjson::Value;
+	JsonValue& val = d;
+	name = val["name"].GetString();
+	enID = val["enID"].GetInt();
+}

@@ -1,5 +1,6 @@
 #include "entity.h"
 #include "quaternion_utils.h"
+#include <rapidjson/writer.h>
 
 STATE Entity::dummy(EntityEvent *ee, Entity* caller)
 {
@@ -725,7 +726,22 @@ rapidjson::Value Entity::Serialize ( rapidjson::Document& d )
         name.SetString(s.c_str(), s.length());
         entity_value.AddMember(name,  p->Serialize(d), d.GetAllocator());
     }
+    StringBuffer str;
+    Writer<StringBuffer> writer(str);
+    entity_value.Accept(writer);
+    std::cout << str.GetString() << std::endl;
     return entity_value;
+}
+
+void Entity::Deserialize(rapidjson::Value& d)
+{
+	using JsonValue = rapidjson::Value;
+	JsonValue& val = d;
+	for(auto it = d.MemberBegin(); it != d.MemberEnd(); ++it)
+	{
+		string name = it->name.GetString();
+		properties[name]->Deserialize(it->value);
+	}
 }
 
 LiveEntity::LiveEntity()
