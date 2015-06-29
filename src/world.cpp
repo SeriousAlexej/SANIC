@@ -135,8 +135,9 @@ void World::updateEditor()
                 if(ep->Name() == "Parent")
                 {
                     selectedEntity->setParent(ri.enHit);
+                } else {
+                    (*ep) = ri.enHit;
                 }
-                (*ep) = ri.enHit;
                 selectedEntity->pointerIndexPrevious = -1; //update target info string
             }
         }

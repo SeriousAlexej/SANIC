@@ -469,6 +469,14 @@ bool Entity::childrenContain(Entity* e) const
 
 void Entity::setParent(Entity* p)
 {
+    for(auto &pt : pointers)
+    {
+        if(pt.Name() == "Parent")
+        {
+            pt = p;
+            break;
+        }
+    }
     if(p == this || p == parent || childrenContain(p)) { return; }
     if(parent)
     for(int i=parent->children.size()-1; i>=0; i--)
