@@ -1,10 +1,14 @@
 #include "world.h"
 #include "entities/incubator.h"
+#include <rapidjson/document.h>
+#include <rapidjson/filewritestream.h>
+#include <rapidjson/filereadstream.h>
+#include <rapidjson/writer.h>
 
 World::World(sf::Window* w)
 {
 	editorFlySpeed = 3.0f;
-	input = new InputHandler(w);
+	input = new InputHandler(w); // TODO: move this beyond
 	edMode = Idle;
 	selectedEntity = NULL;
 
@@ -342,4 +346,51 @@ RayCastInfo World::castRayScreen(bool fromCenter)
 	glm::vec3 lRayOrigin_world = glm::vec3(lRayStart_world.x, lRayStart_world.y, lRayStart_world.z);
 
 	return castRay(lRayOrigin_world, lRayDir_world);
+}
+
+void World::Save(const string &filename)
+{
+    FILE* fp = fopen(filename.c_str(), "w");
+    rapidjson::Document doc;
+    rapidjson::Value out;
+    out.SetArray();
+    for(auto en : entities)
+    {
+        Entity& penEntity = *en;
+        rapidjson::Value val = penEntity.Serialize(doc);
+
+        rapidjson::Value classname;
+        std::string strClass = penEntity.getClass();
+        classname.SetString(strClass.c_str(), strClass.length(), doc.GetAllocator());
+        val.AddMember("class", classname, doc.GetAllocator());
+
+        rapidjson::Value id;
+        id.SetInt(penEntity.getMultipass());
+        val.AddMember("id", id, doc.GetAllocator());
+
+        out.PushBack(val, doc.GetAllocator());
+    }
+    char writeBuffer[65536];
+    rapidjson::FileWriteStream os(fp, writeBuffer, sizeof(writeBuffer));
+    rapidjson::Writer<rapidjson::FileWriteStream> writer(os);
+    out.Accept(writer);
+    fclose(fp);
+}
+
+void World::Love(const string &filename)
+{
+    FILE* fp = fopen(filename.c_str(), "r");
+    char readBuffer[65536];
+    rapidjson::Document doc;
+    rapidjson::FileReadStream str(fp, readBuffer, sizeof(readBuffer));
+
+    doc.ParseStream(str);
+    for(auto it = doc.Begin(); it != doc.End(); ++it)
+    {
+        std::string classname = (*it)["class"].GetString();
+        Entity* pen = createEntity(classname);
+        pen->Deserialize(*it);
+    }
+
+    fclose(fp);
 }

@@ -34,6 +34,9 @@ public:
 
 	InputHandler *getInputHandler() const { return input; }
 
+    void Save(const std::string& filename);
+    void Love(const std::string& filename); // Lyubov porojdaet mir
+
 //private:
 	InputHandler*			input;
 	std::vector<Entity*>	entities;

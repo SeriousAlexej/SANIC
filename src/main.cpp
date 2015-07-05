@@ -6,6 +6,7 @@
 #include <SFML/Graphics.hpp>
 #include <AntTweakBar.h>
 #include <boost/filesystem.hpp>
+#include <rapidjson/writer.h>
 
 #include "world.h"
 #include "./entities/player.h"
@@ -66,8 +67,8 @@ int main(int argc, char **argv)
 
     World* wld = new World(&window);
 	World &world = *wld;
-	//Player* e = (Player*)world.createEntity((Entity*)(new Player()));
-	//SolidBody* floor = world.physics.addBody(0, glm::vec3(20,1,20));
+    //Player* e = (Player*)world.createEntity((Entity*)(new Player()));
+    //SolidBody* floor = world.physics.addBody(0, glm::vec3(20,1,20));
 	ModelInstance* M = world.graphics.createModel("./shaders/smooth.shader",
 											 "./models/sanic.obj",
 											 "./models/sanic.tga", "", "");
@@ -76,76 +77,80 @@ int main(int argc, char **argv)
     //Box* b2 = (Box*)world.createEntity((Entity*) new Box());
     //Box* b3 = (Box*)world.createEntity((Entity*) new Box());
 
-    world.createEntity("Decoration");
-    world.createEntity("PointLight");
+    auto d = world.createEntity("Decoration");
+    auto pl = world.createEntity("PointLight");
     world.createEntity("PointLight");
     world.createEntity("PointLight");
     world.createEntity("PointLight");
 
-	//test
-	//e->setupModel("./shaders/smooth.vsh", "./shaders/smooth.fsh",
-	//										 "./models/sanic.obj",
-	//										 "./models/sanic.tga", "./models/normal.jpg");
+    pl->setParent(d);
+
+    world.Save("/home/nick/SANIC_WORLD_TEST.txt");
+
+    //test
+    //e->setupModel("./shaders/smooth.vsh", "./shaders/smooth.fsh",
+    //										 "./models/sanic.obj",
+    //										 "./models/sanic.tga", "./models/normal.jpg");
 
 //	WorldGraphics worldGFX;
 //	WorldPhysics worldPHY;
 
-	//ModelInstance* mi;
-	/* = worldGFX.createModel("./shaders/smooth.vsh", "./shaders/smooth.fsh",
-											 "./models/test/test.obj",
-											 "./models/test/test_CM.png", "./models/test/test_NM.png");
-	mi->setPosition(glm::vec3(2,0,0));
-	mi = worldGFX.createModel("./shaders/normal.vsh", "./shaders/normal.fsh",
-											 "./models/test/test.obj",
-											 "./models/test/test_CM.png", "./models/test/test_NM.png");
-	mi->setPosition(glm::vec3(0,0,2));
-	*/
-	/*
-	mi = worldGFX.createModel("./shaders/smooth.vsh", "./shaders/smooth.fsh",
-											 "./models/sanic.obj",
-											 "./models/sanic.tga", "./models/normal.jpg");
-	mi->setPosition(glm::vec3(-2,0,0));
-	mi = worldGFX.createModel("./shaders/normal.vsh", "./shaders/normal.fsh",
-											 "./models/sanic.obj",
-											 "./models/sanic.tga", "./models/normal.jpg");
-	mi->playAnimation("walk");
-	mi->setPosition(glm::vec3(0,0,-2));
-	SolidBody* floor = worldPHY.addBody(0, glm::vec3(20,1,20));
-	floor->setPosition(glm::vec3(0,-1,0));
-	SolidBody* cube = worldPHY.addBody(0, glm::vec3(3, 1, 2));
-	//cube->setPosition(glm::vec3(0,1,5));
-	SolidBody* sphere = worldPHY.addBody(20, 1.0f);
+    //ModelInstance* mi;
+    /* = worldGFX.createModel("./shaders/smooth.vsh", "./shaders/smooth.fsh",
+                                             "./models/test/test.obj",
+                                             "./models/test/test_CM.png", "./models/test/test_NM.png");
+    mi->setPosition(glm::vec3(2,0,0));
+    mi = worldGFX.createModel("./shaders/normal.vsh", "./shaders/normal.fsh",
+                                             "./models/test/test.obj",
+                                             "./models/test/test_CM.png", "./models/test/test_NM.png");
+    mi->setPosition(glm::vec3(0,0,2));
+    */
+    /*
+    mi = worldGFX.createModel("./shaders/smooth.vsh", "./shaders/smooth.fsh",
+                                             "./models/sanic.obj",
+                                             "./models/sanic.tga", "./models/normal.jpg");
+    mi->setPosition(glm::vec3(-2,0,0));
+    mi = worldGFX.createModel("./shaders/normal.vsh", "./shaders/normal.fsh",
+                                             "./models/sanic.obj",
+                                             "./models/sanic.tga", "./models/normal.jpg");
+    mi->playAnimation("walk");
+    mi->setPosition(glm::vec3(0,0,-2));
+    SolidBody* floor = worldPHY.addBody(0, glm::vec3(20,1,20));
+    floor->setPosition(glm::vec3(0,-1,0));
+    SolidBody* cube = worldPHY.addBody(0, glm::vec3(3, 1, 2));
+    //cube->setPosition(glm::vec3(0,1,5));
+    SolidBody* sphere = worldPHY.addBody(20, 1.0f);
 
-	ModelInstance* axis = worldGFX.createModel("./shaders/fullbright.vsh", "./shaders/fullbright.fsh",
-											 "",
-											 "./models/uv_checker.jpg", "");
+    ModelInstance* axis = worldGFX.createModel("./shaders/fullbright.vsh", "./shaders/fullbright.fsh",
+                                             "",
+                                             "./models/uv_checker.jpg", "");
 
-	Light* light = worldGFX.createLight();
-	light->setPosition(glm::vec3(0,3,-2));
-	light->setDiffuseColor(glm::vec3(1,1,1));
-	light->setAmbientColor(glm::vec3(0.3,0.3,0.3));
-	light->setFallOff(5.0f);
-	light->setHotSpot(4.0f);
+    Light* light = worldGFX.createLight();
+    light->setPosition(glm::vec3(0,3,-2));
+    light->setDiffuseColor(glm::vec3(1,1,1));
+    light->setAmbientColor(glm::vec3(0.3,0.3,0.3));
+    light->setFallOff(5.0f);
+    light->setHotSpot(4.0f);
 
-	light = worldGFX.createLight();
-	light->setPosition(glm::vec3(-2,2,-2));
-	light->setDiffuseColor(glm::vec3(1,0.75,0.75));
-	light->setAmbientColor(glm::vec3(0.5,0.1,0.1));
-	light->setFallOff(4.0f);
-	light->setHotSpot(3.0f);
+    light = worldGFX.createLight();
+    light->setPosition(glm::vec3(-2,2,-2));
+    light->setDiffuseColor(glm::vec3(1,0.75,0.75));
+    light->setAmbientColor(glm::vec3(0.5,0.1,0.1));
+    light->setFallOff(4.0f);
+    light->setHotSpot(3.0f);
 
 
-	Camera* cm = worldGFX.getCamera();
-	cm->setOffset(glm::vec3(0,0,3));
-	cm->setRotation(3.14f,0.0f);
-	cm->setPosition(glm::vec3(0,1,0));
+    Camera* cm = worldGFX.getCamera();
+    cm->setOffset(glm::vec3(0,0,3));
+    cm->setRotation(3.14f,0.0f);
+    cm->setPosition(glm::vec3(0,1,0));
 */
-	//TwBar *myBar;
-	//myBar = TwNewBar("NameOfMyTweakBar");
+    //TwBar *myBar;
+    //myBar = TwNewBar("NameOfMyTweakBar");
 
 	g_Clock.restart();
-	/*
-	double lastTime = g_Clock.getElapsedTime().asSeconds();
+    /*
+    double lastTime = g_Clock.getElapsedTime().asSeconds();
     int nbFrames = 0;
     */
     // Start game loop
@@ -204,76 +209,76 @@ int main(int argc, char **argv)
 		g_Delta = currTime - g_LastTime;
 		g_LastTime = currTime;
 
-		//sf::Vector2i mpos = sf::Mouse::getPosition(window);
+        //sf::Vector2i mpos = sf::Mouse::getPosition(window);
 
-		//cm->rotate(mouseSpeed * g_Delta * float(1024/2 - mpos.x ),
-		//	       mouseSpeed * g_Delta * float( 768/2 - mpos.y ));
-
-/*
-		glm::vec3 newpos(0,0,0);
-		// Move forward
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)){
-			newpos.x += (speed);
-		} else
-		// Move backward
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)){
-			newpos.x += (-speed);
-		}
-		// Strafe right
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)){
-			newpos.z += (speed);
-		} else
-		// Strafe left
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)){
-			newpos.z += (-speed);
-		}
-*/
-		//e->setDesiredADir(newpos);
+        //cm->rotate(mouseSpeed * g_Delta * float(1024/2 - mpos.x ),
+        //	       mouseSpeed * g_Delta * float( 768/2 - mpos.y ));
 
 /*
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)){
-			cube->rotate(glm::vec3(3.14*g_Delta,0,0));
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)){
-			cube->rotate(glm::vec3(-3.14*g_Delta,0,0));
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::F)){
-			cube->translate(glm::vec3(0,-1*g_Delta,0));//setVelocity(glm::vec3(0,-1,0));
-		}
-
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
-			cube->translate(glm::vec3(0,1*g_Delta,0));//setVelocity(glm::vec3(0,1,0));
-		}
-
-		newpos = newpos.z * cm->getFront() + newpos.x * cm->getRight();
-
-		//shitty test code
-		float avel = glm::length(sphere->getAngularVelocity());
-		if(avel > 0.5f)
-		{
-			glm::vec3 vel = sphere->getVelocity();
-			glm::vec2 vel2d(vel.x, -vel.z);
-			float h = 0.0f;
-			vel2d = glm::normalize(vel2d);
-			if(vel2d.x > 0 && vel2d.y > 0)
-				h = acos(vel2d.x);
-			else
-			if(vel2d.x > 0 && vel2d.y < 0)
-				h = -acos(vel2d.x);
-			else
-			if(vel2d.x < 0 && vel2d.y > 0)
-				h = 1.57 + acos(vel2d.y);
-			else
-			if(vel2d.x < 0 && vel2d.y < 0)
-				h = -1.57 - acos(-vel2d.y);
-
-			mi->setRotation(glm::vec3(0,-90.0f+h*57.3f,0));
-		}
-		sphere->setAngularVelocity(newpos*100.0f);
-		mi->setPosition(sphere->getPosition() + glm::vec3(0,-1,0));
-		cm->setPosition(sphere->getPosition());
+        glm::vec3 newpos(0,0,0);
+        // Move forward
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)){
+            newpos.x += (speed);
+        } else
+        // Move backward
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)){
+            newpos.x += (-speed);
+        }
+        // Strafe right
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)){
+            newpos.z += (speed);
+        } else
+        // Strafe left
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)){
+            newpos.z += (-speed);
+        }
 */
-		//mi->translate(newpos);
+        //e->setDesiredADir(newpos);
+
+/*
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)){
+            cube->rotate(glm::vec3(3.14*g_Delta,0,0));
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)){
+            cube->rotate(glm::vec3(-3.14*g_Delta,0,0));
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::F)){
+            cube->translate(glm::vec3(0,-1*g_Delta,0));//setVelocity(glm::vec3(0,-1,0));
+        }
+
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
+            cube->translate(glm::vec3(0,1*g_Delta,0));//setVelocity(glm::vec3(0,1,0));
+        }
+
+        newpos = newpos.z * cm->getFront() + newpos.x * cm->getRight();
+
+        //shitty test code
+        float avel = glm::length(sphere->getAngularVelocity());
+        if(avel > 0.5f)
+        {
+            glm::vec3 vel = sphere->getVelocity();
+            glm::vec2 vel2d(vel.x, -vel.z);
+            float h = 0.0f;
+            vel2d = glm::normalize(vel2d);
+            if(vel2d.x > 0 && vel2d.y > 0)
+                h = acos(vel2d.x);
+            else
+            if(vel2d.x > 0 && vel2d.y < 0)
+                h = -acos(vel2d.x);
+            else
+            if(vel2d.x < 0 && vel2d.y > 0)
+                h = 1.57 + acos(vel2d.y);
+            else
+            if(vel2d.x < 0 && vel2d.y < 0)
+                h = -1.57 - acos(-vel2d.y);
+
+            mi->setRotation(glm::vec3(0,-90.0f+h*57.3f,0));
+        }
+        sphere->setAngularVelocity(newpos*100.0f);
+        mi->setPosition(sphere->getPosition() + glm::vec3(0,-1,0));
+        cm->setPosition(sphere->getPosition());
+*/
+        //mi->translate(newpos);
 
 //		worldPHY.update();
 //		worldGFX.render();

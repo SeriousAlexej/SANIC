@@ -21,13 +21,15 @@ add_library(lAntTweakBar SHARED IMPORTED)
 set_target_properties(lAntTweakBar PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/deps/lib/libAntTweakBar.so)
 
 include_directories(${CMAKE_SOURCE_DIR}/bullet/src/)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src)
 include_directories(${Boost_INCLUDE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/deps/include/)
 
 file(GLOB_RECURSE SANIC_sources ./src/*.cpp ./src/*.c ./src/*.cc)
 
 add_executable(SANIC ${SANIC_sources})
+set_property(TARGET SANIC PROPERTY CXX_STANDARD 11)
 
 target_link_libraries(SANIC lBulletDynamics lBulletCollision lLinearMath lAntTweakBar ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${Boost_LIBRARIES} ${SFML_LIBRARIES})
 
-set_property(TARGET SANIC PROPERTY CXX_STANDARD 11)
+

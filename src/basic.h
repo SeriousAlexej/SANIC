@@ -105,7 +105,8 @@ public:
 	virtual int	getMultipass() { return multipass; }
 private:
 	static std::vector<int>	registeredMultipasses;
-	int		multipass; //LILUKORBENDALAS!
+    int		multipass; //LILUKORBENDALAS!
+    // TODO: uint multipass!!!
 };
 
 //this class is used for storing results of 'custom callback' from Bullet
