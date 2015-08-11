@@ -13,25 +13,34 @@ public:
 	Shader(std::string shaderPath);
 	virtual ~Shader();
 
-	std::string		getSrcFnm() { return srcShaFnm; }
+	inline std::string  getSrcFnm() const { return srcShaFnm; }
 
 	void	bind();
 
-	GLuint	getMatrixID() const				{ return MatrixID; }
-	GLuint	getmID() const					{ return mID; }
-	GLuint	getNormalTextureID() const		{ return NormalTextureID; }
-	GLuint	getDiffuseTextureID() const		{ return DiffuseTextureID; }
-	GLuint  getHeightTextureID() const      { return HeightTextureID; }
-	GLuint	getFrameProgressID() const		{ return FrameProgressID; }
-	GLuint  getCameraPositionID() const     { return CamPosID; }
-	GLuint	getLightPositionID(int i) const { return LightPositionID[i]; }
-	GLuint	getLightDiffuseID(int i) const	{ return LightDiffuseID[i]; }
-	GLuint	getLightFallOffID(int i) const	{ return LightFallOffID[i]; }
-	GLuint	getLightHotSpotID(int i) const  { return LightHotSpotID[i]; }
-	GLuint	getLightIntensityID(int i) const{ return LightIntensityID[i]; }
-	GLuint  getNormalStrengthID() const     { return normStrengthID; }
-	GLuint  getParallaxScaleID() const      { return parallaxScaleID; }
-	GLuint  getParallaxOffsetID() const     { return parallaxOffsetID; }
+	inline GLuint  getMatrixID() const             { return MatrixID; }
+	inline GLuint  getmID() const                  { return mID; }
+	inline GLuint  getNormalTextureID() const      { return NormalTextureID; }
+	inline GLuint  getDiffuseTextureID() const     { return DiffuseTextureID; }
+	inline GLuint  getHeightTextureID() const      { return HeightTextureID; }
+	inline GLuint  getFrameProgressID() const      { return FrameProgressID; }
+	inline GLuint  getCameraPositionID() const     { return CamPosID; }
+	inline GLuint  getLightPositionID(int i) const { return LightPositionID[i]; }
+	inline GLuint  getLightDiffuseID(int i) const  { return LightDiffuseID[i]; }
+	inline GLuint  getLightFallOffID(int i) const  { return LightFallOffID[i]; }
+	inline GLuint  getLightHotSpotID(int i) const  { return LightHotSpotID[i]; }
+	inline GLuint  getLightIntensityID(int i) const{ return LightIntensityID[i]; }
+	inline GLuint  getNormalStrengthID() const     { return normStrengthID; }
+	inline GLuint  getParallaxScaleID() const      { return parallaxScaleID; }
+	inline GLuint  getParallaxOffsetID() const     { return parallaxOffsetID; }
+    inline GLuint  getBiasMVP() const              { return BiasMVP; }
+    inline GLuint  getDLightAmbient() const        { return DLightAmbient; }
+    inline GLuint  getDLightDiffuse() const        { return DLightDiffuse; }
+    inline GLuint  getDirShadowBool() const        { return DirShadowBool; }
+    inline GLuint  getShadowMap() const            { return ShadowMap; }
+    inline GLuint  getDLightDir() const            { return DLightDir; }
+    inline GLuint  getBiasMVP_LQ() const           { return BiasMVP_LQ; }
+    inline GLuint  getShadowMap_LQ() const         { return ShadowMap_LQ; }
+    inline GLuint  getShadowBorder() const         { return ShadowBorder; }
 
 private:
 
@@ -55,6 +64,15 @@ private:
 	GLuint		LightFallOffID[4];
 	GLuint		LightHotSpotID[4];
 	GLuint      LightIntensityID[4];
+	GLuint      BiasMVP;
+	GLuint      DLightAmbient;
+	GLuint      DLightDiffuse;
+	GLuint      DirShadowBool;
+	GLuint      ShadowMap;
+	GLuint      DLightDir;
+	GLuint      ShadowMap_LQ;
+	GLuint      BiasMVP_LQ;
+	GLuint      ShadowBorder;
 };
 
 #endif

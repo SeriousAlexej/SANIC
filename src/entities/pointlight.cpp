@@ -21,7 +21,7 @@ PointLight::PointLight()
     setClass("PointLight");
 	setTranslatedByBody(false);
 	orientationType = NONE;
-	lightSource = NULL;
+	lightSource = nullptr;
 }
 
 PointLight::~PointLight()

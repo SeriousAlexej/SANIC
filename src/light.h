@@ -11,13 +11,16 @@ public:
 	void		setHotSpot(float val);
 	void		setFallOff(float val);
 	void		setDiffuseColor(glm::vec3 col);
+	void        setAmbientColor(glm::vec3 col);
 	float		getHotSpot() const { return hotspot; }
 	float		getFallOff() const { return falloff; }
 	float       getIntensity() const { return intensity; }
 	glm::vec3	getDiffuseColor() const { return colorDiffuse; }
+	glm::vec3	getAmbientColor() const { return colorAmbient; }
 
 //private:
 	glm::vec3	colorDiffuse;
+	glm::vec3   colorAmbient;
 	float		falloff;
 	float		hotspot;
 	float       intensity;

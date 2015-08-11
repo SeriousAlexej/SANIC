@@ -124,6 +124,15 @@ void Shader::loadShaders(std::string shaderPath)
 	normStrengthID = glGetUniformLocation(shaderID, "normalStrength");
 	parallaxScaleID = glGetUniformLocation(shaderID, "parallaxScale");
 	parallaxOffsetID = glGetUniformLocation(shaderID, "parallaxOffset");
+	BiasMVP = glGetUniformLocation(shaderID, "ShadowBiasMVP");
+	DLightAmbient = glGetUniformLocation(shaderID, "dirLightAmbient");
+	DLightDiffuse = glGetUniformLocation(shaderID, "dirLightDiffuse");
+	DirShadowBool = glGetUniformLocation(shaderID, "directionalShadows");
+	ShadowMap = glGetUniformLocation(shaderID, "shadowMap");
+	DLightDir = glGetUniformLocation(shaderID, "DLightDir");
+	BiasMVP_LQ = glGetUniformLocation(shaderID, "ShadowBiasMVP_LQ");
+	ShadowMap_LQ = glGetUniformLocation(shaderID, "shadowMap_LQ");
+	ShadowBorder = glGetUniformLocation(shaderID, "shadowBorder");
 
 	for(int i=0; i<4; i++)
     {

@@ -37,7 +37,7 @@ public:
     void Save(const std::string& filename);
     void Love(const std::string& filename); // Lyubov porojdaet mir
 
-//private:
+private:
 	InputHandler*			input;
 	std::vector<Entity*>	entities;
 	WorldGraphics			graphics;

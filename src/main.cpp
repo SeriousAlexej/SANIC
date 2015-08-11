@@ -18,6 +18,8 @@ sf::Clock g_Clock;
 float	  g_LastTime = 0.0f;
 float	  g_Delta = 0.0f;
 bool	  g_Editor = false;
+sf::Vector2u g_Resolution(1024u, 768u);
+bool g_UseDirectionalLight = true;
 std::string g_WorkingDir;
 
 const static char logo[] = {
@@ -42,7 +44,7 @@ int main(int argc, char **argv)
 	cs.depthBits = 24;
 	cs.majorVersion = 3;
 	cs.minorVersion = 3;
-	sf::RenderWindow window(sf::VideoMode(1024, 768), "SANIC", sf::Style::Default & ~sf::Style::Resize, cs);
+	sf::RenderWindow window(sf::VideoMode(g_Resolution.x, g_Resolution.y), "SANIC", sf::Style::Default & ~sf::Style::Resize, cs);
     window.setVerticalSyncEnabled(true);
 	//window.setFramerateLimit(60);
 
@@ -62,6 +64,7 @@ int main(int argc, char **argv)
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 	glDepthFunc(GL_LESS);
 	glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
 
@@ -69,23 +72,21 @@ int main(int argc, char **argv)
 	World &world = *wld;
     //Player* e = (Player*)world.createEntity((Entity*)(new Player()));
     //SolidBody* floor = world.physics.addBody(0, glm::vec3(20,1,20));
-	ModelInstance* M = world.graphics.createModel("./shaders/smooth.shader",
-											 "./models/sanic.obj",
-											 "./models/sanic.tga", "", "");
-    M->playAnimation("walk");
+	//ModelInstance* M = world.graphics.createModel("./shaders/smooth.shader",
+	//										 "./models/sanic.obj",
+	//										 "./models/sanic.tga", "", "");
+    //M->playAnimation("walk");
     //Box* b1 = (Box*)world.createEntity((Entity*) new Box());
     //Box* b2 = (Box*)world.createEntity((Entity*) new Box());
     //Box* b3 = (Box*)world.createEntity((Entity*) new Box());
 
-    auto d = world.createEntity("Decoration");
-    auto pl = world.createEntity("PointLight");
+    world.createEntity("Decoration");
+    world.createEntity("Decoration");
     world.createEntity("PointLight");
-    world.createEntity("PointLight");
-    world.createEntity("PointLight");
+    world.createEntity("DirectionalLight");
 
-    pl->setParent(d);
 
-    world.Save("/home/nick/SANIC_WORLD_TEST.txt");
+    //world.Save(g_WorkingDir + "/SANIC_WORLD_TEST.txt");
 
     //test
     //e->setupModel("./shaders/smooth.vsh", "./shaders/smooth.fsh",

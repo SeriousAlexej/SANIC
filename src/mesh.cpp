@@ -315,7 +315,7 @@ bool Mesh::loadModel(std::string path)
 	for(int i=0; i<sz; i++)
 	{
 		glm::vec3 fromCenterToVx = tvertices[i] - boundingSphereCenter;
-		float len = fromCenterToVx.length();
+		float len = glm::length(fromCenterToVx);
 		boundingSphereRadius = std::max(len, boundingSphereRadius);
 	}
 	}

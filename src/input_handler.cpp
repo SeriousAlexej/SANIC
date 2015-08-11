@@ -125,40 +125,40 @@ void InputHandler::update()
 {
 	if(allowCheck)
 	{
-	for(int i=0; i<101; i++)
-	{
-		bool pressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Key(i));
-		if(!keyStatesNew[i] && pressed)
-		{
-			this->registerKeyPress(i);
-		}
-		else
-		if(keyStatesNew[i] && !pressed)
-		{
-			this->registerKeyRelease(i);
-		}
-		else
-		{
-			keyStatesOld[i] = keyStatesNew[i];
-		}
-	}
-	for(int i=0; i<5; i++)
-	{
-		bool pressed = sf::Mouse::isButtonPressed(sf::Mouse::Button(i));
-		if(!mouseKeysNew[i] && pressed)
-		{
-			this->registerMousePress(i);
-		}
-		else
-		if(mouseKeysNew[i] && !pressed)
-		{
-			this->registerMouseRelease(i);
-		}
-		else
-		{
-			mouseKeysOld[i] = mouseKeysNew[i];
-		}
-	}
+        for(int i=0; i<101; i++)
+        {
+            bool pressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Key(i));
+            if(!keyStatesNew[i] && pressed)
+            {
+                this->registerKeyPress(i);
+            }
+            else
+            if(keyStatesNew[i] && !pressed)
+            {
+                this->registerKeyRelease(i);
+            }
+            else
+            {
+                keyStatesOld[i] = keyStatesNew[i];
+            }
+        }
+        for(int i=0; i<5; i++)
+        {
+            bool pressed = sf::Mouse::isButtonPressed(sf::Mouse::Button(i));
+            if(!mouseKeysNew[i] && pressed)
+            {
+                this->registerMousePress(i);
+            }
+            else
+            if(mouseKeysNew[i] && !pressed)
+            {
+                this->registerMouseRelease(i);
+            }
+            else
+            {
+                mouseKeysOld[i] = mouseKeysNew[i];
+            }
+        }
 	}
 	if(lockMouse)
 	{

@@ -1,13 +1,11 @@
 #include "world_graphics.h"
 
+extern bool g_UseDirectionalLight;
+
 WorldGraphics::WorldGraphics()
 {
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glEnableVertexAttribArray(2);
-		glEnableVertexAttribArray(3);
-		glEnableVertexAttribArray(4);
-		glEnableVertexAttribArray(5);
+    directionalLight = nullptr;
+    shadowShader = new Shader("./shaders/shadow");
 }
 
 WorldGraphics::~WorldGraphics()
@@ -27,21 +25,66 @@ WorldGraphics::~WorldGraphics()
 	shaders.clear();
 	textures.clear();
 	lights.clear();
+	delete shadowShader;
 }
 
 void WorldGraphics::render()
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(3);
+    glEnableVertexAttribArray(4);
+    glEnableVertexAttribArray(5);
+
 	//render visible model instances
 	int sz = models.size();
+
+    Light* dirLight = (g_UseDirectionalLight?directionalLight:nullptr);
+
+    //render shadows
+    if(dirLight != nullptr)
+    {
+        shadowShader->bind();
+        glm::mat4 dlMatrix = dirLight->getMatrix();
+
+        //first pass - low quality shadow
+        //second pass - high quality shadow
+        for(int p=0; p<2; p++)
+        {
+            camera.setShadowRenderMode((p==0?Camera::LQ:Camera::HQ));
+
+            camera.setShadowViewMatrix(dlMatrix);
+            camera.preShadowRender();
+            glClear(GL_DEPTH_BUFFER_BIT);
+            for(int i=0; i<sz; i++)
+            {
+                if(camera.sphereIsVisibleForShadow(models[i]->getRenSphere()))
+                {
+                    models[i]->renderForShadow(camera, shadowShader);
+                }
+            }
+        }
+
+        //cleanup
+        camera.postShadowRender();
+    }
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	for(int i=0; i<sz; i++)
 	{
 		if(camera.sphereIsVisible(models[i]->getRenSphere()))
-		//if(camera.boxIsVisible(models[i]->getRenBoxCenter(), models[i]->getRenBoxHalfSizes()))
 		{
-			models[i]->render(camera, pickBestLights(models[i]));
+			models[i]->render(camera, pickBestLights(models[i]), dirLight);
 		}
 	}
+
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
+    glDisableVertexAttribArray(3);
+    glDisableVertexAttribArray(4);
+    glDisableVertexAttribArray(5);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindTexture(GL_TEXTURE_2D, 0); //unbind, just in case
@@ -314,6 +357,24 @@ void WorldGraphics::deleteLight(Light*& light)
 			}
 		}
 	}
+}
+
+Light* WorldGraphics::createDirLight()
+{
+    if(directionalLight == nullptr)
+    {
+        directionalLight = new Light();
+    }
+    return directionalLight;
+}
+
+void WorldGraphics::deleteDirLight()
+{
+    if(directionalLight != nullptr)
+    {
+        delete directionalLight;
+        directionalLight = nullptr;
+    }
 }
 
 std::vector<Light*> WorldGraphics::pickBestLights(ModelInstance* mi)

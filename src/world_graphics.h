@@ -24,10 +24,14 @@ public:
 	Light*			createLight();
 	void			deleteLight(Light*& light);
 
+	Light*          createDirLight();
+	void            deleteDirLight();
+
 private:
 	std::vector<Light*>		pickBestLights(ModelInstance* mi);
 
 	Camera						camera;
+	Shader*                     shadowShader;
 
 	std::vector<ModelInstance*>	models;
 
@@ -36,6 +40,8 @@ private:
 	std::vector<Texture*>		textures;
 
 	std::vector<Light*>			lights;
+
+	Light*                      directionalLight;
 
 	friend class World;
 };
