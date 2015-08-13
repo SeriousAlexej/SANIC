@@ -254,6 +254,7 @@ protected:
     //virtual void                drawProperty(string name, Property* prop);
 
 	friend class World;
+	friend class Editor;
 };
 
 class LiveEntity : public Entity

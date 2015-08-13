@@ -52,7 +52,8 @@ private:
 
 	bool    focus;
 
-	friend class World;
+	//friend class World;
+	friend class Editor;
 };
 
 #endif
