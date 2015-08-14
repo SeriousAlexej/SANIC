@@ -55,14 +55,17 @@ void Editor::update()
     auto& physics = p_world->physics;
     auto& graphics = p_world->graphics;
 
-    physics.render(graphics.getCamera());
     graphics.render();
+    physics.render(graphics.getCamera());
 
 	if(selectedEntity != nullptr)
 	{
 		selectedEntity->editorUpdate();
 	}
     static float doubleClickTime = g_Clock.getElapsedTime().asSeconds();
+    static float moveModeTime = doubleClickTime;
+    static float moveModePeriod = 1.0f;
+    float tmNow = g_Clock.getElapsedTime().asSeconds();
 	if(p_input->lockMouse)
 	{
         edMode = Fly;
@@ -170,8 +173,7 @@ void Editor::update()
 
 		if(selectedEntity != NULL && edMode == Idle && p_input->keyPressed(sf::Keyboard::LControl) && p_input->mouseButtonJustPressed(sf::Mouse::Left))
 		{
-		    float tmNow = g_Clock.getElapsedTime().asSeconds();
-		    if(tmNow-doubleClickTime<=0.5f)
+		    if(tmNow-doubleClickTime<=0.5f && (moveModePeriod<0.1f || tmNow-moveModeTime-moveModePeriod>=1.0f))
             {
                 RayCastInfo ri = castRayScreen();
                 if(ri.enHit!=NULL)
@@ -180,11 +182,13 @@ void Editor::update()
                 } else {
                     selectedEntity->position = ri.posOrigin+ri.direction*5.0f;
                 }
+                doubleClickTime -= 10.0f;
                 return;
             }
 		    doubleClickTime = tmNow;
 
             edMode = Moving;
+            moveModeTime = tmNow;
             sf::Vector2i mpos = sf::Mouse::getPosition(*p_input->mainWindow);
             mpos.y = p_input->windowSize.y - mpos.y;
             glm::mat4 camMat = graphics.getCamera()->getProjectionMatrix() * graphics.getCamera()->getViewMatrix();
@@ -210,6 +214,7 @@ void Editor::update()
             selectedEntity->position = glm::vec3(endPosWLD.x, endPosWLD.y, endPosWLD.z);
 		}
 
+
 		if(p_input->mouseButtonJustReleased(sf::Mouse::Right))
 		{
             if(edMode != Idle) { edMode = Idle; return; }
@@ -217,9 +222,17 @@ void Editor::update()
 
 		if(p_input->mouseButtonJustReleased(sf::Mouse::Left))
 		{
-            if(edMode != Idle) { edMode = Idle; return; }
+            if(edMode != Idle)
+            {
+                if(edMode == Moving)
+                {
+                    moveModePeriod = tmNow - moveModeTime;
+                }
+                edMode = Idle;
+                return;
+            }
 
-            if(g_Clock.getElapsedTime().asSeconds()-doubleClickTime<0.5f) return;
+            if(tmNow-doubleClickTime<0.5f) return;
             RayCastInfo rci = castRayScreen();
             if(rci.enHit != NULL)
             {
@@ -238,9 +251,6 @@ void Editor::update()
                 }
             }
 		}
-		} else {
-            if(edMode != Idle)
-                edMode = Idle;
 		}
 	}
 }
