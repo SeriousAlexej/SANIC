@@ -52,7 +52,7 @@ Entity* World::createEntity(Entity* e)
 {
 	//can't add already added or null entity
 	assert(e != nullptr && e->wldGFX == nullptr && e->wldPHY == nullptr && e->wld == nullptr);
-	e->wldGFX = &graphics;
+    e->wldGFX = pGraphics;
 	e->wldPHY = &physics;
 	e->wld = this;
 	e->initialize();
