@@ -1,6 +1,7 @@
 #ifndef _WORLD_H_
 #define _WORLD_H_
 #include "world_physics.h"
+#include "world_graphics.h"
 #include "entity.h"
 
 class Entity;
@@ -20,7 +21,7 @@ class World
 {
 	friend class Editor;
 public:
-    World();
+	World();
 	~World();
 
 	void	update();

@@ -25,7 +25,7 @@ WorldGraphics::~WorldGraphics()
 	shaders.clear();
 	textures.clear();
 	lights.clear();
-    delete shadowShader;
+	delete shadowShader;
 }
 
 void WorldGraphics::render()
@@ -73,9 +73,9 @@ void WorldGraphics::render()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	for(int i=0; i<sz; i++)
 	{
-        if(camera.sphereIsVisible(models[i]->getRenSphere()))
+		if(camera.sphereIsVisible(models[i]->getRenSphere()))
 		{
-            models[i]->render(camera, pickBestLights(models[i]), dirLight);
+			models[i]->render(camera, pickBestLights(models[i]), dirLight);
 		}
 	}
 

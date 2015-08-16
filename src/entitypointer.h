@@ -16,6 +16,7 @@ public:
     ~EntityPointer();
     std::string Name() const;
     Entity* Value() const;
+    inline int GetCurrentID() const { return enID; }
     bool operator==(const EntityPointer& other) const;
     EntityPointer& operator=(const EntityPointer& other);
     EntityPointer& operator=(Entity* other);

@@ -5,6 +5,12 @@
 #include <rapidjson/filereadstream.h>
 #include <rapidjson/writer.h>
 
+//these vars assist EntityPointer deserialization
+std::map<int, Entity*> enByOldId; //get entity by ID it was saved with
+std::map<EntityPointer*, Entity*> pensOwner; //get Entity that owns given EntityPointer
+std::vector<EntityPointer*> pensToRetarget; //all EntityPointers that need retargeting
+Entity* beingDeserialized = nullptr; //current entity being deserialized, used to fill pensOwner
+
 World::World()
 {
     //penGraphics = nullptr;
@@ -139,6 +145,11 @@ void World::Save(const string &filename)
 
 void World::Love(const string &filename)
 {
+    beingDeserialized = nullptr;
+    pensOwner.clear();
+    enByOldId.clear();
+    pensToRetarget.clear();
+
     FILE* fp = fopen(filename.c_str(), "r");
     char readBuffer[65536];
     rapidjson::Document doc;
@@ -149,8 +160,24 @@ void World::Love(const string &filename)
     {
         std::string classname = (*it)["class"].GetString();
         Entity* pen = createEntity(classname);
+        beingDeserialized = pen;
         pen->Deserialize(*it);
     }
+
+    for(EntityPointer* p : pensToRetarget)
+    {
+        if(p->Name() == "Parent")
+        {
+            pensOwner[p]->setParent(enByOldId[p->GetCurrentID()]);
+        } else {
+            *p = enByOldId[p->GetCurrentID()];
+        }
+    }
+
+    beingDeserialized = nullptr;
+    pensOwner.clear();
+    enByOldId.clear();
+    pensToRetarget.clear();
 
     fclose(fp);
 }

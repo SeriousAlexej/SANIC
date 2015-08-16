@@ -2,6 +2,8 @@
 #include "quaternion_utils.h"
 #include <rapidjson/writer.h>
 
+extern std::map<int, Entity*> enByOldId;
+
 STATE Entity::dummy(EntityEvent *ee, Entity* caller)
 {
 	//does nothing
@@ -469,6 +471,7 @@ bool Entity::childrenContain(Entity* e) const
 
 void Entity::setParent(Entity* p)
 {
+    if(p == this || p == parent || childrenContain(p)) { return; }
     for(auto &pt : pointers)
     {
         if(pt.Name() == "Parent")
@@ -477,7 +480,6 @@ void Entity::setParent(Entity* p)
             break;
         }
     }
-    if(p == this || p == parent || childrenContain(p)) { return; }
     if(parent)
     for(int i=parent->children.size()-1; i>=0; i--)
     {
@@ -689,8 +691,7 @@ void Entity::setupModel(std::string shaderPath,
 						std::string modelPath, std::string diffTexture,
 						std::string normTexture, std::string heightTexture)
 {
-    assert(wldGFX); // Sometimes we don't need graphics
-    //if(!wldGFX) return;
+	assert(wldGFX);
 	if(model)
 		wldGFX->deleteModel(model);
 	model = wldGFX->createModel(shaderPath, modelPath, diffTexture, normTexture, heightTexture);
@@ -745,8 +746,37 @@ void Entity::Deserialize(rapidjson::Value& d)
 	for(auto it = d.MemberBegin(); it != d.MemberEnd(); ++it)
 	{
 		string name = it->name.GetString();
+		if(name == "class")
+        {
+            continue;
+        }
+        if(name == "id")
+        {
+            int _id = it->value.GetInt();
+            enByOldId[_id] = this;
+            continue;
+        }
 		properties[name]->Deserialize(it->value);
 	}
+
+
+    for(int i=0; i<3; i++)
+    {
+        while(rotationEuler[i] > 180.0f) rotationEuler[i] -= 360.0f;
+        while(rotationEuler[i] <-180.0f) rotationEuler[i] += 360.0f;
+    }
+    rotationQuat = glm::quat(glm::vec3(glm::radians(rotationEuler.x),
+                                       glm::radians(rotationEuler.y),
+                                       glm::radians(rotationEuler.z)));
+
+    rotationEulerO = rotationEuler;
+    rotationQuatO = rotationQuat;
+
+    body->setRotation(glm::angle(rotationQuat), glm::axis(rotationQuat));
+    model->setRotation(glm::angle(rotationQuat), glm::axis(rotationQuat));
+
+    model->setPosition(position);
+    body->setPosition(position);
 }
 
 LiveEntity::LiveEntity()

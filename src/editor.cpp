@@ -224,9 +224,17 @@ void Editor::update()
 
 		if(p_input->mouseButtonJustReleased(sf::Mouse::Left))
 		{
-            if(edMode != Idle) { edMode = Idle; return; }
+            if(edMode != Idle)
+            {
+                if(edMode == Moving)
+                {
+                    moveModePeriod = tmNow - moveModeTime;
+                }
+                edMode = Idle;
+                return;
+            }
 
-            if(g_Clock.getElapsedTime().asSeconds()-doubleClickTime<0.5f) return;
+            if(tmNow-doubleClickTime<0.5f) return;
             RayCastInfo rci = castRayScreen();
             if(rci.enHit != NULL)
             {
@@ -245,9 +253,6 @@ void Editor::update()
                 }
             }
 		}
-		} else {
-            if(edMode != Idle)
-                edMode = Idle;
 		}
 	}
 }

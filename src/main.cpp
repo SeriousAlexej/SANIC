@@ -70,13 +70,6 @@ void TW_CALL CopyStdStringToClient(std::string& destinationClientString, const s
 	glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
 
     World* wld = new World();
-	World &world = *wld;
-
-    world.createEntity("Decoration");
-    world.createEntity("Decoration");
-    world.createEntity("PointLight");
-    world.createEntity("DirectionalLight");
-	
     Editor* editor = new Editor(&window, wld);
 
 	g_Clock.restart();
@@ -126,11 +119,11 @@ void TW_CALL CopyStdStringToClient(std::string& destinationClientString, const s
 		float currTime = g_Clock.getElapsedTime().asSeconds();
 		g_Delta = currTime - g_LastTime;
 		g_LastTime = currTime;
-		
+
         if(editor->getInputHandler()->isFocused())
         {
             editor->update();
-            world.update();
+            wld->update();
             TwDraw();
 		}
 

@@ -1,6 +1,10 @@
 #include "entitypointer.h"
 #include <rapidjson/document.h>
 
+extern std::map<EntityPointer*, Entity*> pensOwner;
+extern std::vector<EntityPointer*> pensToRetarget;
+extern Entity* beingDeserialized;
+
 EntityPointer::EntityPointer()
 {
     penTarget = nullptr;
@@ -105,4 +109,9 @@ void EntityPointer::Deserialize(rapidjson::Value& d)
 	JsonValue& val = d;
 	name = val["name"].GetString();
 	enID = val["enID"].GetInt();
+	if(enID != -1)
+    {
+        pensToRetarget.push_back(this);
+        pensOwner[this] = beingDeserialized;
+    }
 }
