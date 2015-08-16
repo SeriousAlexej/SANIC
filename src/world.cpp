@@ -7,7 +7,8 @@
 
 World::World()
 {
-
+    //penGraphics = nullptr;
+    pGraphics = new WorldGraphics();
 }
 
 World::~World()
@@ -20,7 +21,7 @@ World::~World()
         ::operator delete(ptr);
 	}
 	entities.clear();
-	Incubator::deleteInstance();
+    delete pGraphics;
 }
 
 void World::update()
@@ -44,8 +45,8 @@ Entity* World::createEntity(std::string entityName)
 Entity* World::createEntity(Entity* e)
 {
 	//can't add already added or null entity
-	assert(e != nullptr && e->wldGFX == nullptr && e->wldPHY == nullptr && e->wld == nullptr);
-	e->wldGFX = &graphics;
+    assert(e != nullptr /*&& e->wldGFX == nullptr*/ && e->wldPHY == nullptr && e->wld == nullptr);
+    e->wldGFX = pGraphics;
 	e->wldPHY = &physics;
 	e->wld = this;
 	e->initialize();

@@ -248,7 +248,7 @@ protected:
 	glm::mat4                   relativeTransform;
 	glm::mat4                   oldMatrix;
 
-	WorldGraphics*				wldGFX; //fill theese
+    WorldGraphics*				wldGFX; //fill theese
 	WorldPhysics*				wldPHY; //from class World
 	World*						wld;
     //virtual void                drawProperty(string name, Property* prop);

@@ -32,7 +32,7 @@ void TW_CALL CopyStdStringToClient(std::string& destinationClientString, const s
   destinationClientString = sourceLibraryString;
 }
 
-int main(int argc, char **argv)
+/*int main(int argc, char **argv) // TODO: make an external launcher instead
 {
     g_WorkingDir = boost::filesystem::current_path().string();
     std::replace(g_WorkingDir.begin(), g_WorkingDir.end(), '\\', '/');
@@ -143,3 +143,4 @@ int main(int argc, char **argv)
 
 	return EXIT_SUCCESS;
 }
+*/

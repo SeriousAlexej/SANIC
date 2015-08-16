@@ -10,6 +10,7 @@ private:
     World* p_world;
 	InputHandler* p_input;
     RayCastInfo castRayScreen(bool fromCenter = false);
+    void updateEntity(Entity* pen);
 public:
     Editor(sf::Window* w, World* wld);
     ~Editor();

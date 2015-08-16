@@ -1,45 +1,32 @@
 #include <cassert>
 #include "incubator.h"
 
-Incubator* Incubator::instance = nullptr;
-
-void Incubator::deleteInstance()
+Incubator& Incubator::getInstance()
 {
-    if(instance != nullptr)
-    {
-        delete instance;
-        instance = nullptr;
-    }
+    static Incubator instance;
+    return instance;
 }
 
 void Incubator::addToCookBook(std::string className, size_t bytes, void (*ctorCaller)(void*))
 {
     assert(ctorCaller != nullptr);
     assert(bytes > 0);
-    if(instance == nullptr)
-    {
-        instance = new Incubator();
-    }
-    if(instance->cookBook.find(className) == instance->cookBook.end())
+    if(getInstance().cookBook.find(className) == getInstance().cookBook.end())
     {
         ClassInfo ci;
         ci.bytes = bytes;
         ci.ctorCaller = ctorCaller;
-        instance->cookBook[className] = ci;
+        getInstance().cookBook[className] = ci;
     }
 }
 
 void* Incubator::Create(std::string className)
 {
-    if(instance == nullptr)
+    if(getInstance().cookBook.find(className) == getInstance().cookBook.end())
     {
-        instance = new Incubator();
+        throw not_in_cookbook();
     }
-    if(instance->cookBook.find(className) == instance->cookBook.end())
-    {
-        throw std::bad_alloc();
-    }
-    ClassInfo &ci = instance->cookBook[className];
+    ClassInfo &ci = getInstance().cookBook[className];
     void* ptr = ::operator new(ci.bytes);
     ci.ctorCaller(ptr);
     return ptr;

@@ -6,6 +6,7 @@
 #include "shader.h"
 #include "texture.h"
 #include "light.h"
+//#include "world.h"
 
 class WorldGraphics
 {
@@ -14,7 +15,7 @@ public:
 	~WorldGraphics();
 
 	void		render(); //renders stuff
-	Camera*		getCamera() { return &camera; }
+    Camera*		getCamera() { return &camera; }
 
 	ModelInstance*	createModel(std::string shaderPath,
 		std::string modelPath, std::string diffTexture, std::string normTexture, std::string heightTexture);
@@ -30,8 +31,9 @@ public:
 private:
 	std::vector<Light*>		pickBestLights(ModelInstance* mi);
 
-	Camera						camera;
+    Camera						camera;
 	Shader*                     shadowShader;
+    //World*                      pWorld;
 
 	std::vector<ModelInstance*>	models;
 
@@ -43,7 +45,7 @@ private:
 
 	Light*                      directionalLight;
 
-	friend class World;
+    friend class World;
 };
 
 #endif

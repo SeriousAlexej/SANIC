@@ -38,7 +38,9 @@ RayCastInfo Editor::castRayScreen(bool fromCenter)
 		1.0f
 		);
 
-	glm::mat4 M = glm::inverse(p_world->graphics.getCamera()->getProjectionMatrix() * p_world->graphics.getCamera()->getViewMatrix());
+    WorldGraphics& graphics = *p_world->pGraphics;
+
+    glm::mat4 M = glm::inverse(graphics.getCamera()->getProjectionMatrix() * graphics.getCamera()->getViewMatrix());
 	glm::vec4 lRayStart_world = M * lRayStart_NDC; lRayStart_world/=lRayStart_world.w;
 	glm::vec4 lRayEnd_world   = M * lRayEnd_NDC  ; lRayEnd_world  /=lRayEnd_world.w;
 
@@ -49,11 +51,16 @@ RayCastInfo Editor::castRayScreen(bool fromCenter)
 	return p_world->castRay(lRayOrigin_world, lRayDir_world);
 }
 
+void Editor::updateEntity(Entity *pen)
+{
+
+}
+
 void Editor::update()
 {
 	p_input->update();
     auto& physics = p_world->physics;
-    auto& graphics = p_world->graphics;
+    auto& graphics = *p_world->pGraphics;
 
     physics.render(graphics.getCamera());
     graphics.render();

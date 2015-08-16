@@ -689,7 +689,8 @@ void Entity::setupModel(std::string shaderPath,
 						std::string modelPath, std::string diffTexture,
 						std::string normTexture, std::string heightTexture)
 {
-	assert(wldGFX);
+    assert(wldGFX); // Sometimes we don't need graphics
+    //if(!wldGFX) return;
 	if(model)
 		wldGFX->deleteModel(model);
 	model = wldGFX->createModel(shaderPath, modelPath, diffTexture, normTexture, heightTexture);
@@ -734,10 +735,6 @@ rapidjson::Value Entity::Serialize ( rapidjson::Document& d )
         name.SetString(s.c_str(), s.length());
         entity_value.AddMember(name,  p->Serialize(d), d.GetAllocator());
     }
-    StringBuffer str;
-    Writer<StringBuffer> writer(str);
-    entity_value.Accept(writer);
-    std::cout << str.GetString() << std::endl;
     return entity_value;
 }
 

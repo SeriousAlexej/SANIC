@@ -3,12 +3,21 @@
 #include <map>
 #include <string>
 
+class not_in_cookbook : public std::exception
+{
+    virtual const char* what() const throw()
+    {
+        return "No such entity in cookbook";
+    }
+};
+
 class Incubator
 {
     public:
-        static void deleteInstance();
         static void* Create(std::string className);
         static void addToCookBook(std::string className, size_t bytes, void (*ctorCaller)(void*));
+        static Incubator& getInstance(); // Trash
+
     private:
         Incubator() {}
         ~Incubator() {}
@@ -18,8 +27,6 @@ class Incubator
             size_t bytes;
             void (*ctorCaller)(void*);
         };
-
-        static Incubator* instance;
         std::map<std::string,ClassInfo> cookBook;
 };
 
