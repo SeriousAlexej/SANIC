@@ -51,8 +51,8 @@ Entity* World::createEntity(std::string entityName)
 Entity* World::createEntity(Entity* e)
 {
 	//can't add already added or null entity
-    assert(e != nullptr /*&& e->wldGFX == nullptr*/ && e->wldPHY == nullptr && e->wld == nullptr);
-    e->wldGFX = pGraphics;
+	assert(e != nullptr && e->wldGFX == nullptr && e->wldPHY == nullptr && e->wld == nullptr);
+	e->wldGFX = &graphics;
 	e->wldPHY = &physics;
 	e->wld = this;
 	e->initialize();
