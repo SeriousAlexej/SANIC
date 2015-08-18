@@ -3,6 +3,7 @@
 #include "world_physics.h"
 #include "world_graphics.h"
 #include "entity.h"
+#include <luacppinterface.h>
 
 class Entity;
 
@@ -26,7 +27,7 @@ public:
 
 	void	update();
 	void	updateEditor();
-	Entity* createEntity(std::string entityName);
+    Entity* createEntity(const std::string &entityName);
 	void	removeEntity(Entity* e);
 
 	RayCastInfo	castRay(glm::vec3 origin, glm::vec3 direction);
@@ -34,10 +35,14 @@ public:
     void Save(const std::string& filename);
     void Love(const std::string& filename); // Lyubov porojdaet mir
 
+    Lua* getLua() const { return lua; }
+
 private:
 	std::vector<Entity*>	entities;
 	WorldGraphics*			pGraphics;   // Sometimes we don't need graphics
 	WorldPhysics			physics;
+    Lua* lua;
+    void registerEntity(const std::string& name);
 
 private:
 

@@ -13,8 +13,16 @@ Entity* beingDeserialized = nullptr; //current entity being deserialized, used t
 
 World::World()
 {
+    // lua.GetGlobalEnvironment();
+    // lua.GetRegistry();
     //penGraphics = nullptr;
+    lua = new Lua();
+    lua->LoadStandardLibraries();
     pGraphics = new WorldGraphics();
+    for(auto kv : Incubator::getInstance().cookBook)
+    {
+        registerEntity(kv.first);
+    }
 }
 
 World::~World()
@@ -30,6 +38,22 @@ World::~World()
     delete pGraphics;
 }
 
+void World::registerEntity(const std::string& name)
+{
+    auto entityComputer = lua->CreateFunction<LuaUserdata<Entity>() >(
+    [&, name]() -> LuaUserdata<Entity>
+    {
+        Entity* pen = createEntity(name);
+        auto entity = lua->CreateUserdata<Entity>(pen);
+        pen->registerLua(entity);
+        return entity;
+    });
+
+    auto entityType = lua->CreateTable();
+    entityType.Set("new", entityComputer);
+    lua->GetGlobalEnvironment().Set(name.c_str(), entityType);
+}
+
 void World::update()
 {
 	if(!g_Editor)
@@ -43,7 +67,7 @@ void World::update()
 }
 
 
-Entity* World::createEntity(std::string entityName)
+Entity* World::createEntity(const std::string& entityName)
 {
     return createEntity(static_cast<Entity*>(Incubator::Create(entityName)));
 }
@@ -51,10 +75,16 @@ Entity* World::createEntity(std::string entityName)
 Entity* World::createEntity(Entity* e)
 {
 	//can't add already added or null entity
-	assert(e != nullptr && e->wldGFX == nullptr && e->wldPHY == nullptr && e->wld == nullptr);
+    if(!(e != nullptr && e->wldGFX == nullptr && e->wldPHY == nullptr && e->wld == nullptr))
+    {
+        //std::cout << "Vse ploxo" << std::endl;
+        throw cant_create();
+    }
+
     e->wldGFX = pGraphics;
 	e->wldPHY = &physics;
 	e->wld = this;
+    e->pLua = lua;
 	e->initialize();
 	entities.push_back(e);
 	return e;

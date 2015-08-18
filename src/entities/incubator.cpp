@@ -1,5 +1,7 @@
 #include <cassert>
 #include "incubator.h"
+#include "entity.h"
+#include <luauserdata.h>
 
 Incubator& Incubator::getInstance()
 {
@@ -11,7 +13,7 @@ void Incubator::addToCookBook(std::string className, size_t bytes, void (*ctorCa
 {
     assert(ctorCaller != nullptr);
     assert(bytes > 0);
-    if(getInstance().cookBook.find(className) == getInstance().cookBook.end())
+    if(getInstance().cookBook.count(className) == 0)
     {
         ClassInfo ci;
         ci.bytes = bytes;
@@ -20,9 +22,9 @@ void Incubator::addToCookBook(std::string className, size_t bytes, void (*ctorCa
     }
 }
 
-void* Incubator::Create(std::string className)
+void* Incubator::Create(const std::string& className)
 {
-    if(getInstance().cookBook.find(className) == getInstance().cookBook.end())
+    if(getInstance().cookBook.count(className) == 0)
     {
         throw not_in_cookbook();
     }

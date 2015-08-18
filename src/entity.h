@@ -16,6 +16,7 @@
 #include "properties.h"
 #include "entitypointer.h"
 #include "entities/incubator.h"
+#include <luacppinterface.h>
 
 class Entity;
 class EntityPointer;
@@ -162,6 +163,26 @@ public:
 	void                    pointerAdded(EntityPointer* pen);
 	void                    pointerLeft(EntityPointer* pen);
 
+    virtual void            registerLua(LuaUserdata<Entity>& lua);
+
+    template<class C>
+    void addToLua(LuaUserdata<Entity>& l, string s, C c)
+    {
+        l.Set("get"+s, pLua->CreateFunction<C()>([&, s]() {
+            return getProperty<C>(s);
+        }));
+        l.Set("set"+s, pLua->CreateFunction<void(C)>([&, s](C arg) {
+            setProperty<C>(s, arg);
+        }));
+    }
+
+    template<class C, class... T>
+    void addToLua(LuaUserdata<Entity> &l, string s, C c, T... args)
+    {
+        addToLua(l, s, c);
+        addToLua(l, args...);
+    }
+
 protected:
 	//states:
 	DECLARE_STATE(dummy);
@@ -205,7 +226,11 @@ protected:
     template<class T>
     T&                          getProperty(std::string);
 
+    template<class T>
+    void                        setProperty(string s, T& val);
+
     virtual void    addProperties();
+
     vector<vector<DrawableElement>> guiElements;
     void    drawSingleElement(DrawableElement &elem);
     void    drawGuiElements();
@@ -226,6 +251,7 @@ protected:
         registerProperties(s, c);
         registerProperties(Args...);
     }
+
     // END BLACK MAGIC
 
 
@@ -251,6 +277,7 @@ protected:
 	WorldGraphics*				wldGFX; //fill theese
 	WorldPhysics*				wldPHY; //from class World
 	World*						wld;
+    Lua* pLua;
     //virtual void                drawProperty(string name, Property* prop);
 
 	friend class World;

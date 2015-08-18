@@ -39,7 +39,7 @@ public:
     T& GetValue() const;
 
     template<class T>
-    void SetValue(T val);
+    void SetValue(T& val);
 
     template<class T>
     Property();
@@ -65,7 +65,7 @@ T &Property::GetValue() const {
 }
 
 template<class T>
-void Property::SetValue(T val) {
+void Property::SetValue(T& val) {
     if(typeid(T).hash_code() != m_tid) throw bad_typeid();
     T* t_data = static_cast<T*>(m_data);
     *t_data = val;

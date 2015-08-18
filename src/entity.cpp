@@ -122,6 +122,20 @@ void Entity::pointerAdded(EntityPointer* pen)
     pointAtMe.push_back(pen);
 }
 
+void Entity::registerLua(LuaUserdata<Entity>& lua) // TODO: Make it more "generic"
+{
+    addToLua(lua,
+            "Name",    name,
+            //"Quat",    rotationQuat,
+            "RotH",    rotationEuler[1],
+            "RotP",    rotationEuler[0],
+            "RotB",    rotationEuler[2],
+            "PosX",    position[0],
+            "PosY",    position[1],
+            "PosZ",    position[2]
+    );
+}
+
 void Entity::addProperties()
 {
 	registerPointers();
@@ -221,6 +235,12 @@ template<class T>
 T& Entity::getProperty(std::string name)
 {
     return properties[name]->GetValue<T>();
+}
+
+template<class T>
+void Entity::setProperty(string s, T& val)
+{
+    properties[s]->SetValue<T>(val);
 }
 
 void Entity::sendEvent(EntityEvent *ee)

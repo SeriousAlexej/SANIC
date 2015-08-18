@@ -6,8 +6,8 @@ enable_testing()
 
 include_directories(${CMAKE_SOURCE_DIR}/bullet/src/)
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src)
-include_directories(${Boost_INCLUDE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/deps/include/)
+INCLUDE_DIRECTORIES(/usr/include/lua5.2/)
 
 add_subdirectory(test test)
 add_subdirectory(src src)
