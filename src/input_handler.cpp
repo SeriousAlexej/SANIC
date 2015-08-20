@@ -1,5 +1,7 @@
 #include <cstring> //memset
 #include "input_handler.h"
+#include "global.h"
+#include "editorGUI.h"
 
 InputHandler::InputHandler(sf::Window* w)
 {
@@ -104,7 +106,8 @@ bool InputHandler::mouseButtonPressed(int mouseButton) const
 bool InputHandler::cursorIsInsideWindow() const
 {
     sf::Vector2i mpos = sf::Mouse::getPosition(*mainWindow);
-    return mpos.x > 0 && mpos.y > 0 && mpos.x < static_cast<int>(windowSize.x) && mpos.y < static_cast<int>(windowSize.y);
+    sf::Vector2u wsz = mainWindow->getSize();
+    return mpos.x > (g_Editor?leftWndWidth:0) && mpos.y > (g_Editor?topWndHeight:0) && mpos.x < static_cast<int>(wsz.x) && mpos.y < static_cast<int>(wsz.y);
 }
 
 void InputHandler::setFocus(bool _f)

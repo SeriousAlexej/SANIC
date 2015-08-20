@@ -1,4 +1,5 @@
 #include "world_graphics.h"
+#include "global.h"
 
 extern bool g_UseDirectionalLight;
 
@@ -69,6 +70,10 @@ void WorldGraphics::render()
         //cleanup
         camera.postShadowRender();
     }
+    if(g_Editor)
+    {
+        glViewport(g_DrawOrigin.x, g_DrawOrigin.y, g_Resolution.x, g_Resolution.y);
+    }
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	for(int i=0; i<sz; i++)
@@ -103,73 +108,37 @@ ModelInstance* WorldGraphics::createModel(
 
 
 	//find shader id
-	#ifdef SANIC_DEBUG
-	printf("Wanted shader is \"%s\", current shader count is %lu\n", shaderPath.c_str(), shaders.size());
-	#endif // SANIC_DEBUG
 	int sz = shaders.size();
 	for(int i=0; i<sz; i++)
 	{
-        #ifdef SANIC_DEBUG
-        printf("\tFound shader \"%s\" ", shaders[i]->getSrcFnm().c_str());
-        #endif // SANIC_DEBUG
 		if(shaders[i]->getSrcFnm() == shaderPath)
 		{
-            #ifdef SANIC_DEBUG
-            printf("Shader matches!\n");
-            #endif // SANIC_DEBUG
 			shaderIndex = i; //if shader was found - use it
 			break;
 		}
-        #ifdef SANIC_DEBUG
-        printf("\n");
-        #endif // SANIC_DEBUG
 	}
 	if(shaderIndex == -1) //shader not found - create it
 	{
-        #ifdef SANIC_DEBUG
-        printf("\t\tCreating NEW shader!\n");
-        #endif // SANIC_DEBUG
 		shaderIndex = shaders.size(); //index of new shader will be the last one
 		shaders.push_back(new Shader(shaderPath));
 	}
-	#ifdef SANIC_DEBUG
-	printf("\tNow shader count is %lu\n\n", shaders.size());
-	#endif // SANIC_DEBUG
 	//find textures id's
-	#ifdef SANIC_DEBUG
-	printf("Wanted textures are:\n\t\"%s\"\n\t\"%s\"\n\t\"%s\"\ncurrent texture count is %lu\n", diffTexture.c_str(), normTexture.c_str(), heightTexture.c_str(), textures.size());
-	#endif // SANIC_DEBUG
 	sz = textures.size();
 	for(int i=0; i<sz; i++)
 	{
 	    std::string texName = textures[i]->getSrcFnm();
-        #ifdef SANIC_DEBUG
-	    printf("\tFound texture \"%s\"", texName.c_str());
-        #endif // SANIC_DEBUG
 		if(texName == diffTexture)
 		{
-            #ifdef SANIC_DEBUG
-            printf(" Diffuse texture matches!");
-            #endif // SANIC_DEBUG
 			textureDiffuseIndex = i;
 		}
 		if(texName == normTexture)
 		{
-            #ifdef SANIC_DEBUG
-            printf(" Normal texture matches!");
-            #endif // SANIC_DEBUG
 			textureNormalIndex = i;
 		}
 		if(texName == heightTexture)
         {
-            #ifdef SANIC_DEBUG
-            printf(" Displacement texture matches!");
-            #endif // SANIC_DEBUG
             textureHeightIndex = i;
         }
-        #ifdef SANIC_DEBUG
-        printf("\n");
-        #endif // SANIC_DEBUG
 		if(textureDiffuseIndex != -1 && textureNormalIndex != -1 && textureHeightIndex != -1)
         {
             break;
@@ -177,9 +146,6 @@ ModelInstance* WorldGraphics::createModel(
 	}
 	if(textureDiffuseIndex == -1)
 	{
-        #ifdef SANIC_DEBUG
-        printf("\t\tCreating NEW diffuse texture!\n");
-        #endif // SANIC_DEBUG
 		textureDiffuseIndex = textures.size();
 		textures.push_back(new Texture(diffTexture));
 		if(normTexture == diffTexture)
@@ -193,9 +159,6 @@ ModelInstance* WorldGraphics::createModel(
 	}
 	if(textureNormalIndex == -1)
 	{
-        #ifdef SANIC_DEBUG
-        printf("\t\tCreating NEW normal texture!\n");
-        #endif // SANIC_DEBUG
 		textureNormalIndex = textures.size();
 		textures.push_back(new Texture(normTexture));
 		if(normTexture == heightTexture)
@@ -205,49 +168,25 @@ ModelInstance* WorldGraphics::createModel(
 	}
 	if(textureHeightIndex == -1)
     {
-        #ifdef SANIC_DEBUG
-        printf("\t\tCreating NEW displacement texture!\n");
-        #endif // SANIC_DEBUG
         textureHeightIndex = textures.size();
         textures.push_back(new Texture(heightTexture));
     }
-	#ifdef SANIC_DEBUG
-	printf("\tNow texture count is %lu\n\n", textures.size());
-	#endif // SANIC_DEBUG
 	//find mesh
 
-	#ifdef SANIC_DEBUG
-	printf("Wanted mesh is \"%s\", current mesh count is %lu\n", modelPath.c_str(), meshes.size());
-	#endif // SANIC_DEBUG
 	sz = meshes.size();
 	for(int i=0; i<sz; i++)
 	{
-        #ifdef SANIC_DEBUG
-	    printf("\tFound mesh \"%s\" ", meshes[i]->getSrcFnm().c_str());
-        #endif // SANIC_DEBUG
 		if(meshes[i]->getSrcFnm() == modelPath)
 		{
-            #ifdef SANIC_DEBUG
-		    printf("Mesh matches!\n");
-            #endif // SANIC_DEBUG
 			meshIndex = i;
 			break;
 		}
-        #ifdef SANIC_DEBUG
-		printf("\n");
-        #endif // SANIC_DEBUG
 	}
 	if(meshIndex == -1)
 	{
-        #ifdef SANIC_DEBUG
-	    printf("\t\tCreating NEW mesh!\n");
-        #endif // SANIC_DEBUG
 		meshIndex = meshes.size();
 		meshes.push_back(new Mesh(modelPath));
 	}
-	#ifdef SANIC_DEBUG
-	printf("\tNow mesh count is %lu\n\n", meshes.size());
-	#endif // SANIC_DEBUG
 
 	//now we're ready to create model instance
 	int index = models.size();

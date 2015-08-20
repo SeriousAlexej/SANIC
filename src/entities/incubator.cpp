@@ -33,3 +33,14 @@ void* Incubator::Create(const std::string& className)
     ci.ctorCaller(ptr);
     return ptr;
 }
+
+std::vector<std::string> Incubator::getRegisteredClasses()
+{
+    std::vector<std::string> ret;
+    std::map<std::string, ClassInfo> &mp = getInstance().cookBook;
+    for(auto it = mp.begin(); it != mp.end(); ++it)
+    {
+        ret.push_back(it->first);
+    }
+    return ret;
+}

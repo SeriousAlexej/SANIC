@@ -1,5 +1,6 @@
 #include "world_physics.h"
 #include "entity.h"
+#include "solidbody.h"
 
 extern ContactProcessedCallback		gContactProcessedCallback;
 
@@ -23,8 +24,33 @@ static bool CustomProcessedCallback(btManifoldPoint& cp, void* body0,void* body1
 
 WorldPhysics::WorldPhysics()
 {
+    createPhysics();
+}
 
+WorldPhysics::~WorldPhysics()
+{
+    deletePhysics();
+}
 
+void WorldPhysics::deletePhysics()
+{
+	if(dynamicsWorld)
+	{
+		for (int i=bodies.size()-1; i>=0; i--)
+		{
+			bodies[i]->removeFromWorld();
+		}
+		bodies.clear();
+		delete dynamicsWorld;
+	}
+	if(solver)					delete solver;
+	if(collisionConfiguration)	delete collisionConfiguration;
+	if(dispatcher)				delete dispatcher;
+	if(broadphase)				delete broadphase;
+}
+
+void WorldPhysics::createPhysics()
+{
     broadphase				= new btDbvtBroadphase();
     collisionConfiguration	= new btDefaultCollisionConfiguration();
     dispatcher				= new btCollisionDispatcher(collisionConfiguration);
@@ -45,21 +71,10 @@ WorldPhysics::WorldPhysics()
 	gContactProcessedCallback = CustomProcessedCallback;
 }
 
-WorldPhysics::~WorldPhysics()
+void WorldPhysics::Clear()
 {
-	if(dynamicsWorld)
-	{
-		for (int i=bodies.size()-1; i>=0; i--)
-		{
-			bodies[i]->removeFromWorld();
-		}
-		bodies.clear();
-		delete dynamicsWorld;
-	}
-	if(solver)					delete solver;
-	if(collisionConfiguration)	delete collisionConfiguration;
-	if(dispatcher)				delete dispatcher;
-	if(broadphase)				delete broadphase;
+    deletePhysics();
+    createPhysics();
 }
 
 void WorldPhysics::update()

@@ -10,6 +10,7 @@ public:
 	Decoration();
 	virtual ~Decoration();
 	virtual void initialize();
+    void Deserialize(rapidjson::Value& d);
 
 private:
 	//states

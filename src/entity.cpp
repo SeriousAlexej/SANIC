@@ -1,5 +1,7 @@
 #include "entity.h"
 #include "quaternion_utils.h"
+#include "editorGUI.h"
+#include "global.h"
 #include <rapidjson/writer.h>
 
 extern std::map<int, Entity*> enByOldId;
@@ -660,7 +662,9 @@ void Entity::editorSelect()
     char idStr[15]; //example "Model::Mountain(ID=42)"
     sprintf(idStr, "(ID=%d)", getMultipass());
     std::string barLabel = (getClass()+"::"+getName()+idStr);
-    TwDefine((" EntityBar label='"+barLabel+"' fontSize=3 ").c_str());
+    std::string barPosition = "position='"+std::to_string(leftWndWidth)+" "+std::to_string(topWndHeight)+"' ";
+    std::string barSize = "size='"+std::to_string(barWidth)+" "+std::to_string(g_Resolution.y)+"' ";
+    TwDefine((" EntityBar label='"+barLabel+"' color='70 70 70' alpha=200 valueswidth="+std::to_string(barWidth/2)+" fontSize=2 resizable=false movable=false iconifiable=false " + barPosition + barSize).c_str());
 
     drawGuiElements();
 
@@ -792,11 +796,24 @@ void Entity::Deserialize(rapidjson::Value& d)
     rotationEulerO = rotationEuler;
     rotationQuatO = rotationQuat;
 
-    body->setRotation(glm::angle(rotationQuat), glm::axis(rotationQuat));
-    model->setRotation(glm::angle(rotationQuat), glm::axis(rotationQuat));
+    setPosition(position);
+    setRotation(rotationQuat);
 
-    model->setPosition(position);
-    body->setPosition(position);
+    adjustMoving();
+}
+
+void Entity::setPosition(glm::vec3 pos)
+{
+    position = pos;
+    model->setPosition(pos);
+    body->setPosition(pos);
+}
+
+void Entity::setRotation(glm::quat rot)
+{
+    rotationQuat = rot;
+    body->setRotation(glm::angle(rot), glm::axis(rot));
+    model->setRotation(glm::angle(rot), glm::axis(rot));
 }
 
 LiveEntity::LiveEntity()

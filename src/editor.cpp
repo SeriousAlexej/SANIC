@@ -1,25 +1,315 @@
+#include <string>
+#include <GL/glew.h>
+#include <SFML/Graphics.hpp>
+#include <SFGUI/SFGUI.hpp>
+#include <SFGUI/Widgets.hpp>
+#include <boost/filesystem.hpp>
+#include <AntTweakBar.h>
+#include "dialogs/tinyfiledialogs.h"
+#include "world.h"
+#include "input_handler.h"
 #include "editor.h"
+#include "global.h"
+#include "editorGUI.h"
 
-Editor::Editor(sf::Window* w, World* wld) : p_world(wld)
+class IncuButton : public sfg::Button
+{
+public:
+    typedef std::shared_ptr<IncuButton> Ptr;
+    static Ptr Create(const sf::String &lbl, World* w)
+    {
+        std::shared_ptr<IncuButton> ib(new IncuButton(w));
+        ib->SetLabel(lbl);
+        return ib;
+    }
+    void Spawn()
+    {
+        assert(wld != nullptr);
+        wld->createEntity(GetLabel().toAnsiString());
+    }
+private:
+    IncuButton(World* w) : wld(w) {}
+    World* wld;
+};
+
+
+void TW_CALL CopyStdStringToClient(std::string& destinationClientString, const std::string& sourceLibraryString)
+{
+  destinationClientString = sourceLibraryString;
+}
+
+static std::string relativePath(std::string absPath)
+{
+    std::replace(absPath.begin(), absPath.end(), '\\', '/');
+    if(absPath.find(g_WorkingDir)==0)
+    {
+        absPath = "." + absPath.substr(g_WorkingDir.length());
+    }
+    if(absPath[0] != '.')
+    {
+        absPath = "." + absPath;
+    }
+    return absPath;
+}
+
+void Editor::NewWorld()
+{
+    if(selectedEntity != nullptr)
+    {
+        selectedEntity->editorDesselect();
+        selectedEntity = nullptr;
+    }
+    p_world->Clear();
+}
+
+void Editor::Load()
+{
+    std::string path;
+    const char * result = tinyfd_openFileDialog("Load world","./",0,NULL,0);
+    if(result) {
+        path = relativePath(result);
+        p_world->Love(path);
+    }
+}
+
+void Editor::SaveAs()
+{
+    std::string path;
+    const char * result = tinyfd_saveFileDialog("Save world as","./",0,NULL);
+    if(result) {
+        path = relativePath(result);
+        p_world->Save(path);
+    }
+}
+
+void Editor::resizeGUIComponents(unsigned width, unsigned height)
+{
+	TwWindowSize(width, height);
+
+    topWindow->SetAllocation( sf::FloatRect( 0.0f, 0.0f,
+                                       static_cast<float>(width), static_cast<float>(topWndHeight) ) );
+    leftWindow->SetAllocation( sf::FloatRect( 0.0f, static_cast<float>(topWndHeight),
+                                       static_cast<float>(leftWndWidth), static_cast<float>(height - topWndHeight)));
+
+    g_DrawOrigin.x = leftWndWidth;
+    g_DrawOrigin.y = 0u;
+
+    g_Resolution.x = width - leftWndWidth;
+    g_Resolution.y = height - topWndHeight;
+
+    if(selectedEntity != nullptr)
+    {
+        std::string barSize = "size='"+std::to_string(barWidth)+" "+std::to_string(g_Resolution.y)+"' ";
+        TwDefine((" EntityBar " + barSize).c_str());
+    }
+}
+
+int Editor::run()
+{
+	printf(logo);
+
+	sf::ContextSettings cs;
+	cs.antialiasingLevel = 4;
+	cs.depthBits = 24;
+	cs.majorVersion = 3;
+	cs.minorVersion = 3;
+
+	sf::RenderWindow window(sf::VideoMode(g_Resolution.x, g_Resolution.y), "Eggine Editor", sf::Style::Default, cs);
+    window.setVerticalSyncEnabled(true);
+	window.setFramerateLimit(60);
+    window.setActive();
+
+	glewExperimental=true;
+	glewInit();
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glDepthFunc(GL_LESS);
+    glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
+
+	TwInit(TW_OPENGL, NULL);
+	TwCopyStdStringToClientFunc(CopyStdStringToClient);
+
+	p_input = new InputHandler(&window);
+	p_world = new World();
+
+	sfg::SFGUI sfgui;
+    window.setActive();
+    sfg::Desktop desktop;
+    leftWindow = sfg::Window::Create(sfg::Window::Style::BACKGROUND);
+    topWindow = sfg::Window::Create(sfg::Window::Style::BACKGROUND);
+    //fill windows here
+    {
+        auto leftBox = sfg::Box::Create(sfg::Box::Orientation::VERTICAL, 2.0f);
+        std::vector<std::string> classes = Incubator::getRegisteredClasses();
+        for(std::string &cl : classes)
+        {
+            auto btn = IncuButton::Create(cl, p_world);
+            btn->GetSignal( sfg::Widget::OnLeftClick ).Connect( std::bind( &IncuButton::Spawn, btn ) );
+            leftBox->Pack(btn, true);
+        }
+        auto leftScroll = sfg::ScrolledWindow::Create();
+        leftScroll->AddWithViewport(leftBox);
+        auto mainLeftBox = sfg::Box::Create(sfg::Box::Orientation::VERTICAL, 0.0f);
+        auto lbl = sfg::Label::Create("Create Entity");
+        mainLeftBox->Pack(lbl, false, true);
+        mainLeftBox->Pack(leftScroll);
+        leftWindow->Add(mainLeftBox);
+
+        auto topBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 2.0f);
+        auto btnNew = sfg::Button::Create("New World");
+        auto btnLoad = sfg::Button::Create("Load World");
+        auto btnSaveAs = sfg::Button::Create("Save As");
+        auto btnSave = sfg::Button::Create("Save");
+        btnNew->SetRequisition(sf::Vector2f(100.0f, 0.0f));
+        btnLoad->SetRequisition(sf::Vector2f(100.0f, 0.0f));
+        btnSaveAs->SetRequisition(sf::Vector2f(100.0f, 0.0f));
+        btnSave->SetRequisition(sf::Vector2f(100.0f, 0.0f));
+        btnNew->GetSignal( sfg::Widget::OnLeftClick ).Connect( std::bind( &Editor::NewWorld, this) );
+        btnLoad->GetSignal( sfg::Widget::OnLeftClick ).Connect( std::bind( &Editor::Load, this) );
+        btnSaveAs->GetSignal( sfg::Widget::OnLeftClick ).Connect( std::bind( &Editor::SaveAs, this) );
+        //TODO: bind Save button
+        topBox->Pack(btnNew, false, true);
+        topBox->Pack(btnLoad, false, true);
+        topBox->Pack(btnSaveAs, false, true);
+        topBox->Pack(btnSave, false, true);
+        topWindow->Add(topBox);
+    }
+    //~fill windows here
+    desktop.Add(leftWindow);
+    desktop.Add(topWindow);
+    resizeGUIComponents(window.getSize().x, window.getSize().y);
+    desktop.Update( 0.f );
+
+	g_Clock.restart();
+    while (window.isOpen())
+    {
+		float currTime = g_Clock.getElapsedTime().asSeconds();
+		g_Delta = currTime - g_LastTime;
+		g_LastTime = currTime;
+
+		desktop.Update(g_Delta);
+
+        sf::Event event;
+        while (window.pollEvent(event))
+        {
+            int handled = TwEventSFML23(&event);
+            if(!handled)
+            {
+                p_input->allowCheck = true;
+
+                switch(event.type)
+                {
+                case sf::Event::LostFocus:
+                    {
+                        p_input->setFocus(false);
+                        break;
+                    }
+                case sf::Event::GainedFocus:
+                    {
+                        p_input->setFocus(true);
+                        break;
+                    }
+                case sf::Event::Closed:
+                    {
+                        window.close();
+                        break;
+                    }
+                case sf::Event::MouseWheelMoved:
+                    {
+                        p_input->registerWheelDelta(event.mouseWheel.delta);
+                        break;
+                    }
+                case sf::Event::Resized:
+                    {
+                        unsigned width(event.size.width), height(event.size.height);
+                        bool fixSize = false;
+                        if(width < 320)
+                        {
+                            fixSize = true;
+                            width = 320;
+                        }
+                        if(height < 240)
+                        {
+                            fixSize = true;
+                            height = 240;
+                        }
+                        if(fixSize)
+                        {
+                            window.setSize(sf::Vector2u(width, height));
+                        }
+                        resizeGUIComponents(width, height);
+                        break;
+                    }
+                default: break;
+                }
+            }
+            else //if TwEventSFML handled
+            {
+                p_input->allowCheck = false;
+            }
+            if(!p_input->cursorIsInsideWindow())
+            {
+                desktop.HandleEvent(event);
+            }
+        }
+
+        glPushAttrib(GL_ALL_ATTRIB_BITS);
+        if(p_input->isFocused())
+        {
+            update();
+            p_world->update();
+            TwDraw();
+		}
+		glPopAttrib();
+
+        window.pushGLStates();
+        window.resetGLStates();
+        glViewport(0, 0, window.getSize().x, window.getSize().y);
+		sfgui.Display(window);
+		window.popGLStates();
+
+        window.display();
+	}
+
+	TwTerminate();
+
+    return EXIT_SUCCESS;
+}
+
+Editor::Editor()
 {
 	editorFlySpeed = 3.0f;
 	edMode = Idle;
-	selectedEntity = NULL;
-	p_input = new InputHandler(w);
+	selectedEntity = nullptr;
 }
 
 Editor::~Editor()
 {
-        delete p_input;
+    delete p_world;
+    delete p_input;
+}
+
+Editor::Ptr Editor::Create()
+{
+    g_WorkingDir = boost::filesystem::current_path().string();
+    std::replace(g_WorkingDir.begin(), g_WorkingDir.end(), '\\', '/');
+	g_Editor = true;
+
+    Editor::Ptr ed(new Editor());
+    return ed;
 }
 
 RayCastInfo Editor::castRayScreen(bool fromCenter)
 {
-	int screenWidth = p_input->windowSize.x, screenHeight = p_input->windowSize.y;
+    sf::Vector2u sz = p_input->mainWindow->getSize();
+	int screenWidth = sz.x - leftWndWidth, screenHeight = sz.y - topWndHeight;
 	sf::Vector2i mp(screenWidth/2, screenHeight/2);
 	if(!fromCenter)
 	{
 		mp = sf::Mouse::getPosition(*p_input->mainWindow);
+		mp.x -= leftWndWidth; mp.y -= topWndHeight;
 		mp.y = screenHeight - mp.y;
     }
 
@@ -62,8 +352,8 @@ void Editor::update()
     auto& physics = p_world->physics;
     auto& graphics = *p_world->pGraphics;
 
+    graphics.render(); //DO NOT CHANGE RENDERING ORDER, IT'S ADDITIVE :P
     physics.render(graphics.getCamera());
-    graphics.render();
 
 	if(selectedEntity != nullptr)
 	{
@@ -243,7 +533,7 @@ void Editor::update()
             RayCastInfo rci = castRayScreen();
             if(rci.enHit != NULL)
             {
-                if(selectedEntity != NULL)
+                if(selectedEntity != nullptr)
                 {
                     if(selectedEntity == rci.enHit) return;
                     selectedEntity->editorDesselect();
@@ -251,10 +541,10 @@ void Editor::update()
                 selectedEntity = rci.enHit;
                 selectedEntity->editorSelect();
             } else {
-                if(selectedEntity != NULL)
+                if(selectedEntity != nullptr)
                 {
                     selectedEntity->editorDesselect();
-                    selectedEntity = NULL;
+                    selectedEntity = nullptr;
                 }
             }
 		}

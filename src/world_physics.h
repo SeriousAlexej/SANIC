@@ -1,7 +1,16 @@
 #ifndef _WORLD_PHYSICS_H_
 #define _WORLD_PHYSICS_H_
-#include "solidbody.h"
+#include <glm/vec3.hpp>
+#include <vector>
 #include "GLDebugDrawer.h"
+class SolidBody;
+class ModelInstance;
+class Camera;
+class btBroadphaseInterface;
+class btDefaultCollisionConfiguration;
+class btCollisionDispatcher;
+class btSequentialImpulseConstraintSolver;
+class btDiscreteDynamicsWorld;
 
 extern float g_Delta;
 
@@ -21,7 +30,9 @@ public:
 	void		render(Camera* cam);
 
 private:
-	//void		clearGarbage();
+    void        Clear();
+    void        createPhysics();
+    void        deletePhysics();
 
 	GLDebugDrawer								debugDrawer;
 
@@ -32,8 +43,6 @@ private:
 	btDiscreteDynamicsWorld*					dynamicsWorld;
 
 	std::vector<SolidBody*>			bodies;
-	//float							tmLastGarbageClean;
-	//float							garbageCleanInterval;
 
 	friend class World;
 };

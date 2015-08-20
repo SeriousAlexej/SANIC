@@ -113,6 +113,25 @@ void Decoration::addProperties()
     setName("Decoration");
 }
 
+void Decoration::Deserialize(rapidjson::Value& d)
+{
+    Entity::Deserialize(d);
+
+    glm::vec3 lastPos = model->getPosition();
+    glm::quat lastRot = model->getRotationQuat();
+    glm::vec3 lastSca = model->getScale();
+    glm::vec3 lastOff = model->getOffset();
+    setupModel(shaderPath,
+               modelPath,
+               dTexturePath,
+               nTexturePath,
+               hTexturePath);
+    model->setPosition(lastPos);
+    model->setRotation(glm::angle(lastRot), glm::axis(lastRot));
+    model->setScale(lastSca);
+    model->setOffset(lastOff);
+}
+
 void Decoration::initialize()
 {
     shaderPath     = "./shaders/fullbright.shader";

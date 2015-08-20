@@ -2,8 +2,8 @@
 #include <SFML/Graphics.hpp>
 #include <cstdio>
 #include "camera.h"
+#include "global.h"
 
-extern sf::Vector2u g_Resolution;
 extern bool g_UseDirectionalLight;
 
 Camera::Camera()
@@ -101,7 +101,10 @@ void Camera::preShadowRender()
 void Camera::postShadowRender() const
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glViewport(0, 0, g_Resolution.x, g_Resolution.y);
+    if(!g_Editor)
+    {
+        glViewport(g_DrawOrigin.x, g_DrawOrigin.y, g_Resolution.x, g_Resolution.y);
+    }
 }
 
 void Camera::setPerspective(float fovxdeg, float ratio, float near, float _far)

@@ -6,7 +6,6 @@ ADD_TO_INCUBATOR(Player);
 Player::Player()
 {
 	setClass("Player");
-	setName("Sanic");
 	setTranslatedByBody(false);
 	orientationType = NONE;
 }
@@ -14,6 +13,7 @@ Player::Player()
 void Player::addProperties()
 {
     Entity::addProperties();
+	setName("Sanic");
 }
 
 void Player::initialize()
