@@ -35,7 +35,7 @@ private:
 
 void TW_CALL CopyStdStringToClient(std::string& destinationClientString, const std::string& sourceLibraryString)
 {
-  destinationClientString = sourceLibraryString;
+    destinationClientString = sourceLibraryString;
 }
 
 static std::string relativePath(std::string absPath)
@@ -84,19 +84,19 @@ void Editor::SaveAs()
 
 void Editor::resizeGUIComponents(unsigned width, unsigned height)
 {
-	TwWindowSize(width, height);
-
+    TwWindowSize(width, height);
+    
     topWindow->SetAllocation( sf::FloatRect( 0.0f, 0.0f,
-                                       static_cast<float>(width), static_cast<float>(topWndHeight) ) );
+                                             static_cast<float>(width), static_cast<float>(topWndHeight) ) );
     leftWindow->SetAllocation( sf::FloatRect( 0.0f, static_cast<float>(topWndHeight),
-                                       static_cast<float>(leftWndWidth), static_cast<float>(height - topWndHeight)));
-
+                                              static_cast<float>(leftWndWidth), static_cast<float>(height - topWndHeight)));
+    
     g_DrawOrigin.x = leftWndWidth;
     g_DrawOrigin.y = 0u;
-
+    
     g_Resolution.x = width - leftWndWidth;
     g_Resolution.y = height - topWndHeight;
-
+    
     if(selectedEntity != nullptr)
     {
         std::string barSize = "size='"+std::to_string(barWidth)+" "+std::to_string(g_Resolution.y)+"' ";
@@ -106,35 +106,35 @@ void Editor::resizeGUIComponents(unsigned width, unsigned height)
 
 int Editor::run()
 {
-	printf(logo);
-
-	sf::ContextSettings cs;
-	cs.antialiasingLevel = 4;
-	cs.depthBits = 24;
-	cs.majorVersion = 3;
-	cs.minorVersion = 3;
-
-	sf::RenderWindow window(sf::VideoMode(g_Resolution.x, g_Resolution.y), "Eggine Editor", sf::Style::Default, cs);
+    printf(logo);
+    
+    sf::ContextSettings cs;
+    cs.antialiasingLevel = 4;
+    cs.depthBits = 24;
+    cs.majorVersion = 3;
+    cs.minorVersion = 3;
+    
+    sf::RenderWindow window(sf::VideoMode(g_Resolution.x, g_Resolution.y), "Eggine Editor", sf::Style::Default, cs);
     window.setVerticalSyncEnabled(true);
-	window.setFramerateLimit(60);
+    window.setFramerateLimit(60);
     window.setActive();
-
-	glewExperimental=true;
-	glewInit();
-
+    
+    glewExperimental=true;
+    glewInit();
+    
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glDepthFunc(GL_LESS);
     glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
-
-	TwInit(TW_OPENGL, NULL);
-	TwCopyStdStringToClientFunc(CopyStdStringToClient);
-
-	p_input = new InputHandler(&window);
-	p_world = new World();
-
-	sfg::SFGUI sfgui;
+    
+    TwInit(TW_OPENGL, NULL);
+    TwCopyStdStringToClientFunc(CopyStdStringToClient);
+    
+    p_input = new InputHandler(&window);
+    p_world = new World();
+    
+    sfg::SFGUI sfgui;
     window.setActive();
     sfg::Desktop desktop;
     leftWindow = sfg::Window::Create(sfg::Window::Style::BACKGROUND);
@@ -156,7 +156,7 @@ int Editor::run()
         mainLeftBox->Pack(lbl, false, true);
         mainLeftBox->Pack(leftScroll);
         leftWindow->Add(mainLeftBox);
-
+        
         auto topBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 2.0f);
         auto btnNew = sfg::Button::Create("New World");
         auto btnLoad = sfg::Button::Create("Load World");
@@ -181,16 +181,16 @@ int Editor::run()
     desktop.Add(topWindow);
     resizeGUIComponents(window.getSize().x, window.getSize().y);
     desktop.Update( 0.f );
-
-	g_Clock.restart();
+    
+    g_Clock.restart();
     while (window.isOpen())
     {
-		float currTime = g_Clock.getElapsedTime().asSeconds();
-		g_Delta = currTime - g_LastTime;
-		g_LastTime = currTime;
-
-		desktop.Update(g_Delta);
-
+        float currTime = g_Clock.getElapsedTime().asSeconds();
+        g_Delta = currTime - g_LastTime;
+        g_LastTime = currTime;
+        
+        desktop.Update(g_Delta);
+        
         sf::Event event;
         while (window.pollEvent(event))
         {
@@ -198,30 +198,30 @@ int Editor::run()
             if(!handled)
             {
                 p_input->allowCheck = true;
-
+                
                 switch(event.type)
                 {
-                case sf::Event::LostFocus:
+                    case sf::Event::LostFocus:
                     {
                         p_input->setFocus(false);
                         break;
                     }
-                case sf::Event::GainedFocus:
+                    case sf::Event::GainedFocus:
                     {
                         p_input->setFocus(true);
                         break;
                     }
-                case sf::Event::Closed:
+                    case sf::Event::Closed:
                     {
                         window.close();
                         break;
                     }
-                case sf::Event::MouseWheelMoved:
+                    case sf::Event::MouseWheelMoved:
                     {
                         p_input->registerWheelDelta(event.mouseWheel.delta);
                         break;
                     }
-                case sf::Event::Resized:
+                    case sf::Event::Resized:
                     {
                         unsigned width(event.size.width), height(event.size.height);
                         bool fixSize = false;
@@ -242,7 +242,7 @@ int Editor::run()
                         resizeGUIComponents(width, height);
                         break;
                     }
-                default: break;
+                    default: break;
                 }
             }
             else //if TwEventSFML handled
@@ -254,35 +254,35 @@ int Editor::run()
                 desktop.HandleEvent(event);
             }
         }
-
+        
         glPushAttrib(GL_ALL_ATTRIB_BITS);
         if(p_input->isFocused())
         {
             update();
             p_world->update();
             TwDraw();
-		}
-		glPopAttrib();
-
+        }
+        glPopAttrib();
+        
         window.pushGLStates();
         window.resetGLStates();
         glViewport(0, 0, window.getSize().x, window.getSize().y);
-		sfgui.Display(window);
-		window.popGLStates();
-
+        sfgui.Display(window);
+        window.popGLStates();
+        
         window.display();
-	}
-
-	TwTerminate();
-
+    }
+    
+    TwTerminate();
+    
     return EXIT_SUCCESS;
 }
 
 Editor::Editor()
 {
-	editorFlySpeed = 3.0f;
-	edMode = Idle;
-	selectedEntity = nullptr;
+    editorFlySpeed = 3.0f;
+    edMode = Idle;
+    selectedEntity = nullptr;
 }
 
 Editor::~Editor()
@@ -295,8 +295,8 @@ Editor::Ptr Editor::Create()
 {
     g_WorkingDir = boost::filesystem::current_path().string();
     std::replace(g_WorkingDir.begin(), g_WorkingDir.end(), '\\', '/');
-	g_Editor = true;
-
+    g_Editor = true;
+    
     Editor::Ptr ed(new Editor());
     return ed;
 }
@@ -304,250 +304,250 @@ Editor::Ptr Editor::Create()
 RayCastInfo Editor::castRayScreen(bool fromCenter)
 {
     sf::Vector2u sz = p_input->mainWindow->getSize();
-	int screenWidth = sz.x - leftWndWidth, screenHeight = sz.y - topWndHeight;
-	sf::Vector2i mp(screenWidth/2, screenHeight/2);
-	if(!fromCenter)
-	{
-		mp = sf::Mouse::getPosition(*p_input->mainWindow);
-		mp.x -= leftWndWidth; mp.y -= topWndHeight;
-		mp.y = screenHeight - mp.y;
+    int screenWidth = sz.x - leftWndWidth, screenHeight = sz.y - topWndHeight;
+    sf::Vector2i mp(screenWidth/2, screenHeight/2);
+    if(!fromCenter)
+    {
+        mp = sf::Mouse::getPosition(*p_input->mainWindow);
+        mp.x -= leftWndWidth; mp.y -= topWndHeight;
+        mp.y = screenHeight - mp.y;
     }
-
-	int mouseX = mp.x, mouseY = mp.y;
-
-	glm::vec4 lRayStart_NDC(
-		(float(mouseX)/float(screenWidth)  - 0.5f) * 2.0f,
-		(float(mouseY)/float(screenHeight) - 0.5f) * 2.0f,
-		-1.0,
-		1.0f
-		);
-	glm::vec4 lRayEnd_NDC(
-		(float(mouseX)/float(screenWidth)  - 0.5f) * 2.0f,
-		(float(mouseY)/float(screenHeight) - 0.5f) * 2.0f,
-		1.0,
-		1.0f
-		);
-
+    
+    int mouseX = mp.x, mouseY = mp.y;
+    
+    glm::vec4 lRayStart_NDC(
+        (float(mouseX)/float(screenWidth)  - 0.5f) * 2.0f,
+                            (float(mouseY)/float(screenHeight) - 0.5f) * 2.0f,
+                            -1.0,
+                            1.0f
+    );
+    glm::vec4 lRayEnd_NDC(
+        (float(mouseX)/float(screenWidth)  - 0.5f) * 2.0f,
+                          (float(mouseY)/float(screenHeight) - 0.5f) * 2.0f,
+                          1.0,
+                          1.0f
+    );
+    
     WorldGraphics& graphics = *p_world->pGraphics;
-
+    
     glm::mat4 M = glm::inverse(graphics.getCamera()->getProjectionMatrix() * graphics.getCamera()->getViewMatrix());
-	glm::vec4 lRayStart_world = M * lRayStart_NDC; lRayStart_world/=lRayStart_world.w;
-	glm::vec4 lRayEnd_world   = M * lRayEnd_NDC  ; lRayEnd_world  /=lRayEnd_world.w;
-
+    glm::vec4 lRayStart_world = M * lRayStart_NDC; lRayStart_world/=lRayStart_world.w;
+    glm::vec4 lRayEnd_world   = M * lRayEnd_NDC  ; lRayEnd_world  /=lRayEnd_world.w;
+    
     glm::vec4 lrd4(lRayEnd_world - lRayStart_world);
-	glm::vec3 lRayDir_world = glm::vec3(lrd4.x, lrd4.y, lrd4.z);
-	glm::vec3 lRayOrigin_world = glm::vec3(lRayStart_world.x, lRayStart_world.y, lRayStart_world.z);
-
-	return p_world->castRay(lRayOrigin_world, lRayDir_world);
+    glm::vec3 lRayDir_world = glm::vec3(lrd4.x, lrd4.y, lrd4.z);
+    glm::vec3 lRayOrigin_world = glm::vec3(lRayStart_world.x, lRayStart_world.y, lRayStart_world.z);
+    
+    return p_world->castRay(lRayOrigin_world, lRayDir_world);
 }
 
 void Editor::updateEntity(Entity *pen)
 {
-
+    
 }
 
 void Editor::update()
 {
-	p_input->update();
+    p_input->update();
     auto& physics = p_world->physics;
     auto& graphics = *p_world->pGraphics;
-
+    
     graphics.render(); //DO NOT CHANGE RENDERING ORDER, IT'S ADDITIVE :P
     physics.render(graphics.getCamera());
-
-	if(selectedEntity != nullptr)
-	{
-		selectedEntity->editorUpdate();
-	}
+    
+    if(selectedEntity != nullptr)
+    {
+        selectedEntity->editorUpdate();
+    }
     static float doubleClickTime = g_Clock.getElapsedTime().asSeconds();
     static float moveModeTime = doubleClickTime;
     static float moveModePeriod = 1.0f;
     float tmNow = g_Clock.getElapsedTime().asSeconds();
-	if(p_input->lockMouse)
-	{
+    if(p_input->lockMouse)
+    {
         edMode = Fly;
-		if(p_input->wheelDelta > 0)
-		{
-			p_input->wheelDelta = 0;
-			if(editorFlySpeed < 100.0f)
-				editorFlySpeed *= 2.0f;
-		} else
-		if(p_input->wheelDelta < 0)
-		{
-			p_input->wheelDelta = 0;
-			if(editorFlySpeed > 0.25f)
-				editorFlySpeed *= 0.5f;
-		}
-		Camera* cam = graphics.getCamera();
-		cam->rotate(0.1f * g_Delta * p_input->mouseDelta.x,
-					0.1f * g_Delta * p_input->mouseDelta.y);
+        if(p_input->wheelDelta > 0)
+        {
+            p_input->wheelDelta = 0;
+            if(editorFlySpeed < 100.0f)
+                editorFlySpeed *= 2.0f;
+        } else
+            if(p_input->wheelDelta < 0)
+            {
+                p_input->wheelDelta = 0;
+                if(editorFlySpeed > 0.25f)
+                    editorFlySpeed *= 0.5f;
+            }
+            Camera* cam = graphics.getCamera();
+        cam->rotate(0.1f * g_Delta * p_input->mouseDelta.x,
+                    0.1f * g_Delta * p_input->mouseDelta.y);
         if(p_input->keyPressed(sf::Keyboard::Up))
-		{
-			cam->moveFront(editorFlySpeed*g_Delta);
-		} else
-        if(p_input->keyPressed(sf::Keyboard::Down))
-		{
-			cam->moveFront(-editorFlySpeed*g_Delta);
-		}
-        if(p_input->keyPressed(sf::Keyboard::Right))
-		{
-			cam->moveRight(editorFlySpeed*g_Delta);
-		} else
-        if(p_input->keyPressed(sf::Keyboard::Left))
-		{
-			cam->moveRight(-editorFlySpeed*g_Delta);
-		}
-		if(p_input->keyPressed(sf::Keyboard::Space))
-		{
-			cam->moveUp(editorFlySpeed*g_Delta);
-		} else
-		if(p_input->keyPressed(sf::Keyboard::C))
-		{
-			cam->moveUp(-editorFlySpeed*g_Delta);
-		}
-	} else {
+        {
+            cam->moveFront(editorFlySpeed*g_Delta);
+        } else
+            if(p_input->keyPressed(sf::Keyboard::Down))
+            {
+                cam->moveFront(-editorFlySpeed*g_Delta);
+            }
+            if(p_input->keyPressed(sf::Keyboard::Right))
+            {
+                cam->moveRight(editorFlySpeed*g_Delta);
+            } else
+                if(p_input->keyPressed(sf::Keyboard::Left))
+                {
+                    cam->moveRight(-editorFlySpeed*g_Delta);
+                }
+                if(p_input->keyPressed(sf::Keyboard::Space))
+                {
+                    cam->moveUp(editorFlySpeed*g_Delta);
+                } else
+                    if(p_input->keyPressed(sf::Keyboard::C))
+                    {
+                        cam->moveUp(-editorFlySpeed*g_Delta);
+                    }
+    } else {
         if(edMode == Fly)
         {
             edMode = Idle;
         }
-		if(p_input->cursorIsInsideWindow())
-		{
-
-        if(edMode==Idle && p_input->keyJustReleased(sf::Keyboard::Delete))
+        if(p_input->cursorIsInsideWindow())
         {
-            if(selectedEntity != NULL)
+            
+            if(edMode==Idle && p_input->keyJustReleased(sf::Keyboard::Delete))
             {
-                selectedEntity->editorDesselect();
-                p_world->removeEntity(selectedEntity);
-                selectedEntity = NULL;
-                return;
-            }
-        }
-
-        if(edMode==Idle && p_input->keyJustReleased(sf::Keyboard::Q))
-        {
-            if(selectedEntity != NULL)
-            {
-                selectedEntity->editorDesselect();
-                selectedEntity = NULL;
-                return;
-            }
-        }
-
-        if(selectedEntity != NULL && edMode == Idle && p_input->keyJustReleased(sf::Keyboard::R))
-        {
-            RayCastInfo ri = castRayScreen();
-            EntityPointer* ep = selectedEntity->getTargetPointer();
-            if(ep != nullptr)
-            {
-                if(ep->Name() == "Parent")
+                if(selectedEntity != NULL)
                 {
-                    selectedEntity->setParent(ri.enHit);
-                } else {
-                    (*ep) = ri.enHit;
+                    selectedEntity->editorDesselect();
+                    p_world->removeEntity(selectedEntity);
+                    selectedEntity = NULL;
+                    return;
                 }
-                selectedEntity->pointerIndexPrevious = -1; //update target info string
             }
-        }
-
-		if(selectedEntity != NULL && edMode == Idle && p_input->keyPressed(sf::Keyboard::LControl) && p_input->mouseButtonJustPressed(sf::Mouse::Right))
-		{
-		    edMode = Pulling;
-            sf::Vector2i mpos = sf::Mouse::getPosition(*p_input->mainWindow);
-            mposOffsetMoving = glm::vec2(mpos.x, mpos.y);
-		}
-
-		if(edMode == Pulling)
-        {
-            if(selectedEntity == NULL) { edMode = Idle; return; }
-            sf::Vector2i mpos = sf::Mouse::getPosition(*p_input->mainWindow);
-            glm::vec3 camPos = graphics.getCamera()->getPosition();
-            camPos = camPos - selectedEntity->position;
-            camPos *= editorFlySpeed*((mpos.y - mposOffsetMoving.y)/(1.0f*p_input->windowSize.y))/glm::length(camPos);
-            selectedEntity->position += camPos;
-            mposOffsetMoving = glm::vec2(mpos.x, mpos.y);
-        }
-
-		if(selectedEntity != NULL && edMode == Idle && p_input->keyPressed(sf::Keyboard::LControl) && p_input->mouseButtonJustPressed(sf::Mouse::Left))
-		{
-		    if(tmNow-doubleClickTime<=0.5f && (moveModePeriod<0.1f || tmNow-moveModeTime-moveModePeriod>=1.0f))
+            
+            if(edMode==Idle && p_input->keyJustReleased(sf::Keyboard::Q))
+            {
+                if(selectedEntity != NULL)
+                {
+                    selectedEntity->editorDesselect();
+                    selectedEntity = NULL;
+                    return;
+                }
+            }
+            
+            if(selectedEntity != NULL && edMode == Idle && p_input->keyJustReleased(sf::Keyboard::R))
             {
                 RayCastInfo ri = castRayScreen();
-                if(ri.enHit!=NULL)
+                EntityPointer* ep = selectedEntity->getTargetPointer();
+                if(ep != nullptr)
                 {
-                    selectedEntity->position = ri.posHit;
+                    if(ep->Name() == "Parent")
+                    {
+                        selectedEntity->setParent(ri.enHit);
+                    } else {
+                        (*ep) = ri.enHit;
+                    }
+                    selectedEntity->pointerIndexPrevious = -1; //update target info string
+                }
+            }
+            
+            if(selectedEntity != NULL && edMode == Idle && p_input->keyPressed(sf::Keyboard::LControl) && p_input->mouseButtonJustPressed(sf::Mouse::Right))
+            {
+                edMode = Pulling;
+                sf::Vector2i mpos = sf::Mouse::getPosition(*p_input->mainWindow);
+                mposOffsetMoving = glm::vec2(mpos.x, mpos.y);
+            }
+            
+            if(edMode == Pulling)
+            {
+                if(selectedEntity == NULL) { edMode = Idle; return; }
+                sf::Vector2i mpos = sf::Mouse::getPosition(*p_input->mainWindow);
+                glm::vec3 camPos = graphics.getCamera()->getPosition();
+                camPos = camPos - selectedEntity->position;
+                camPos *= editorFlySpeed*((mpos.y - mposOffsetMoving.y)/(1.0f*p_input->windowSize.y))/glm::length(camPos);
+                selectedEntity->position += camPos;
+                mposOffsetMoving = glm::vec2(mpos.x, mpos.y);
+            }
+            
+            if(selectedEntity != NULL && edMode == Idle && p_input->keyPressed(sf::Keyboard::LControl) && p_input->mouseButtonJustPressed(sf::Mouse::Left))
+            {
+                if(tmNow-doubleClickTime<=0.5f && (moveModePeriod<0.1f || tmNow-moveModeTime-moveModePeriod>=1.0f))
+                {
+                    RayCastInfo ri = castRayScreen();
+                    if(ri.enHit!=NULL)
+                    {
+                        selectedEntity->position = ri.posHit;
+                    } else {
+                        selectedEntity->position = ri.posOrigin+ri.direction*5.0f;
+                    }
+                    doubleClickTime -= 10.0f;
+                    return;
+                }
+                doubleClickTime = tmNow;
+                
+                edMode = Moving;
+                moveModeTime = tmNow;
+                sf::Vector2i mpos = sf::Mouse::getPosition(*p_input->mainWindow);
+                mpos.y = p_input->windowSize.y - mpos.y;
+                glm::mat4 camMat = graphics.getCamera()->getProjectionMatrix() * graphics.getCamera()->getViewMatrix();
+                glm::vec4 entPos = glm::vec4(selectedEntity->position.x, selectedEntity->position.y, selectedEntity->position.z, 1.0f);
+                entPos =  camMat * entPos; entPos/=entPos.w;
+                mposOffsetMoving = glm::vec2(entPos.x - (float(mpos.x)/float(p_input->windowSize.x))*2.0f + 1.0f,
+                                             entPos.y - (float(mpos.y)/float(p_input->windowSize.y))*2.0f + 1.0f);
+            }
+            
+            if(edMode == Moving)
+            {
+                if(selectedEntity == NULL) { edMode = Idle; return; }
+                glm::mat4 camMat = graphics.getCamera()->getProjectionMatrix() * graphics.getCamera()->getViewMatrix();
+                glm::vec4 entPos = glm::vec4(selectedEntity->position.x, selectedEntity->position.y, selectedEntity->position.z, 1.0f);
+                entPos =  camMat * entPos;
+                sf::Vector2i mpos = sf::Mouse::getPosition(*p_input->mainWindow);
+                mpos.y = p_input->windowSize.y - mpos.y;
+                glm::vec4 endPosNDC = glm::vec4( (float(mpos.x)/float(p_input->windowSize.x))*2.0f - 1.0f + mposOffsetMoving.x,
+                                                 (float(mpos.y)/float(p_input->windowSize.y))*2.0f - 1.0f + mposOffsetMoving.y,
+                                                 entPos.z/entPos.w,
+                                                 1.0f);
+                glm::vec4 endPosWLD = glm::inverse(camMat) * endPosNDC; endPosWLD/=endPosWLD.w;
+                selectedEntity->position = glm::vec3(endPosWLD.x, endPosWLD.y, endPosWLD.z);
+            }
+            
+            
+            if(p_input->mouseButtonJustReleased(sf::Mouse::Right))
+            {
+                if(edMode != Idle) { edMode = Idle; return; }
+            }
+            
+            if(p_input->mouseButtonJustReleased(sf::Mouse::Left))
+            {
+                if(edMode != Idle)
+                {
+                    if(edMode == Moving)
+                    {
+                        moveModePeriod = tmNow - moveModeTime;
+                    }
+                    edMode = Idle;
+                    return;
+                }
+                
+                if(tmNow-doubleClickTime<0.5f) return;
+                RayCastInfo rci = castRayScreen();
+                if(rci.enHit != NULL)
+                {
+                    if(selectedEntity != nullptr)
+                    {
+                        if(selectedEntity == rci.enHit) return;
+                        selectedEntity->editorDesselect();
+                    }
+                    selectedEntity = rci.enHit;
+                    selectedEntity->editorSelect();
                 } else {
-                    selectedEntity->position = ri.posOrigin+ri.direction*5.0f;
-                }
-                doubleClickTime -= 10.0f;
-                return;
-            }
-		    doubleClickTime = tmNow;
-
-            edMode = Moving;
-            moveModeTime = tmNow;
-            sf::Vector2i mpos = sf::Mouse::getPosition(*p_input->mainWindow);
-            mpos.y = p_input->windowSize.y - mpos.y;
-            glm::mat4 camMat = graphics.getCamera()->getProjectionMatrix() * graphics.getCamera()->getViewMatrix();
-            glm::vec4 entPos = glm::vec4(selectedEntity->position.x, selectedEntity->position.y, selectedEntity->position.z, 1.0f);
-            entPos =  camMat * entPos; entPos/=entPos.w;
-            mposOffsetMoving = glm::vec2(entPos.x - (float(mpos.x)/float(p_input->windowSize.x))*2.0f + 1.0f,
-                                         entPos.y - (float(mpos.y)/float(p_input->windowSize.y))*2.0f + 1.0f);
-		}
-
-		if(edMode == Moving)
-		{
-            if(selectedEntity == NULL) { edMode = Idle; return; }
-            glm::mat4 camMat = graphics.getCamera()->getProjectionMatrix() * graphics.getCamera()->getViewMatrix();
-            glm::vec4 entPos = glm::vec4(selectedEntity->position.x, selectedEntity->position.y, selectedEntity->position.z, 1.0f);
-            entPos =  camMat * entPos;
-            sf::Vector2i mpos = sf::Mouse::getPosition(*p_input->mainWindow);
-            mpos.y = p_input->windowSize.y - mpos.y;
-            glm::vec4 endPosNDC = glm::vec4( (float(mpos.x)/float(p_input->windowSize.x))*2.0f - 1.0f + mposOffsetMoving.x,
-                                             (float(mpos.y)/float(p_input->windowSize.y))*2.0f - 1.0f + mposOffsetMoving.y,
-                                             entPos.z/entPos.w,
-                                             1.0f);
-            glm::vec4 endPosWLD = glm::inverse(camMat) * endPosNDC; endPosWLD/=endPosWLD.w;
-            selectedEntity->position = glm::vec3(endPosWLD.x, endPosWLD.y, endPosWLD.z);
-		}
-
-
-		if(p_input->mouseButtonJustReleased(sf::Mouse::Right))
-		{
-            if(edMode != Idle) { edMode = Idle; return; }
-		}
-
-		if(p_input->mouseButtonJustReleased(sf::Mouse::Left))
-		{
-            if(edMode != Idle)
-            {
-                if(edMode == Moving)
-                {
-                    moveModePeriod = tmNow - moveModeTime;
-                }
-                edMode = Idle;
-                return;
-            }
-
-            if(tmNow-doubleClickTime<0.5f) return;
-            RayCastInfo rci = castRayScreen();
-            if(rci.enHit != NULL)
-            {
-                if(selectedEntity != nullptr)
-                {
-                    if(selectedEntity == rci.enHit) return;
-                    selectedEntity->editorDesselect();
-                }
-                selectedEntity = rci.enHit;
-                selectedEntity->editorSelect();
-            } else {
-                if(selectedEntity != nullptr)
-                {
-                    selectedEntity->editorDesselect();
-                    selectedEntity = nullptr;
+                    if(selectedEntity != nullptr)
+                    {
+                        selectedEntity->editorDesselect();
+                        selectedEntity = nullptr;
+                    }
                 }
             }
-		}
-		}
-	}
+        }
+    }
 }
