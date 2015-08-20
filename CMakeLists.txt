@@ -11,3 +11,4 @@ INCLUDE_DIRECTORIES(/usr/include/lua5.2/)
 
 add_subdirectory(test test)
 add_subdirectory(src src)
+add_subdirectory(game game)

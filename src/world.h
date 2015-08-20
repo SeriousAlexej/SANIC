@@ -36,6 +36,7 @@ public:
     void Love(const std::string& filename); // Lyubov porojdaet mir
 
     Lua* getLua() const { return lua; }
+    std::vector<Entity*>& getEntities() { return entities; }
 
 private:
 	std::vector<Entity*>	entities;

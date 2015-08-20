@@ -20,21 +20,6 @@ boost::crc_32_type calc_crc(std::string filename)
     return result;
 }
 
-TEST_CASE("Is parent serializing correctly?") {
-    World w_1;
-    Entity* d = w_1.createEntity("Decoration");
-    Entity* dd = w_1.createEntity("Decoration");
-    dd->setParent(d);
-    rapidjson::Document dc;
-    dd->Serialize(dc);
-
-    rapidjson::StringBuffer buffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    dc.Accept(writer);
-
-    INFO("Serialized entity: \n" << buffer.GetString());
-}
-
 TEST_CASE("Save/Love") {
     World w_1, w_2;
     Entity* d = w_1.createEntity("Decoration");
@@ -49,13 +34,19 @@ TEST_CASE("Save/Love") {
     WARN("Check files manually!");
 }
 
-TEST_CASE("Lua boys") {
+TEST_CASE("Lua constructor") {
     World w;
     //w.createEntity("Decoration");
-    std::ifstream in("test_lua_in.lua");
-    std::stringstream buf;
-    buf << in.rdbuf();
-    w.getLua()->RunScript(buf.str());
-    w.Save("test_lua.txt");
-    WARN("Check file manually"); // TODO: it can be checked in code
+    w.getLua()->RunScript("Decoration.new()");
+    REQUIRE(w.getEntities().size() == 1);
+}
+
+TEST_CASE("Lua get/set") {
+    World w;
+    w.getLua()->RunScript("local dec = Decoration.new()"
+                          "dec.setName('dick')"
+                          "local nm = dec.getName()"
+                          "dec.setName(string.upper(nm))");
+    Entity* pen = w.getEntities()[0];
+    REQUIRE(pen->getName() == "DICK");
 }

@@ -91,19 +91,19 @@ void Editor::update()
 		Camera* cam = graphics.getCamera();
 		cam->rotate(0.1f * g_Delta * p_input->mouseDelta.x,
 					0.1f * g_Delta * p_input->mouseDelta.y);
-		if(p_input->keyPressed(sf::Keyboard::W))
+        if(p_input->keyPressed(sf::Keyboard::Up))
 		{
 			cam->moveFront(editorFlySpeed*g_Delta);
 		} else
-		if(p_input->keyPressed(sf::Keyboard::S))
+        if(p_input->keyPressed(sf::Keyboard::Down))
 		{
 			cam->moveFront(-editorFlySpeed*g_Delta);
 		}
-		if(p_input->keyPressed(sf::Keyboard::D))
+        if(p_input->keyPressed(sf::Keyboard::Right))
 		{
 			cam->moveRight(editorFlySpeed*g_Delta);
 		} else
-		if(p_input->keyPressed(sf::Keyboard::A))
+        if(p_input->keyPressed(sf::Keyboard::Left))
 		{
 			cam->moveRight(-editorFlySpeed*g_Delta);
 		}
