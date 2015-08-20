@@ -160,6 +160,9 @@ public:
 	void                    setParent(Entity* p);
 	Entity*                 getParent() const;
 
+	void                    setPosition(glm::vec3 pos);
+	void                    setRotation(glm::quat rot);
+
 	void                    pointerAdded(EntityPointer* pen);
 	void                    pointerLeft(EntityPointer* pen);
 
@@ -230,7 +233,6 @@ protected:
     void                        setProperty(string s, T& val);
 
     virtual void    addProperties();
-
     vector<vector<DrawableElement>> guiElements;
     void    drawSingleElement(DrawableElement &elem);
     void    drawGuiElements();
@@ -251,7 +253,6 @@ protected:
         registerProperties(s, c);
         registerProperties(Args...);
     }
-
     // END BLACK MAGIC
 
 

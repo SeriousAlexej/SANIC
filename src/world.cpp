@@ -25,7 +25,7 @@ World::World()
     }
 }
 
-World::~World()
+void World::deleteAllEntities()
 {
 	for(int i=entities.size()-1; i>=0; i--)
 	{
@@ -35,7 +35,23 @@ World::~World()
         ::operator delete(ptr);
 	}
 	entities.clear();
+}
+
+World::~World()
+{
+    deleteAllEntities();
     delete pGraphics;
+}
+
+void World::Clear()
+{
+    deleteAllEntities();
+	if(pGraphics != nullptr)
+    {
+        delete pGraphics;
+    }
+    physics.Clear();
+    pGraphics = new WorldGraphics();
 }
 
 void World::registerEntity(const std::string& name)
@@ -87,6 +103,10 @@ Entity* World::createEntity(Entity* e)
     e->pLua = lua;
 	e->initialize();
 	entities.push_back(e);
+	if(pGraphics != nullptr)
+    {//useful in editor. If called from Load, then position will be reset anyway, so no harm done.
+        e->setPosition(pGraphics->camera.getPosition() + pGraphics->camera.getFront()*3.0f);
+    }
 	return e;
 }
 
@@ -175,6 +195,8 @@ void World::Save(const string &filename)
 
 void World::Love(const string &filename)
 {
+    Clear();
+
     beingDeserialized = nullptr;
     pensOwner.clear();
     enByOldId.clear();

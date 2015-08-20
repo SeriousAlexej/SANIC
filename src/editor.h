@@ -1,31 +1,51 @@
 #ifndef EDITOR_H
 #define EDITOR_H
-#include "world.h"
-#include "input_handler.h"
+#include <memory>
+#include <glm/glm.hpp>
+
+class World;
+class InputHandler;
+class Entity;
+struct RayCastInfo;
+namespace sfg
+{
+    class Window;
+};
 
 class Editor
 {
+public:
+    typedef std::shared_ptr<Editor> Ptr;
+    static Ptr Create();
+    ~Editor();
+
+    int run();
+
+    void NewWorld();
+    void Load();
+    void SaveAs();
 
 private:
+    Editor();
+	void update();
+
+	void resizeGUIComponents(unsigned width, unsigned height);
+
     World* p_world;
 	InputHandler* p_input;
     RayCastInfo castRayScreen(bool fromCenter = false);
     void updateEntity(Entity* pen);
-public:
-    Editor(sf::Window* w, World* wld);
-    ~Editor();
-	void update();
-	InputHandler *getInputHandler() const { return p_input; }
-	
-	//editor stuff
+
 	enum EditorMode { Fly, Moving, Pulling, Idle };
 
 	Entity*					selectedEntity;
 	float					editorFlySpeed;
 	glm::vec2               mposOffsetMoving;
 
-	TwBar*					entitiesList;
 	EditorMode 				edMode;
+
+	std::shared_ptr<sfg::Window> leftWindow;
+	std::shared_ptr<sfg::Window> topWindow;
 };
 
 #endif // EDITOR_H

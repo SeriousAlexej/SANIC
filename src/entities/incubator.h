@@ -1,6 +1,7 @@
 #ifndef INCUBATOR_H
 #define INCUBATOR_H
 #include <map>
+#include <vector>
 #include <string>
 #include <luacppinterface.h>
 
@@ -19,13 +20,14 @@ class cant_create : public std::exception
     }
 };
 
-
 class Incubator
 {
     public:
         static void* Create(const std::string &className);
         static void addToCookBook(std::string className, size_t bytes, void (*ctorCaller)(void*));
         static Incubator& getInstance();
+        static std::vector<std::string> getRegisteredClasses();
+
     private:
         Incubator() {}
         ~Incubator() {}

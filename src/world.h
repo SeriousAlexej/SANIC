@@ -32,6 +32,7 @@ public:
 
 	RayCastInfo	castRay(glm::vec3 origin, glm::vec3 direction);
 
+    void Clear(); //complementation of entities
     void Save(const std::string& filename);
     void Love(const std::string& filename); // Lyubov porojdaet mir
 
@@ -39,8 +40,10 @@ public:
     std::vector<Entity*>& getEntities() { return entities; }
 
 private:
+    void deleteAllEntities(); //red button
+
 	std::vector<Entity*>	entities;
-	WorldGraphics*			pGraphics;   // Sometimes we don't need graphics
+	WorldGraphics*			pGraphics;   // there are thigs possible to render with nothing but heart
 	WorldPhysics			physics;
     Lua* lua;
     void registerEntity(const std::string& name);
