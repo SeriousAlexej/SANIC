@@ -1,5 +1,6 @@
 #include "entitypointer.h"
 #include <rapidjson/document.h>
+#include <vector>
 
 extern std::map<EntityPointer*, Entity*> pensOwner;
 extern std::vector<EntityPointer*> pensToRetarget;

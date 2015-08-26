@@ -50,3 +50,15 @@ TEST_CASE("Lua get/set") {
     Entity* pen = w.getEntities()[0];
     REQUIRE(pen->getName() == "DICK");
 }
+
+TEST_CASE("Lua events") {
+    World w;
+    w.getLua()->RunScript("local ev = EntityEvent.new('Damage')"
+                          "print(ev.getAmount())"
+                          "local dec = Decoration.new()"
+                          "dec.setName('dick')"
+                          "ev.setDamager(dec)"
+                          "ev.getDamager().setName('not dick!')");
+    Entity* pen = w.getEntities()[0];
+    REQUIRE(pen->getName() == "not dick!");
+}

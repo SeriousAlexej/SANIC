@@ -188,7 +188,7 @@ bool Camera::pointIsVisible(glm::vec3 point)
 
 void Camera::extractShadowFrustum()
 {
-    float	t;
+    float t;
 
     glm::mat4 clip;
     switch(renMode)

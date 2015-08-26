@@ -7,7 +7,7 @@
 
 class Entity;
 
-class EntityPointer : public Serial
+class EntityPointer : public Serial, public FromLua
 {
 public:
     EntityPointer();
@@ -24,6 +24,8 @@ public:
 
     virtual void Deserialize(rapidjson::Value& d);
     virtual rapidjson::Value Serialize(rapidjson::Document& d);
+
+    virtual void registerLua(LuaUserdata<EntityPointer>& l) {};
 private:
     Entity*       penTarget;
     int           enID;

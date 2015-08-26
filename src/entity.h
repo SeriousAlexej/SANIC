@@ -17,6 +17,7 @@
 #include "entitypointer.h"
 #include "entities/incubator.h"
 #include <luacppinterface.h>
+#include <type_traits>
 
 class Entity;
 class EntityPointer;
@@ -129,8 +130,8 @@ public:
 	void					switchToEditorModel();
 	void					switchToModel();
 
-    virtual void Deserialize(rapidjson::Value& d);
-    virtual rapidjson::Value Serialize(rapidjson::Document& d);
+    virtual void                Deserialize(rapidjson::Value& d);
+    virtual rapidjson::Value    Serialize(rapidjson::Document& d);
 
     string getName();
 	const SolidBody*		getBody() const { return body; }//for moving purposes
@@ -169,7 +170,15 @@ public:
     virtual void            registerLua(LuaUserdata<Entity>& lua);
 
     template<class C>
-    void addToLua(LuaUserdata<Entity>& l, string s, C c)
+    typename std::enable_if<std::is_base_of<FromLua, C>::value>::type addToLua(LuaUserdata<Entity>& l, string s, C c)
+    {
+        l.Set("get"+s, genUserdataGetter(*pLua, &getProperty<C>(s)));
+        l.Set("set"+s, pLua->CreateFunction<void(LuaUserdata<C>)>([&, s](C arg) {
+            setProperty<C>(s, arg);
+        }));
+    }
+    template<class C>
+    typename std::enable_if<!std::is_base_of<FromLua, C>::value>::type addToLua(LuaUserdata<Entity>& l, string s, C c)
     {
         l.Set("get"+s, pLua->CreateFunction<C()>([&, s]() {
             return getProperty<C>(s);

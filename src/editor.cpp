@@ -134,9 +134,15 @@ int Editor::run()
     p_input = new InputHandler(&window);
     p_world = new World();
     
+    std::shared_ptr<sf::Font> ptsans = std::make_shared<sf::Font>();
+    ptsans->loadFromFile("fonts/PTSR.ttf");
+
     sfg::SFGUI sfgui;
     window.setActive();
     sfg::Desktop desktop;
+    desktop.GetEngine().GetResourceManager().SetDefaultFont(ptsans);
+    desktop.SetProperty("*", "FontName", "fonts/PTSR.ttf");
+    desktop.SetProperty("*", "FontSize", "12");
     leftWindow = sfg::Window::Create(sfg::Window::Style::BACKGROUND);
     topWindow = sfg::Window::Create(sfg::Window::Style::BACKGROUND);
     //fill windows here

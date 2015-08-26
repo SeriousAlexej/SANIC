@@ -23,6 +23,7 @@ World::World()
     {
         registerEntity(kv.first);
     }
+    registerEvents(*lua);
 }
 
 void World::deleteAllEntities()
