@@ -26,7 +26,7 @@ void World::registerLua()
     }
     auto getEntitiesList = egg::getInstance().g_lua.CreateFunction<LuaTable()>([&]() {
         LuaTable result = egg::getInstance().g_lua.CreateTable();
-        for(auto pen : entities) {
+        for(std::shared_ptr<Entity> &pen : entities) {
             result.Set<LuaUserdata<Entity>>(pen->getMultipass(), pen->private_lud);
         }
         return result;

@@ -574,7 +574,8 @@ std::vector<Light*> WorldGraphics::pickBestLights(const std::vector<Light*>& poo
         glm::vec3 lpos = pool[i]->getPosition();
         float lfalloff = pool[i]->getFallOff();
 		float distToLight = glm::distance2(bestPosition, lpos);
-		if(distToLight > lfalloff + modelRenSphere.w)
+		const float maxPossibleDistance = lfalloff + modelRenSphere.w;
+		if(distToLight > maxPossibleDistance * maxPossibleDistance)
         {// this light can't even reach model's bounding sphere, discard it
             continue;
         }
