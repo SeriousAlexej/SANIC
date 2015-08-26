@@ -1,6 +1,5 @@
 #include "entitypointer.h"
 #include <rapidjson/document.h>
-#include <vector>
 
 extern std::map<EntityPointer*, Entity*> pensOwner;
 extern std::vector<EntityPointer*> pensToRetarget;
@@ -44,14 +43,14 @@ std::string EntityPointer::Name() const
     return name;
 }
 
-Entity* EntityPointer::Value() const
-{
-    return penTarget;
-}
-
 bool EntityPointer::operator==(const EntityPointer& other) const
 {
     return penTarget == other.penTarget;
+}
+
+bool EntityPointer::operator==(const Entity* other) const
+{
+    return penTarget == other;
 }
 
 EntityPointer& EntityPointer::operator=(const EntityPointer& other)
@@ -86,6 +85,15 @@ EntityPointer& EntityPointer::operator=(Entity* other)
         enID = -1;
     }
     return *this;
+}
+
+Entity* EntityPointer::operator->() const
+{
+    if(penTarget == nullptr)
+    {
+        throw null_entitypointer();
+    }
+    return penTarget;
 }
 
 rapidjson::Value EntityPointer::Serialize(rapidjson::Document& d)

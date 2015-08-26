@@ -8,7 +8,6 @@
 #include <vector>
 #include <list>
 #include <string>
-#include <luacppinterface.h>
 
 extern bool g_Editor;
 
@@ -27,7 +26,7 @@ public:
 
 	void		setPosition(glm::vec3 pos);
 	void		setRotation(glm::vec3 rot);
-	void		setRotation(float angle, glm::vec3 dir);
+	void        setRotation(glm::quat q);
 	void		setRotation(glm::mat4 rot);
 	void		setScale(glm::vec3 sca);
 	void		setOffset(glm::vec3 off);
@@ -164,44 +163,5 @@ private:
 	std::string		ancestorClasses;
 	std::string		currentClass;
 };
-
-class FromLua
-{
-    // simple as fuck
-};
-
-template<class C>
-auto genLuaGetter(Lua& l, C* c) -> LuaFunction<C()>
-{
-    return l.CreateFunction<C()>([&]() {
-        return *c;
-    });
-}
-
-template<class C>
-auto genLuaSetter(Lua& l, C* c) -> LuaFunction<void(C)>
-{
-    return l.CreateFunction<void(C)>([&](C target) {
-        *c = target;
-    });
-}
-
-template<class C>
-auto genUserdataSetter(Lua& l, C* c) -> LuaFunction<void(LuaUserdata<C>)>
-{
-    return l.CreateFunction<void(LuaUserdata<C>)>([&](LuaUserdata<C> target) {
-        c = target.GetPointer();
-    });
-}
-
-template<class C>
-auto genUserdataGetter(Lua& l, C* c) -> LuaFunction<LuaUserdata<C>()>
-{
-    return l.CreateFunction<LuaUserdata<C>()>([&]() {
-        auto lud = l.CreateUserdata<C>(c);
-        lud->registerLua(lud);
-        return lud;
-    });
-}
 
 #endif

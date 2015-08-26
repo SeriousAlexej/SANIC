@@ -1,33 +1,66 @@
-#define CATCH_CONFIG_RUNNER
+#include <string>
+#include <iostream>
 #include "editor.h"
-#include "../test/Serialization.h"
-#include <catch.hpp>
-#include <SFML/Graphics.hpp>
+#include "game.h"
+
+unsigned char flagEditor = 1 << 0,
+                       flagWorld = 1 << 1;
 
 int main(int argc, char **argv)
 {
-    // test shit
-        sf::ContextSettings cs;
-        cs.antialiasingLevel = 4;
-        cs.depthBits = 24;
-        cs.majorVersion = 3;
-        cs.minorVersion = 3;
+    std::string helpString = std::string("Eggine arguments:\n") +
+                                            "\tLoad world: -w <path> or --world <path>\n" +
+                                            "\tLaunch editor: -e or --editor\n" +
+                                            "\tDisplay version: -v or --version\n" +
+                                            "\tShow this help: -h or --help\n";
+    unsigned char appFlags = 0;
+    std::string wld = "";
+    EggineInstance::Ptr app;
 
-        sf::RenderWindow window(sf::VideoMode(800, 600), "Eggine Editor", sf::Style::Default, cs);
-        window.setVerticalSyncEnabled(true);
-        window.setFramerateLimit(60);
-        window.setActive();
+    for(int i=1; i<argc; ++i)
+    {
+        std::string arg = argv[i];
+        if(arg == "-h" || arg == "--help")
+        {
+            std::cout << helpString;
+            return EXIT_SUCCESS;
+        } else
+        if(arg == "-e" || arg == "--editor")
+        {
+            appFlags |= flagEditor;
+        } else
+        if(arg == "-w" || arg == "--world")
+        {
+            if(i >= argc - 1)
+            {
+                std::cout << "Too few arguments for " + arg << std::endl;
+            } else {
+                wld = argv[++i];
+                appFlags |= flagWorld;
+            }
+        } else
+        if(arg == "-v" || arg == "--version")
+        {
+            EggineInstance::printVersion(std::cout);
+            return EXIT_SUCCESS;
+        } else
+        {
+            std::cout << "Unknown argument " + arg  << std::endl;
+            continue;
+        }
+    }
 
-        glewExperimental=true;
-        glewInit();
+    if(appFlags & flagEditor)
+    {
+        app = Editor::Create();
+    } else {
+        app = Game::Create();
+    }
 
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_BACK);
-        glDepthFunc(GL_LESS);
-        glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
+    if(appFlags & flagWorld)
+    {
+        app->setStartupWorld(wld);
+    }
 
-//    auto app = Editor::Create();
-//    app->run();
-    return Catch::Session().run(argc, argv);
+    return app->run();
 }

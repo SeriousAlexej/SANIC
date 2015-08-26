@@ -1,6 +1,7 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 #include <SFML/System/Clock.hpp>
+#include <SFML/System/Vector2.hpp>
 #include <string>
 
 extern char                logo[];

@@ -56,6 +56,12 @@ void TW_CALL updateParameters(void *decorPtr)
 Decoration::Decoration()
 {
 	setClass("Decoration");
+	collision = true;
+	mass = 0.0f;
+	radius = 0.5f;
+	collBoxSize = glm::vec3(1.0f,1.0f,1.0f);
+	mdlScale = glm::vec3(1.0f, 1.0f, 1.0f);
+	bodyType = 0;
 }
 
 Decoration::~Decoration()
@@ -74,24 +80,37 @@ void Decoration::addProperties()
                 "ShaPath",       &shaderPath,
                 "NStrength",     &model->normalStrength,
                 "HScale",        &model->parallaxScale,
-                "HOffset",       &model->parallaxOffset
+                "HOffset",       &model->parallaxOffset,
+                "Mass",            &mass,
+                "BodyType",   &bodyType,
+                "Radius",         &radius,
+                "CBoxX",          &collBoxSize[0],
+                "CBoxY",          &collBoxSize[1],
+                "CBoxZ",          &collBoxSize[2],
+                "COffX",           &collOffset[0],
+                "COffY",           &collOffset[1],
+                "COffZ",           &collOffset[2],
+                "ScaleX",          &mdlScale[0],
+                "ScaleY",          &mdlScale[1],
+                "ScaleZ",          &mdlScale[2],
+                "Collide",         &collision
     );
 
     addDrawableElements(
         {
             {
                 DrawableElement{DrawableElement::PT_STRING, "ModelPath", "label='Model' "},
-                DrawableElement{DrawableElement::PT_BUTTON, "PickModel", "label='    Pick' ", &modelPath, pickModel}
+                DrawableElement{DrawableElement::PT_BUTTON, "PickModel", "label='    Pick' ", &modelPath, pickModel},
+                DrawableElement{DrawableElement::PT_BUTTON, "ScaleLabel", "label='Scale'", NULL, NULL},
+                DrawableElement{DrawableElement::PT_FLOAT, "ScaleX", "label='X' min=0 step=0.01"},
+                DrawableElement{DrawableElement::PT_FLOAT, "ScaleY", "label='Y' min=0 step=0.01"},
+                DrawableElement{DrawableElement::PT_FLOAT, "ScaleZ", "label='Z' min=0 step=0.01"}
             },
             {
                 DrawableElement{DrawableElement::PT_STRING, "DTextPath", "label='Diffuse map' "},
-                DrawableElement{DrawableElement::PT_BUTTON, "PickDText", "label='    Pick' ", &dTexturePath, pickTexture}
-            },
-            {
+                DrawableElement{DrawableElement::PT_BUTTON, "PickDText", "label='    Pick' ", &dTexturePath, pickTexture},
                 DrawableElement{DrawableElement::PT_STRING, "NTextPath", "label='Normal map' "},
-                DrawableElement{DrawableElement::PT_BUTTON, "PickNText", "label='    Pick' ", &nTexturePath, pickTexture}
-            },
-            {
+                DrawableElement{DrawableElement::PT_BUTTON, "PickNText", "label='    Pick' ", &nTexturePath, pickTexture},
                 DrawableElement{DrawableElement::PT_STRING, "HTextPath", "label='Height map' "},
                 DrawableElement{DrawableElement::PT_BUTTON, "PickHText", "label='    Pick' ", &hTexturePath, pickTexture}
             },
@@ -105,6 +124,20 @@ void Decoration::addProperties()
                 DrawableElement{DrawableElement::PT_FLOAT, "HOffset", "label='Parallax offset' step=0.01 "}
             },
             {
+                DrawableElement{DrawableElement::PT_BOOL, "Collide", ""},
+                DrawableElement{DrawableElement::PT_ENUM, "BdType", "label='Collision'", &bodyType, NULL, "Box,Sphere,Model"},
+                DrawableElement{DrawableElement::PT_BUTTON, "CollParams", "label='Collision params'", NULL, NULL},
+                DrawableElement{DrawableElement::PT_FLOAT, "Mass", "step=0.2 min=0"},
+                DrawableElement{DrawableElement::PT_FLOAT, "Radius", "min=0 step=0.2"},
+                DrawableElement{DrawableElement::PT_FLOAT, "CBoxX", "label='Width' min=0 step=0.2"},
+                DrawableElement{DrawableElement::PT_FLOAT, "CBoxY", "label='Height' min=0 step=0.2"},
+                DrawableElement{DrawableElement::PT_FLOAT, "CBoxZ", "label='Length' min=0 step=0.2"},
+                DrawableElement{DrawableElement::PT_BUTTON, "CollOffset", "label='Collision offset'", NULL, NULL},
+                DrawableElement{DrawableElement::PT_FLOAT, "COffX", "label='X' min=0 step=0.2"},
+                DrawableElement{DrawableElement::PT_FLOAT, "COffY", "label='Y' min=0 step=0.2"},
+                DrawableElement{DrawableElement::PT_FLOAT, "COffZ", "label='Z' min=0 step=0.2"}
+            },
+            {
                 DrawableElement{DrawableElement::PT_BUTTON, "UpdateButton", "label='Update parameters' ", this, updateParameters}
             }
         }
@@ -116,7 +149,12 @@ void Decoration::addProperties()
 void Decoration::Deserialize(rapidjson::Value& d)
 {
     Entity::Deserialize(d);
+    reloadRig();
+}
 
+void Decoration::reloadRig()
+{
+    glm::vec3 mutValues(model->normalStrength, model->parallaxOffset, model->parallaxScale);
     glm::vec3 lastPos = model->getPosition();
     glm::quat lastRot = model->getRotationQuat();
     glm::vec3 lastSca = model->getScale();
@@ -126,10 +164,45 @@ void Decoration::Deserialize(rapidjson::Value& d)
                dTexturePath,
                nTexturePath,
                hTexturePath);
-    model->setPosition(lastPos);
-    model->setRotation(glm::angle(lastRot), glm::axis(lastRot));
     model->setScale(lastSca);
     model->setOffset(lastOff);
+    if(collision || g_Editor)
+    {
+        switch(bodyType)
+        {
+            case 2:
+            {
+                setupCollision(0.0f);
+                mass = 0.0f; //somewhy mesh objects fail to collide when mass > 0... F*king bullet
+                break;
+            }
+            case 1:
+            {
+                setupCollision(mass, radius);
+                break;
+            }
+            case 0:
+            default:
+            {
+                setupCollision(mass, collBoxSize*0.5f);
+                break;
+            }
+        }
+        body->setOffset(collOffset);
+    }
+    setRotation(lastRot);
+    setPosition(lastPos);
+
+    model->normalStrength = mutValues.x;
+    model->parallaxOffset = mutValues.y;
+    model->parallaxScale = mutValues.z;
+    model->setScale(mdlScale);
+    updateShaderMutators();
+
+    if(editor)
+    {
+        switchToEditorModel();
+    }
 }
 
 void Decoration::initialize()
@@ -144,7 +217,10 @@ void Decoration::initialize()
                dTexturePath,
                nTexturePath,
                hTexturePath);
-    setupCollision(0.0f, glm::vec3(0.5f, 0.5f, 0.5f));
+    if(g_Editor)
+    {
+        setupCollision(0.0f, glm::vec3(0.5f, 0.5f, 0.5f));
+    }
     switchToModel();
 	pushState(main);
 
@@ -160,17 +236,7 @@ void Decoration::updateShaderMutators()
 
 void Decoration::updateParamsInternal()
 {
-    glm::vec3 mutValues(model->normalStrength, model->parallaxOffset, model->parallaxScale);
-    setupModel(shaderPath,
-               modelPath,
-               dTexturePath,
-               nTexturePath,
-               hTexturePath);
-    model->normalStrength = mutValues.x;
-    model->parallaxOffset = mutValues.y;
-    model->parallaxScale = mutValues.z;
-    updateShaderMutators();
-
+    reloadRig();
     drawGuiElements();
 }
 

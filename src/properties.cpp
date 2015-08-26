@@ -18,10 +18,14 @@ void Property::Deserialize ( rapidjson::Value& d )
         int tmp = val.GetInt();
 		this->SetValue(tmp);
     }
+    else if_type(bool) {
+        bool tmp = val.GetBool();
+        this->SetValue(tmp);
+    }
     else if_type(float) {
 		float tmp = val.GetDouble();
 		this->SetValue(tmp);
-	}	
+	}
     else if_type(double) {
 		double tmp = val.GetDouble();
 		this->SetValue(tmp);
@@ -64,6 +68,7 @@ rapidjson::Value Property::Serialize(rapidjson::Document& d)
     }
     else if_type(bool) {
         bool b = *static_cast<bool*>(m_data);
+        val.SetBool(b);
     }
     else if_type(glm::vec3) {
         glm::vec3 v = *static_cast<glm::vec3*>(m_data);
@@ -93,7 +98,7 @@ rapidjson::Value Property::Serialize(rapidjson::Document& d)
         std::string s = *static_cast<std::string*>(m_data);
         val.SetString(s.c_str(), s.length());
     }
-    
+
     else {
     	Serial* ser = static_cast<Serial*>(m_data);
     	return ser->Serialize(d);

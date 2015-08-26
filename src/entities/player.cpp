@@ -6,8 +6,6 @@ ADD_TO_INCUBATOR(Player);
 Player::Player()
 {
 	setClass("Player");
-	setTranslatedByBody(false);
-	orientationType = NONE;
 }
 
 void Player::addProperties()

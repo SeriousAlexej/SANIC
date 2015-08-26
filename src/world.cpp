@@ -4,6 +4,7 @@
 #include <rapidjson/filewritestream.h>
 #include <rapidjson/filereadstream.h>
 #include <rapidjson/writer.h>
+#include <SFML/Window/Keyboard.hpp>
 
 //these vars assist EntityPointer deserialization
 std::map<int, Entity*> enByOldId; //get entity by ID it was saved with
@@ -23,7 +24,6 @@ World::World()
     {
         registerEntity(kv.first);
     }
-    registerEvents(*lua);
 }
 
 void World::deleteAllEntities()
@@ -79,7 +79,12 @@ void World::update()
 		{
 			entities[i]->update();
 		}
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::P))
 		physics.update();
+    }
+    if(pGraphics != nullptr)
+    {
+        pGraphics->render();
     }
 }
 

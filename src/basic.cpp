@@ -66,9 +66,9 @@ void Movable::setRotation(glm::vec3 rot)
 	updateModelMatrix();
 }
 
-void Movable::setRotation(float angle, glm::vec3 dir)
+void Movable::setRotation(glm::quat q)
 {
-	rotMx = glm::rotate(angle, dir);
+	rotMx = glm::mat4(q);
 	updateModelMatrix();
 }
 

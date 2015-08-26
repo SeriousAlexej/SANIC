@@ -1,12 +1,6 @@
 #ifndef _ENTITY_EVENT_H_
 #define _ENTITY_EVENT_H_
-#include <luacppinterface.h>
-#include <memory>
-#include "entity.h"
 
-class Entity;
-
-using std::make_shared;
 
 /*********************************************************************/
 
@@ -75,38 +69,6 @@ public:
 	virtual ~EventAutowaitCallback() {}
 	int	index;
 };
-
-/*********************************************************************/
-
-const int EventCode_Damage = 5;
-class EventDamage : public EntityEvent
-{
-public:
-    Entity* penDamager;
-    int amount;
-    EventDamage(Entity* pen, int a) : penDamager(pen), amount(a) {}
-};
-
-static void registerEvents(Lua& lua)
-{
-    auto newEvent = lua.CreateFunction<LuaUserdata<EntityEvent>(std::string)>(
-    [&](std::string type) -> LuaUserdata<EntityEvent>
-    {
-        if(type == "Damage")
-        {
-            EventDamage* ped = new EventDamage(nullptr, 0);
-            auto lud = lua.CreateUserdata<EntityEvent>(ped);
-            lud.Set("getAmount", genLuaGetter(lua, &(ped->amount)));
-            lud.Set("getDamager", genUserdataGetter<Entity>(lua, (ped->penDamager)));
-            lud.Set("setAmount", genLuaSetter(lua, &(ped->amount)));
-            lud.Set("setDamager", genUserdataSetter<Entity>(lua, (ped->penDamager)));
-            return lud;
-        }
-    });
-    auto dtable = lua.CreateTable();
-    dtable.Set("new", newEvent);
-    lua.GetGlobalEnvironment().Set("EntityEvent", dtable);
-}
 
 /*********************************************************************/
 
