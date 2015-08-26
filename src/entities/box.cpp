@@ -5,8 +5,6 @@ ADD_TO_INCUBATOR(Box);
 Box::Box()
 {
 	setClass("Box");
-	setTranslatedByBody(false);
-	orientationType = BY_BODY;
 }
 
 void Box::addProperties()

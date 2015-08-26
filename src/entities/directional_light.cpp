@@ -19,8 +19,6 @@ static void TW_CALL pickColor(void *colorPtr)
 DirectionalLight::DirectionalLight()
 {
     setClass("DirectionalLight");
-	setTranslatedByBody(false);
-	orientationType = NONE;
 	lightSource = nullptr;
 }
 
@@ -59,7 +57,10 @@ void DirectionalLight::initialize()
 			   "./models/editor/sprite.obj",
 			   "./models/editor/dlight.png",
 			   "", "");
-	setupCollision(0.0f, glm::vec3(0.25f, 0.25f, 0.25f));
+    if(g_Editor)
+    {
+	    setupCollision(0.0f, glm::vec3(0.25f, 0.25f, 0.25f));
+    }
 	switchToEditorModel();
 	pushState(main);
 	lightSource = wldGFX->createDirLight();
@@ -70,9 +71,9 @@ void DirectionalLight::initialize()
 
 void DirectionalLight::adjustMoving()
 {
-    if(lightSource && body)
+    if(lightSource && model)
     {
-        lightSource->setRotation(body->getRotation());
+        lightSource->setRotation(model->getRotation());
     }
 }
 

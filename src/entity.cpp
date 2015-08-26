@@ -77,27 +77,21 @@ void Entity::fillPointers()
 Entity::Entity()
 {
     pointersString = "";
-	wld = NULL;
-	wldGFX = NULL;
-	wldPHY = NULL;
+	wld = nullptr;
+	wldGFX = nullptr;
+	wldPHY = nullptr;
 	editor = false;
-	entityBar = NULL;
-	orientationType = BY_BODY;
-	translatedByBody = true;
-	body = NULL;
-	model = NULL;
+	entityBar = nullptr;
+	body = nullptr;
+	model = nullptr;
 	pushState(dummy, 0);
 	setClass("Entity");
-	desiredLinearDirection = glm::vec3(0,0,0);
-	desiredAngularDirection = glm::vec3(0,0,0);
-	desiredRotation = glm::vec3(0,0,0);
-	rotationSpeed = 1.0f;
 	rotationQuat = glm::quat();
 	rotationEuler = glm::vec3(0,0,0);
 	rotationQuatO = glm::quat();
 	rotationEulerO = glm::vec3(0,0,0);
 	position = glm::vec3(0,0,0);
-	parent = NULL;
+	parent = nullptr;
 	relativeTransform = glm::mat4(1);
 	oldMatrix = glm::mat4(1);
 	pointerIndex = 0;
@@ -150,13 +144,15 @@ void Entity::addProperties()
                 "RotB",     &rotationEuler[2],
                 "PosX",     &position[0],
                 "PosY",     &position[1],
-                "PosZ",     &position[2]
+                "PosZ",     &position[2],
+                "Editor",   &editor
     );
 
     addDrawableElements(
         {
             {
-                DrawableElement{DrawableElement::PT_STRING, "Name", "label='Name' "}
+                DrawableElement{DrawableElement::PT_STRING, "Name", "label='Name' "},
+                DrawableElement{DrawableElement::PT_BOOL, "Editor", "label='Editor Only'"}
             },
             {
                 DrawableElement{DrawableElement::PT_QUAT, "Quat", "label='Quaternion' opened=true "},
@@ -193,7 +189,7 @@ Entity::~Entity()
 
 	for(int i=children.size()-1; i>=0; i--)
 	{
-        children[i]->parent = NULL;
+        children[i]->parent = nullptr;
 	}
 	children.clear();
 
@@ -214,7 +210,6 @@ Entity::~Entity()
 
     for(auto &p : pointAtMe)
     {
-        printf("Clearing pointer!\n");
         (*p) = nullptr;
     }
 
@@ -274,9 +269,9 @@ void Entity::sendEvent(EntityEvent *ee)
 
 void Entity::switchToEditorModel()
 {
-	if(g_Editor)
+    editor = true;
+	if(!g_Editor)
 	{
-		editor = true;
 		if(model)
 			model->deactivate();
 		if(body)
@@ -308,7 +303,6 @@ void Entity::replaceState(stateCallback callback, float waitTime)
 	assert(!states.empty());
 	states.top()->setObsolete();
 	statesObsolete.push(states.top());
-	//delete states.top();
 	states.pop();
 	pushState(callback, waitTime);
 }
@@ -320,7 +314,6 @@ void Entity::popState(EntityEvent* ee)
 		int retIndex = states.top()->getReturnIndex();
 		states.top()->setObsolete();
 		statesObsolete.push(states.top());
-		//delete states.top();
 		states.pop();
 
 		if(states.empty())
@@ -357,14 +350,19 @@ void Entity::autowait(float time, int returnIndex)
 	states.push(new EntityState(autowaitState, this, time, returnIndex));
 }
 
-void Entity::syncEntitySpeed()
+void Entity::syncEntityRotation()
 {
+    if(body && model)
+    {
+        model->setRotation(body->getRotationQuat());
+    }
+    /*
 	//sync moving and rotation speeds here!
 	if(body)
 	{
-		if(translatedByBody)
-			body->setVelocity(desiredLinearDirection);
-		body->setAngularVelocity(desiredAngularDirection);
+		//if(translatedByBody)
+		//	body->setVelocity(desiredLinearDirection);
+		//body->setAngularVelocity(desiredAngularDirection);
 	}
 	if(model && orientationType != NONE)
 	{
@@ -377,6 +375,7 @@ void Entity::syncEntitySpeed()
 		}
 		model->setRotation(glm::angle(q), glm::axis(q));
 	}
+	*/
 }
 
 void Entity::update()
@@ -386,10 +385,6 @@ void Entity::update()
 		destroy();
 	}
 	while(!statesObsolete.empty()) { delete statesObsolete.top(); statesObsolete.pop(); }
-
-	//you really think you're moving?
-	syncEntitySpeed();
-	adjustMoving();
 
 	//transfer pending Touch events from
 	//collision callback to actual event handler
@@ -407,7 +402,10 @@ void Entity::update()
 			model->setPosition(body->getPosition());
 		}
 	}
+	//sync rotation
+	syncEntityRotation();
 	updatePosition();
+	adjustMoving();
 }
 
 void Entity::renderSelectionIndicator()
@@ -443,16 +441,8 @@ void Entity::parentMoved()
     glm::mat4 newPos = glm::transpose(relativeTransform * glm::transpose(parent->model->getMatrix()));
     position = glm::vec3(newPos[3][0],newPos[3][1],newPos[3][2]);
     rotationQuat = glm::quat(newPos);
-    if(model)
-    {
-        model->setPosition(position);
-        model->setRotation(glm::angle(rotationQuat), glm::axis(rotationQuat));
-    }
-    if(body)
-    {
-        body->setPosition(position);
-        body->setRotation(glm::angle(rotationQuat), glm::axis(rotationQuat));
-    }
+    setRotation(rotationQuat);
+    setPosition(position);
     oldMatrix = model->getMatrix();
     for(int i=children.size()-1; i>=0; i--)
     {
@@ -544,11 +534,8 @@ void Entity::editorUpdate()
     rotationEulerO = rotationEuler;
     rotationQuatO = rotationQuat;
 
-    body->setRotation(glm::angle(rotationQuat), glm::axis(rotationQuat));
-    model->setRotation(glm::angle(rotationQuat), glm::axis(rotationQuat));
-
-    model->setPosition(position);
-    body->setPosition(position);
+    setRotation(rotationQuat);
+    setPosition(position);
 
     char idStr[15];
     sprintf(idStr, "(ID=%d)", getMultipass());
@@ -563,7 +550,7 @@ void Entity::editorUpdate()
         {
             if(tp->Name()=="Parent")
             {
-                setParent(NULL);
+                setParent(nullptr);
             }
             (*tp) = nullptr;
             pointerIndexPrevious = -1;
@@ -583,19 +570,14 @@ void Entity::editorUpdate()
 
 void Entity::addDrawableElements(initializer_list<initializer_list<DrawableElement>> lle)
 {
-    static unsigned int groupID = 0;
-    string groupName = " group=g";
     for(auto le : lle)
     {
         int sz = guiElements.size();
         guiElements.push_back(vector<DrawableElement>());
         for(auto e : le)
         {
-            DrawableElement em = e;
-            em.drawingHint += groupName;
             guiElements[sz].push_back(e);
         }
-        groupName += to_string(++groupID);
     }
 }
 
@@ -603,6 +585,11 @@ void Entity::drawSingleElement(DrawableElement &elem)
 {
     switch(elem.tp)
     {
+        case TW_TYPE_BOOLCPP :
+        {
+            TwAddVarRW(entityBar, elem.name.c_str(), TW_TYPE_BOOLCPP, properties[elem.name]->m_data, elem.drawingHint.c_str());
+            break;
+        }
         case TW_TYPE_COLOR3F :
         {
             TwAddVarRW(entityBar, elem.name.c_str(), TW_TYPE_COLOR3F, properties[elem.name]->m_data, elem.drawingHint.c_str());
@@ -682,15 +669,15 @@ EntityPointer* Entity::getTargetPointer()
 
 std::string Entity::getPointerDescr()
 {
-    EntityPointer* p = getTargetPointer();
-    if(p != nullptr)
+    EntityPointer* ptr = getTargetPointer();
+    if(ptr != nullptr)
     {
-        Entity* e = p->Value();
-        if(e != nullptr)
+        EntityPointer& p = *ptr;
+        if(p)
         {
             char idStr[15];
-            sprintf(idStr, "(ID=%d)", e->getMultipass());
-            return e->getName()+idStr;
+            sprintf(idStr, "(ID=%d)", p->getMultipass());
+            return p->getName()+idStr;
         }
     }
     return "(none)";
@@ -765,8 +752,6 @@ rapidjson::Value Entity::Serialize ( rapidjson::Document& d )
 
 void Entity::Deserialize(rapidjson::Value& d)
 {
-	using JsonValue = rapidjson::Value;
-	JsonValue& val = d;
 	for(auto it = d.MemberBegin(); it != d.MemberEnd(); ++it)
 	{
 		string name = it->name.GetString();
@@ -799,38 +784,28 @@ void Entity::Deserialize(rapidjson::Value& d)
     setPosition(position);
     setRotation(rotationQuat);
 
+    if(editor)
+    {
+        switchToEditorModel();
+    }
+
     adjustMoving();
 }
 
 void Entity::setPosition(glm::vec3 pos)
 {
     position = pos;
-    model->setPosition(pos);
-    body->setPosition(pos);
+    if(model)
+        model->setPosition(pos);
+    if(body)
+        body->setPosition(pos);
 }
 
 void Entity::setRotation(glm::quat rot)
 {
     rotationQuat = rot;
-    body->setRotation(glm::angle(rot), glm::axis(rot));
-    model->setRotation(glm::angle(rot), glm::axis(rot));
-}
-
-LiveEntity::LiveEntity()
-{
-	setClass("LiveEntity");
-	health = 100.0f;
-	maxHealth = 100.0f;
-}
-
-LiveEntity::~LiveEntity()
-{
-}
-
-void LiveEntity::receiveDamage(Entity* inflictor, float damage, glm::vec3 direction)
-{
-}
-
-void LiveEntity::initialize()
-{
+    if(body)
+        body->setRotation(rot);
+    if(model)
+        model->setRotation(rot);
 }

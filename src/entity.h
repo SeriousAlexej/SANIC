@@ -71,7 +71,7 @@ public:
 	}
 	void	handleEvents(std::list<EntityEvent*> &events)
 	{
-		if(waitTime > 0.0f) waitTime -= g_Delta;
+		if(waitTime > 0.0f) { waitTime -= g_Delta; if(waitTime == 0.0f) waitTime = -1.0f; }
 		if(waitTime < 0.0f){ retInd = retIndBackup; events.push_back(new EventTimer()); }
 		while(!events.empty())
 		{
@@ -111,13 +111,6 @@ class Entity : public Touchable, public Unique, public FamilyTree, public Serial
 {
 public:
 
-	enum Orientation
-	{
-		BY_BODY,
-		BY_DESIRE,
-		NONE,
-	};
-
 			 Entity();
 	virtual ~Entity();
 	virtual void			initialize();
@@ -130,26 +123,14 @@ public:
 	void					switchToEditorModel();
 	void					switchToModel();
 
-    virtual void                Deserialize(rapidjson::Value& d);
-    virtual rapidjson::Value    Serialize(rapidjson::Document& d);
+    virtual void Deserialize(rapidjson::Value& d);
+    virtual rapidjson::Value Serialize(rapidjson::Document& d);
 
     string getName();
 	const SolidBody*		getBody() const { return body; }//for moving purposes
 	const ModelInstance*	getModelInstance() const { return model; }//for anim playing
-	glm::vec3				getDesiredLDir() const { return desiredLinearDirection; }
-	glm::vec3				getDesiredADir() const { return desiredAngularDirection; }
-	glm::vec3				getDesiredRotation() const { return desiredRotation; }
-	float					getRotationSpeed() const { return rotationSpeed; }
-	Orientation				getOrientationType() const { return orientationType; }
-	bool					isTranslatedByBody() const { return translatedByBody; }
 
     void					setName(std::string newName);
-	void					setDesiredLDir(glm::vec3 dir) { desiredLinearDirection = dir; }
-	void					setDesiredADir(glm::vec3 dir) { desiredAngularDirection = dir; }
-	void					setDesiredRotation(glm::vec3 rot) { desiredRotation = rot; }
-	void					setRotationSpeed(float speed) { if(speed >=0.0f) rotationSpeed = speed; }
-	void					setOrientationType(Orientation type) { orientationType = type; }
-	void					setTranslatedByBody(bool value) { translatedByBody = value; }
 
 	void					setupModel(std::string shaderPath,
 									   std::string modelPath, std::string diffTexture,
@@ -203,10 +184,10 @@ protected:
 	void					autowait(float time, int returnIndex);
 	void					pushState(stateCallback callback, float waitTime = 0.0f);
 	void					replaceState(stateCallback callback, float waitTime = 0.0f);
-	void					popState(EntityEvent* ee = NULL);
-	void					syncEntitySpeed();
+	void					popState(EntityEvent* ee = nullptr);
+	void					syncEntityRotation();
 	void					update();
-	void                    updatePosition();
+	void                    updatePosition(); //inform children about position change
 	void                    parentMoved();
 	bool                    childrenContain(Entity* e) const;
 
@@ -223,13 +204,8 @@ protected:
 	std::stack<EntityState*>	states;
 	std::list<EntityEvent*>		events;
 
-	glm::vec3					desiredLinearDirection;
-	glm::vec3					desiredAngularDirection;
-	glm::vec3					desiredRotation; //doesn't affect physics, just the visible part
 	float						rotationSpeed;
 	bool						editor;
-	Orientation					orientationType;
-	bool						translatedByBody;
 	SolidBody*					body;
 	ModelInstance*				model;
     map<string, Property*>      properties;
@@ -288,27 +264,9 @@ protected:
 	WorldPhysics*				wldPHY; //from class World
 	World*						wld;
     Lua* pLua;
-    //virtual void                drawProperty(string name, Property* prop);
 
 	friend class World;
 	friend class Editor;
-};
-
-class LiveEntity : public Entity
-{
-public:
-			 LiveEntity();
-	virtual ~LiveEntity();
-
-	virtual void initialize();
-
-	virtual void receiveDamage(Entity* inflictor, float damage, glm::vec3 direction);
-	float		 getHealth() const { return health; }
-	float		 getMaxHealth() const { return maxHealth; }
-
-protected:
-	float	health;
-	float	maxHealth;
 };
 
 #endif

@@ -8,13 +8,23 @@ Shader::Shader(std::string shaderPath)
 	shaderID = 0;
 	MatrixID = 0;
 	mID = 0;
-	CamPosID = 0;
 	NormalTextureID = 0;
 	DiffuseTextureID = 0;
 	HeightTextureID = 0;
+	FrameProgressID = 0;
 	normStrengthID = 0;
 	parallaxScaleID = 0;
 	parallaxOffsetID = 0;
+	CamPosID = 0;
+	BiasMVP = 0;
+	DLightAmbient = 0;
+	DLightDiffuse = 0;
+	DirShadowBool = 0;
+	ShadowMap = 0;
+	DLightDir = 0;
+	ShadowMap_LQ = 0;
+	BiasMVP_LQ = 0;
+	ShadowBorder = 0;
 	for(int i=0; i<4; i++)
     {
         LightPositionID[i] = 0;

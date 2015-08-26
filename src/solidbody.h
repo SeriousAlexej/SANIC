@@ -29,7 +29,7 @@ public:
 	glm::vec3   getOffset() const;
 	void		setPosition(glm::vec3 pos);
 	void		setRotation(glm::vec3 rot);
-	void		setRotation(float angle, glm::vec3 dir);
+	void		setRotation(glm::quat q);
 	void		setVelocity(glm::vec3 vel);
 	void		setAngularVelocity(glm::vec3 vel);
 	void		addVelocity(glm::vec3 vel);

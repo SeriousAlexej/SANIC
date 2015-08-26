@@ -20,6 +20,7 @@ public:
 
 class World
 {
+    friend class Game;
 	friend class Editor;
 public:
 	World();

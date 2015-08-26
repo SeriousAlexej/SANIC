@@ -27,7 +27,7 @@ public:
 
 	void		setPosition(glm::vec3 pos);
 	void		setRotation(glm::vec3 rot);
-	void		setRotation(float angle, glm::vec3 dir);
+	void        setRotation(glm::quat q);
 	void		setRotation(glm::mat4 rot);
 	void		setScale(glm::vec3 sca);
 	void		setOffset(glm::vec3 off);
