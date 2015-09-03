@@ -4,8 +4,6 @@
 #include "camera.h"
 #include "global.h"
 
-extern bool g_UseDirectionalLight;
-
 Camera::Camera()
 {
 	this->setPerspective(75.0f, 4.0f/3.0f, 0.1f, 100.0f);
@@ -73,7 +71,7 @@ void Camera::createFrameBuffersAndTextures()
 
 	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     {
-        g_UseDirectionalLight = false;
+        egg::getInstance().g_UseDirectionalLight = false;
     }
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -101,9 +99,9 @@ void Camera::preShadowRender()
 void Camera::postShadowRender() const
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    if(!g_Editor)
+    if(!egg::getInstance().g_Editor)
     {
-        glViewport(g_DrawOrigin.x, g_DrawOrigin.y, g_Resolution.x, g_Resolution.y);
+        glViewport(egg::getInstance().g_DrawOrigin.x, egg::getInstance().g_DrawOrigin.y, egg::getInstance().g_Resolution.x, egg::getInstance().g_Resolution.y);
     }
 }
 

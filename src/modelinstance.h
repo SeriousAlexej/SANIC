@@ -8,8 +8,6 @@
 #include "texture.h"
 #include "light.h"
 
-extern sf::Clock g_Clock;
-
 class ModelInstance : public Movable
 {
 public:

@@ -12,8 +12,6 @@ class btCollisionDispatcher;
 class btSequentialImpulseConstraintSolver;
 class btDiscreteDynamicsWorld;
 
-extern float g_Delta;
-
 class WorldPhysics
 {
 public:

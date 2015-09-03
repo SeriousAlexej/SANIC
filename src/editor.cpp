@@ -40,9 +40,9 @@ void TW_CALL CopyStdStringToClient(std::string& destinationClientString, const s
 static std::string relativePath(std::string absPath)
 {
     std::replace(absPath.begin(), absPath.end(), '\\', '/');
-    if(absPath.find(g_WorkingDir)==0)
+    if(absPath.find(egg::getInstance().g_WorkingDir)==0)
     {
-        absPath = "." + absPath.substr(g_WorkingDir.length());
+        absPath = "." + absPath.substr(egg::getInstance().g_WorkingDir.length());
     }
     if(absPath[0] != '.')
     {
@@ -90,22 +90,27 @@ void Editor::resizeGUIComponents(unsigned width, unsigned height)
     leftWindow->SetAllocation( sf::FloatRect( 0.0f, static_cast<float>(topWndHeight),
                                        static_cast<float>(leftWndWidth), static_cast<float>(height - topWndHeight)));
 
-    g_DrawOrigin.x = leftWndWidth;
-    g_DrawOrigin.y = 0u;
+    egg::getInstance().g_DrawOrigin.x = leftWndWidth;
+    egg::getInstance().g_DrawOrigin.y = 0u;
 
-    g_Resolution.x = width - leftWndWidth;
-    g_Resolution.y = height - topWndHeight;
+    egg::getInstance().g_Resolution.x = width - leftWndWidth;
+    egg::getInstance().g_Resolution.y = height - topWndHeight;
 
     if(selectedEntity != nullptr)
     {
-        std::string barSize = "size='"+std::to_string(barWidth)+" "+std::to_string(g_Resolution.y)+"' ";
+        std::string barSize = "size='"+std::to_string(barWidth)+" "+std::to_string(egg::getInstance().g_Resolution.y)+"' ";
         TwDefine((" EntityBar " + barSize).c_str());
     }
 }
 
+void Editor::setup()
+{
+
+}
+
 int Editor::run()
 {
-	printf(logo);
+    printf(egg::getInstance().logo);
 
 	sf::ContextSettings cs;
 	cs.antialiasingLevel = 4;
@@ -113,7 +118,7 @@ int Editor::run()
 	cs.majorVersion = 3;
 	cs.minorVersion = 3;
 
-	sf::RenderWindow window(sf::VideoMode(g_Resolution.x, g_Resolution.y), "Eggine Editor", sf::Style::Default, cs);
+    sf::RenderWindow window(sf::VideoMode(egg::getInstance().g_Resolution.x, egg::getInstance().g_Resolution.y), "Eggine Editor", sf::Style::Default, cs);
     window.setVerticalSyncEnabled(true);
 	window.setFramerateLimit(60);
     window.setActive();
@@ -186,14 +191,14 @@ int Editor::run()
         p_world->Love(startupWorld);
     }
 
-	g_Clock.restart();
+    egg::getInstance().g_Clock.restart();
     while (window.isOpen())
     {
-		float currTime = g_Clock.getElapsedTime().asSeconds();
-		g_Delta = currTime - g_LastTime;
-		g_LastTime = currTime;
+        float currTime = egg::getInstance().g_Clock.getElapsedTime().asSeconds();
+        egg::getInstance().g_Delta = currTime - egg::getInstance().g_LastTime;
+        egg::getInstance().g_LastTime = currTime;
 
-		desktop.Update(g_Delta);
+        desktop.Update(egg::getInstance().g_Delta);
 
         sf::Event event;
         while (window.pollEvent(event))
@@ -297,7 +302,7 @@ Editor::~Editor()
 
 Editor::Ptr Editor::Create()
 {
-	g_Editor = true;
+    egg::getInstance().g_Editor = true;
     Editor::Ptr ed(new Editor());
     return ed;
 }
@@ -359,10 +364,10 @@ void Editor::update()
 	{
 		selectedEntity->editorUpdate();
 	}
-    static float doubleClickTime = g_Clock.getElapsedTime().asSeconds();
+    static float doubleClickTime = egg::getInstance().g_Clock.getElapsedTime().asSeconds();
     static float moveModeTime = doubleClickTime;
     static float moveModePeriod = 1.0f;
-    float tmNow = g_Clock.getElapsedTime().asSeconds();
+    float tmNow = egg::getInstance().g_Clock.getElapsedTime().asSeconds();
 	if(p_input->lockMouse)
 	{
         edMode = Fly;
@@ -379,31 +384,31 @@ void Editor::update()
 				editorFlySpeed *= 0.5f;
 		}
 		Camera* cam = graphics.getCamera();
-		cam->rotate(0.1f * g_Delta * p_input->mouseDelta.x,
-					0.1f * g_Delta * p_input->mouseDelta.y);
+        cam->rotate(0.1f * egg::getInstance().g_Delta * p_input->mouseDelta.x,
+                    0.1f * egg::getInstance().g_Delta * p_input->mouseDelta.y);
         if(p_input->keyPressed(sf::Keyboard::Up) || p_input->keyPressed(sf::Keyboard::W))
 		{
-			cam->moveFront(editorFlySpeed*g_Delta);
+            cam->moveFront(editorFlySpeed*egg::getInstance().g_Delta);
 		} else
         if(p_input->keyPressed(sf::Keyboard::Down) || p_input->keyPressed(sf::Keyboard::S))
 		{
-			cam->moveFront(-editorFlySpeed*g_Delta);
+            cam->moveFront(-editorFlySpeed*egg::getInstance().g_Delta);
 		}
         if(p_input->keyPressed(sf::Keyboard::Right) || p_input->keyPressed(sf::Keyboard::D))
 		{
-			cam->moveRight(editorFlySpeed*g_Delta);
+            cam->moveRight(editorFlySpeed*egg::getInstance().g_Delta);
 		} else
         if(p_input->keyPressed(sf::Keyboard::Left) || p_input->keyPressed(sf::Keyboard::A))
 		{
-			cam->moveRight(-editorFlySpeed*g_Delta);
+            cam->moveRight(-editorFlySpeed*egg::getInstance().g_Delta);
 		}
 		if(p_input->keyPressed(sf::Keyboard::Space))
 		{
-			cam->moveUp(editorFlySpeed*g_Delta);
+            cam->moveUp(editorFlySpeed*egg::getInstance().g_Delta);
 		} else
 		if(p_input->keyPressed(sf::Keyboard::C))
 		{
-			cam->moveUp(-editorFlySpeed*g_Delta);
+            cam->moveUp(-editorFlySpeed*egg::getInstance().g_Delta);
 		}
 	} else {
         if(edMode == Fly)

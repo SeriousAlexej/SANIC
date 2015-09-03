@@ -37,7 +37,6 @@ public:
     void Save(const std::string& filename);
     void Love(const std::string& filename); // Lyubov porojdaet mir
 
-    Lua* getLua() const { return lua; }
     std::vector<Entity*>& getEntities() { return entities; }
 
 private:
@@ -46,7 +45,6 @@ private:
 	std::vector<Entity*>	entities;
 	WorldGraphics*			pGraphics;   // there are thigs possible to render with nothing but heart
 	WorldPhysics			physics;
-    Lua* lua;
     void registerEntity(const std::string& name);
 
 private:

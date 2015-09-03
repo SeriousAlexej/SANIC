@@ -1,8 +1,6 @@
 #include "world_graphics.h"
 #include "global.h"
 
-extern bool g_UseDirectionalLight;
-
 WorldGraphics::WorldGraphics()
 {
     directionalLight = nullptr;
@@ -41,7 +39,7 @@ void WorldGraphics::render()
 	//render visible model instances
 	int sz = models.size();
 
-    Light* dirLight = (g_UseDirectionalLight?directionalLight:nullptr);
+    Light* dirLight = (egg::getInstance().g_UseDirectionalLight?directionalLight:nullptr);
 
     //render shadows
     if(dirLight != nullptr)
@@ -70,9 +68,9 @@ void WorldGraphics::render()
         //cleanup
         camera.postShadowRender();
     }
-    if(g_Editor)
+    if(egg::getInstance().g_Editor)
     {
-        glViewport(g_DrawOrigin.x, g_DrawOrigin.y, g_Resolution.x, g_Resolution.y);
+        glViewport(egg::getInstance().g_DrawOrigin.x, egg::getInstance().g_DrawOrigin.y, egg::getInstance().g_Resolution.x, egg::getInstance().g_Resolution.y);
     }
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

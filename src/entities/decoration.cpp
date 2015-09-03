@@ -1,16 +1,15 @@
 #include "decoration.h"
 #include "../dialogs/tinyfiledialogs.h"
+#include "global.h"
 
 ADD_TO_INCUBATOR(Decoration);
-
-extern std::string g_WorkingDir;
 
 static std::string relativePath(std::string absPath)
 {
     std::replace(absPath.begin(), absPath.end(), '\\', '/');
-    if(absPath.find(g_WorkingDir)==0)
+    if(absPath.find(egg::getInstance().g_WorkingDir)==0)
     {
-        absPath = "." + absPath.substr(g_WorkingDir.length());
+        absPath = "." + absPath.substr(egg::getInstance().g_WorkingDir.length());
     }
     if(absPath[0] != '.')
     {
@@ -166,7 +165,7 @@ void Decoration::reloadRig()
                hTexturePath);
     model->setScale(lastSca);
     model->setOffset(lastOff);
-    if(collision || g_Editor)
+    if(collision || egg::getInstance().g_Editor)
     {
         switch(bodyType)
         {
@@ -217,7 +216,7 @@ void Decoration::initialize()
                dTexturePath,
                nTexturePath,
                hTexturePath);
-    if(g_Editor)
+    if(egg::getInstance().g_Editor)
     {
         setupCollision(0.0f, glm::vec3(0.5f, 0.5f, 0.5f));
     }

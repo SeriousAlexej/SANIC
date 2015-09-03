@@ -34,7 +34,7 @@ public:
     virtual void Deserialize(rapidjson::Value& d);
     virtual rapidjson::Value Serialize(rapidjson::Document& d);
 
-    virtual void registerLua(LuaUserdata<EntityPointer>& l) {};
+    virtual void registerLua(LuaUserdata<EntityPointer>& l);
 private:
     Entity*       penTarget;
     int           enID;

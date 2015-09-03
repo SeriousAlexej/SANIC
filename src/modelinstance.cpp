@@ -1,4 +1,5 @@
 #include "modelinstance.h"
+#include "global.h"
 
 ModelInstance::ModelInstance(Mesh* mesh, Shader* shader, Texture* diffuse, Texture* normal, Texture* height)
 {
@@ -53,9 +54,9 @@ void ModelInstance::playAnimation(std::string anim)
 
 void ModelInstance::render(Camera& cam, std::vector<Light*> lights, Light* dirLight)
 {
-	if(!active && !g_Editor) return;
+    if(!active && !egg::getInstance().g_Editor) return;
 
-	float tmNow = g_Clock.getElapsedTime().asSeconds();
+    float tmNow = egg::getInstance().g_Clock.getElapsedTime().asSeconds();
 	float delta = tmNow - lastRender;
 	float frameProgress = delta / animInfo.secondsPerFrame;
 
@@ -185,9 +186,9 @@ void ModelInstance::render(Camera& cam, std::vector<Light*> lights, Light* dirLi
 
 void ModelInstance::renderForShadow(Camera& cam, Shader* shader)
 {
-	if(!active && !g_Editor) return;
+    if(!active && !egg::getInstance().g_Editor) return;
 
-	float tmNow = g_Clock.getElapsedTime().asSeconds();
+    float tmNow = egg::getInstance().g_Clock.getElapsedTime().asSeconds();
 	float delta = tmNow - lastRender;
 	float frameProgress = delta / animInfo.secondsPerFrame;
 

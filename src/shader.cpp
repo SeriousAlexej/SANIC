@@ -1,6 +1,5 @@
 #include "shader.h"
-
-extern std::string g_WorkingDir;
+#include "global.h"
 
 Shader::Shader(std::string shaderPath)
 {
@@ -36,7 +35,7 @@ Shader::Shader(std::string shaderPath)
     std::string toUse = shaderPath;
     if(toUse!="")
     {
-        toUse = g_WorkingDir + toUse.substr(1);
+        toUse = egg::getInstance().g_WorkingDir + toUse.substr(1);
     }
 	loadShaders(toUse);
 }

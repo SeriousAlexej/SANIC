@@ -1,5 +1,6 @@
 #include "pointlight.h"
 #include "../dialogs/tinyfiledialogs.h"
+#include "global.h"
 
 ADD_TO_INCUBATOR(PointLight);
 
@@ -60,7 +61,7 @@ void PointLight::initialize()
 			   "./models/editor/sprite.obj",
 			   "./models/editor/light.png",
 			   "", "");
-    if(g_Editor)
+    if(egg::getInstance().g_Editor)
     {
 	    setupCollision(0.0f, glm::vec3(0.25f, 0.25f, 0.25f));
     }

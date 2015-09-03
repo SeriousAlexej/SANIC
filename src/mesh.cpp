@@ -8,8 +8,7 @@
 #include "dirtools.h"
 #include "default_model.h"
 #include "modelLoader/objParser.h"
-
-extern std::string g_WorkingDir;
+#include "global.h"
 
 unsigned Mesh::defVertexbuffer = 0;
 unsigned Mesh::defNormalbuffer = 0;
@@ -267,7 +266,7 @@ bool Mesh::loadModel(std::string path)
 {
     if(path!="")
     {
-        path = g_WorkingDir + path.substr(1);
+        path = egg::getInstance().g_WorkingDir + path.substr(1);
     }
 	std::replace(path.begin(), path.end(), '\\', '/');
 

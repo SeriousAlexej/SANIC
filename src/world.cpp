@@ -5,6 +5,7 @@
 #include <rapidjson/filereadstream.h>
 #include <rapidjson/writer.h>
 #include <SFML/Window/Keyboard.hpp>
+#include"global.h"
 
 //these vars assist EntityPointer deserialization
 std::map<int, Entity*> enByOldId; //get entity by ID it was saved with
@@ -17,14 +18,12 @@ World::World()
     // lua.GetGlobalEnvironment();
     // lua.GetRegistry();
     //penGraphics = nullptr;
-    lua = new Lua();
-    lua->LoadStandardLibraries();
     pGraphics = new WorldGraphics();
     for(auto kv : Incubator::getInstance().cookBook)
     {
         registerEntity(kv.first);
     }
-    registerEvents(*lua);
+    registerEvents(egg::getInstance().g_lua);
 }
 
 void World::deleteAllEntities()
@@ -58,23 +57,23 @@ void World::Clear()
 
 void World::registerEntity(const std::string& name)
 {
-    auto entityComputer = lua->CreateFunction<LuaUserdata<Entity>() >(
+    auto entityComputer = egg::getInstance().g_lua.CreateFunction<LuaUserdata<Entity>() >(
     [&, name]() -> LuaUserdata<Entity>
     {
         Entity* pen = createEntity(name);
-        auto entity = lua->CreateUserdata<Entity>(pen);
+        auto entity = egg::getInstance().g_lua.CreateUserdata<Entity>(pen);
         pen->registerLua(entity);
         return entity;
     });
 
-    auto entityType = lua->CreateTable();
+    auto entityType = egg::getInstance().g_lua.CreateTable();
     entityType.Set("new", entityComputer);
-    lua->GetGlobalEnvironment().Set(name.c_str(), entityType);
+    egg::getInstance().g_lua.GetGlobalEnvironment().Set(name.c_str(), entityType);
 }
 
 void World::update()
 {
-	if(!g_Editor)
+    if(!egg::getInstance().g_Editor)
 	{
 		for(int i=entities.size()-1; i>=0; i--)
 		{
@@ -107,7 +106,6 @@ Entity* World::createEntity(Entity* e)
     e->wldGFX = pGraphics;
 	e->wldPHY = &physics;
 	e->wld = this;
-    e->pLua = lua;
 	e->initialize();
 	entities.push_back(e);
 	if(pGraphics != nullptr)

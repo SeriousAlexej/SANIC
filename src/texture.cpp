@@ -1,7 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include "texture.h"
-
-extern std::string g_WorkingDir;
+#include "global.h"
 
 Texture::Texture(std::string path)
 {
@@ -27,7 +26,7 @@ void Texture::loadTexture()
     std::string toUse = srcFnm;
     if(toUse!="")
     {
-        toUse = g_WorkingDir + toUse.substr(1);
+        toUse = egg::getInstance().g_WorkingDir + toUse.substr(1);
     }
 	sf::Image image;
 	if (image.loadFromFile(toUse))

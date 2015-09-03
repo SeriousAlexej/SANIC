@@ -3,15 +3,28 @@
 #include <SFML/System/Clock.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <string>
+#include <luacppinterface.h>
 
-extern char                logo[];
-extern sf::Clock           g_Clock;
-extern float               g_LastTime;
-extern float               g_Delta;
-extern bool	               g_Editor;
-extern sf::Vector2u        g_Resolution;
-extern sf::Vector2u        g_DrawOrigin;
-extern bool                g_UseDirectionalLight;
-extern std::string         g_WorkingDir;
+class egg {
+public:
+    char          logo[];
+    sf::Clock           g_Clock;
+    float               g_LastTime;
+    float               g_Delta;
+    bool                g_Editor; // TODO: remove
+    sf::Vector2u        g_Resolution = {800, 600};
+    sf::Vector2u        g_DrawOrigin;
+    bool                g_UseDirectionalLight = true;
+    std::string         g_WorkingDir;
+    Lua                 g_lua;
+
+    static egg& getInstance();
+private:
+    egg() : g_lua() {
+        g_lua.GetGlobalEnvironment();
+        g_lua.LoadStandardLibraries();
+    }
+    ~egg() {}
+};
 
 #endif // GLOBAL_H

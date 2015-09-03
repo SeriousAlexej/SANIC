@@ -20,6 +20,7 @@ public:
     virtual ~Editor();
 
     int run();
+    void setup();
     void NewWorld();
     void Load();
     void SaveAs();

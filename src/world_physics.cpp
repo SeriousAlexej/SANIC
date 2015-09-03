@@ -79,7 +79,7 @@ void WorldPhysics::Clear()
 
 void WorldPhysics::update()
 {
-	dynamicsWorld->stepSimulation(g_Delta,1);
+    dynamicsWorld->stepSimulation(egg::getInstance().g_Delta,1);
 }
 
 SolidBody* WorldPhysics::addBody(float mass, float radius)

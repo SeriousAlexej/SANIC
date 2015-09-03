@@ -18,6 +18,7 @@
 #include "entities/incubator.h"
 #include <luacppinterface.h>
 #include <type_traits>
+#include "global.h"
 
 class Entity;
 class EntityPointer;
@@ -71,7 +72,7 @@ public:
 	}
 	void	handleEvents(std::list<EntityEvent*> &events)
 	{
-		if(waitTime > 0.0f) { waitTime -= g_Delta; if(waitTime == 0.0f) waitTime = -1.0f; }
+        if(waitTime > 0.0f) { waitTime -= egg::getInstance().g_Delta; if(waitTime == 0.0f) waitTime = -1.0f; }
 		if(waitTime < 0.0f){ retInd = retIndBackup; events.push_back(new EventTimer()); }
 		while(!events.empty())
 		{
@@ -153,6 +154,7 @@ public:
     template<class C>
     typename std::enable_if<std::is_base_of<FromLua, C>::value>::type addToLua(LuaUserdata<Entity>& l, string s, C c)
     {
+        Lua *pLua = &egg::getInstance().g_lua;
         l.Set("get"+s, genUserdataGetter(*pLua, &getProperty<C>(s)));
         l.Set("set"+s, pLua->CreateFunction<void(LuaUserdata<C>)>([&, s](C arg) {
             setProperty<C>(s, arg);
@@ -161,6 +163,7 @@ public:
     template<class C>
     typename std::enable_if<!std::is_base_of<FromLua, C>::value>::type addToLua(LuaUserdata<Entity>& l, string s, C c)
     {
+        Lua *pLua = &egg::getInstance().g_lua;
         l.Set("get"+s, pLua->CreateFunction<C()>([&, s]() {
             return getProperty<C>(s);
         }));
@@ -263,7 +266,6 @@ protected:
 	WorldGraphics*				wldGFX; //fill theese
 	WorldPhysics*				wldPHY; //from class World
 	World*						wld;
-    Lua* pLua;
 
 	friend class World;
 	friend class Editor;

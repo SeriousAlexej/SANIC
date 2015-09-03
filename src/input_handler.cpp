@@ -107,7 +107,7 @@ bool InputHandler::cursorIsInsideWindow() const
 {
     sf::Vector2i mpos = sf::Mouse::getPosition(*mainWindow);
     sf::Vector2u wsz = mainWindow->getSize();
-    return mpos.x > (g_Editor?leftWndWidth:0) && mpos.y > (g_Editor?topWndHeight:0) && mpos.x < static_cast<int>(wsz.x) && mpos.y < static_cast<int>(wsz.y);
+    return mpos.x > (egg::getInstance().g_Editor?leftWndWidth:0) && mpos.y > (egg::getInstance().g_Editor?topWndHeight:0) && mpos.x < static_cast<int>(wsz.x) && mpos.y < static_cast<int>(wsz.y);
 }
 
 void InputHandler::setFocus(bool _f)

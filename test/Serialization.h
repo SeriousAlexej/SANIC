@@ -5,6 +5,7 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 #include <fstream>
+#include "global.h"
 
 #include <boost/crc.hpp>
 
@@ -37,13 +38,13 @@ TEST_CASE("Save/Love") {
 TEST_CASE("Lua constructor") {
     World w;
     //w.createEntity("Decoration");
-    w.getLua()->RunScript("Decoration.new()");
+    egg::getInstance().g_lua.RunScript("Decoration.new()");
     REQUIRE(w.getEntities().size() == 1);
 }
 
 TEST_CASE("Lua get/set") {
     World w;
-    w.getLua()->RunScript("local dec = Decoration.new()"
+    egg::getInstance().g_lua.RunScript("local dec = Decoration.new()"
                           "dec.setName('dick')"
                           "local nm = dec.getName()"
                           "dec.setName(string.upper(nm))");
@@ -53,7 +54,7 @@ TEST_CASE("Lua get/set") {
 
 TEST_CASE("Lua events") {
     World w;
-    w.getLua()->RunScript("local ev = EntityEvent.new('Damage')"
+    egg::getInstance().g_lua.RunScript("local ev = EntityEvent.new('Damage')"
                           "print(ev.getAmount())"
                           "local dec = Decoration.new()"
                           "dec.setName('dick')"

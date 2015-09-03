@@ -124,3 +124,8 @@ void EntityPointer::Deserialize(rapidjson::Value& d)
         pensOwner[this] = beingDeserialized;
     }
 }
+
+void EntityPointer::registerLua(LuaUserdata<EntityPointer>& l)
+{
+    Lua& lua = egg::getInstance().g_lua;
+}

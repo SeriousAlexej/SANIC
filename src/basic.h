@@ -10,12 +10,10 @@
 #include <string>
 #include <luacppinterface.h>
 
-extern bool g_Editor;
-
 class Movable
 {
 public:
-	Movable();
+    Movable();
 	virtual ~Movable();
 
 	glm::vec3	getOffset();
