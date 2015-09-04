@@ -65,7 +65,7 @@ int main(int argc, char **argv)
         app->setStartupWorld(wld);
     }
     app->setup();
-#ifdef SANIC_TEST
+#ifndef SANIC_TEST
     Catch::Session().run(argc, argv);
 #endif
     app->run();

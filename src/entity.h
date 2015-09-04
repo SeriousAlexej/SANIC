@@ -22,6 +22,7 @@
 
 class Entity;
 class EntityPointer;
+class EntityEvent;
 class World;
 
 typedef void (*stateCallback)(EntityEvent*,Entity*);
@@ -155,9 +156,13 @@ public:
     typename std::enable_if<std::is_base_of<FromLua, C>::value>::type addToLua(LuaUserdata<Entity>& l, string s, C c)
     {
         Lua *pLua = &egg::getInstance().g_lua;
-        l.Set("get"+s, genUserdataGetter(*pLua, &getProperty<C>(s)));
-        l.Set("set"+s, pLua->CreateFunction<void(LuaUserdata<C>)>([&, s](C arg) {
-            setProperty<C>(s, arg);
+        l.Set("get"+s, pLua->CreateFunction<LuaUserdata<C>()>([&, s]() {
+            auto lud = pLua->CreateUserdata<C>(&(getProperty<C>(s)));
+            if(lud.GetPointer() != nullptr) lud->registerLua(lud);
+            return lud;
+        }));
+        l.Set("set"+s, pLua->CreateFunction<void(LuaUserdata<C>)>([&, s](LuaUserdata<C> arg) {
+            setProperty<C>(s, *(arg.GetPointer()));
         }));
     }
     template<class C>

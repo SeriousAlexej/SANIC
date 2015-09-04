@@ -5,7 +5,8 @@
 #include <rapidjson/filereadstream.h>
 #include <rapidjson/writer.h>
 #include <SFML/Window/Keyboard.hpp>
-#include"global.h"
+#include "global.h"
+#include "registerevents.h"
 
 //these vars assist EntityPointer deserialization
 std::map<int, Entity*> enByOldId; //get entity by ID it was saved with

@@ -128,4 +128,19 @@ void EntityPointer::Deserialize(rapidjson::Value& d)
 void EntityPointer::registerLua(LuaUserdata<EntityPointer>& l)
 {
     Lua& lua = egg::getInstance().g_lua;
+    auto constructor = lua.CreateFunction<LuaUserdata<EntityPointer>()>([&]() {
+        auto lud = lua.CreateUserdata<EntityPointer>(new EntityPointer);
+        lud.Set("GetEntity", lua.CreateFunction<LuaUserdata<Entity>()>([&]() {
+            auto eud = lua.CreateUserdata<Entity>(penTarget);
+            if(penTarget != nullptr) penTarget->registerLua(eud);
+            return eud;
+        }));
+        lud.Set("SetEntity", lua.CreateFunction<void(LuaUserdata<Entity>)>([&](LuaUserdata<Entity> arg) {
+            penTarget = arg.GetPointer();
+        }));
+        return lud;
+    });
+    auto table = lua.CreateTable();
+    table.Set("new", constructor);
+    lua.GetGlobalEnvironment().Set("EntityPointer", table);
 }

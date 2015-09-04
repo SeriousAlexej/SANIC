@@ -63,3 +63,12 @@ TEST_CASE("Lua events") {
     Entity* pen = w.getEntities()[0];
     REQUIRE(pen->getName() == "not dick!");
 }
+TEST_CASE("Lua userdata get/set") {
+    World w;
+    egg::getInstance().g_lua.RunScript("local e1 = Decoration.new()"
+                                       "local e2 = Decoration.new()"
+                                       "e2.setName('dick')"
+                                       "e1.getParent().SetEntity(e2)");
+    Entity* pen = w.getEntities()[1];
+    REQUIRE(pen->getName() == "dick");
+}

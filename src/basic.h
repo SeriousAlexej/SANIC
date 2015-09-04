@@ -167,39 +167,4 @@ class FromLua
 {
     // simple as fuck
 };
-
-template<class C>
-auto genLuaGetter(Lua& l, C* c) -> LuaFunction<C()>
-{
-    return l.CreateFunction<C()>([&]() {
-        return *c;
-    });
-}
-
-template<class C>
-auto genLuaSetter(Lua& l, C* c) -> LuaFunction<void(C)>
-{
-    return l.CreateFunction<void(C)>([&](C target) {
-        *c = target;
-    });
-}
-
-template<class C>
-auto genUserdataSetter(Lua& l, C* c) -> LuaFunction<void(LuaUserdata<C>)>
-{
-    return l.CreateFunction<void(LuaUserdata<C>)>([&](LuaUserdata<C> target) {
-        c = target.GetPointer();
-    });
-}
-
-template<class C>
-auto genUserdataGetter(Lua& l, C* c) -> LuaFunction<LuaUserdata<C>()>
-{
-    return l.CreateFunction<LuaUserdata<C>()>([&]() {
-        auto lud = l.CreateUserdata<C>(c);
-        lud->registerLua(lud);
-        return lud;
-    });
-}
-
 #endif

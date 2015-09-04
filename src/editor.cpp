@@ -141,6 +141,8 @@ int Editor::run()
 	sfg::SFGUI sfgui;
     window.setActive();
     sfg::Desktop desktop;
+    desktop.SetProperty("*", "FontName", "PTSR.ttf");
+    desktop.SetProperty("*", "FontSize", "12");
     leftWindow = sfg::Window::Create(sfg::Window::Style::BACKGROUND);
     topWindow = sfg::Window::Create(sfg::Window::Style::BACKGROUND);
     //fill windows here

@@ -128,7 +128,8 @@ void Entity::registerLua(LuaUserdata<Entity>& lua) // TODO: Make it more "generi
             "RotB",    rotationEuler[2],
             "PosX",    position[0],
             "PosY",    position[1],
-            "PosZ",    position[2]
+            "PosZ",    position[2],
+            "Parent",  pointers[0]
     );
 }
 
