@@ -1,0 +1,690 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"Copy",
+				"CopyStdStringToClient"
+			],
+			[
+				"pr",
+				"preview_size"
+			],
+			[
+				"prev",
+				"preview_link"
+			],
+			[
+				"upda",
+				"update_size"
+			],
+			[
+				"re",
+				"return"
+			],
+			[
+				"mod_",
+				"mod_folder"
+			],
+			[
+				"pre",
+				"preview_link"
+			],
+			[
+				"mod",
+				"mod_type"
+			],
+			[
+				"s",
+				"subcategory"
+			],
+			[
+				"p",
+				"preview_link"
+			],
+			[
+				"S",
+				"SubcategoryForm"
+			],
+			[
+				"ac",
+				"ActionForm"
+			],
+			[
+				"c",
+				"choices"
+			],
+			[
+				"pla",
+				"playerObj	(statement)"
+			],
+			[
+				"player",
+				"playerObj	(statement)"
+			],
+			[
+				"fnu",
+				"function"
+			],
+			[
+				"sh",
+				"shots_hit	(function)"
+			],
+			[
+				"B",
+				"BooleanField	(class)"
+			],
+			[
+				"user",
+				"userobj	(statement)"
+			],
+			[
+				"us",
+				"user"
+			],
+			[
+				"Use",
+				"UserPlayer	(class)"
+			],
+			[
+				"Ac",
+				"AchievementInline	(class)"
+			],
+			[
+				"A",
+				"AchievementAdmin	(class)"
+			],
+			[
+				"Badg",
+				"BadgeInline	(class)"
+			],
+			[
+				"Ba",
+				"BadgeAdmin	(class)"
+			],
+			[
+				"Wea",
+				"WeaponInline	(class)"
+			],
+			[
+				"Weapo",
+				"WeaponPlayer	(class)"
+			],
+			[
+				"h",
+				"h	height"
+			],
+			[
+				"use",
+				"username	(statement)"
+			],
+			[
+				"redirect",
+				"redirectURL	(statement)"
+			],
+			[
+				"Man",
+				"ManyToManyField	(class)"
+			],
+			[
+				"pass",
+				"password	(statement)"
+			],
+			[
+				"get",
+				"get"
+			],
+			[
+				"User",
+				"UserPlayer"
+			],
+			[
+				"u",
+				"username"
+			],
+			[
+				"cre",
+				"create_user"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"settings":
+			{
+				"buffer_size": 0,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 375.0,
+		"last_filter": "pckre",
+		"selected_items":
+		[
+			[
+				"pckre",
+				"Package Control: Remove Package"
+			],
+			[
+				"pckrem",
+				"Package Control: Remove Package"
+			],
+			[
+				"ycm",
+				"C++YouCompleteMe: Highlight problems"
+			],
+			[
+				"reid",
+				"Indentation: Reindent Lines"
+			],
+			[
+				"pcken",
+				"Package Control: Enable Package"
+			],
+			[
+				"ssc+",
+				"Set Syntax: C++"
+			],
+			[
+				"ssc++",
+				"Set Syntax: C++"
+			],
+			[
+				"pckdi",
+				"Package Control: Disable Package"
+			],
+			[
+				"you",
+				"C++YouCompleteMe: Goto declaration"
+			],
+			[
+				"ss c++",
+				"Set Syntax: C++"
+			],
+			[
+				"pckd",
+				"Package Control: Disable Package"
+			],
+			[
+				"setsyntex c",
+				"Set Syntax: Objective-C++"
+			],
+			[
+				"YouCom",
+				"Set Syntax: C++YouCompleteMeErrorPanel"
+			],
+			[
+				"ycmd",
+				"C++YouCompleteMe: Goto declaration"
+			],
+			[
+				"conv",
+				"Indentation: Convert to Tabs"
+			],
+			[
+				"pckins",
+				"Package Control: Install Package"
+			],
+			[
+				"encode",
+				"HTML: Encode Special Characters"
+			],
+			[
+				"reide",
+				"Indentation: Reindent Lines"
+			],
+			[
+				"linter",
+				"SublimeLinter: Disable Linter"
+			],
+			[
+				"menu",
+				"View: Toggle Menu"
+			],
+			[
+				"settings",
+				"Preferences: Settings - User"
+			],
+			[
+				"pckin",
+				"Package Control: Install Package"
+			],
+			[
+				"add f",
+				"Project: Add Folder"
+			],
+			[
+				"project",
+				"Project: Add Folder"
+			],
+			[
+				"close ",
+				"Project: Close"
+			],
+			[
+				"conver",
+				"Indentation: Convert to Spaces"
+			],
+			[
+				"iden",
+				"Indentation: Convert to Spaces"
+			],
+			[
+				"lint",
+				"SublimeLinter: Show All Errors"
+			],
+			[
+				"pcki",
+				"Package Control: Install Package"
+			],
+			[
+				"fold",
+				"Code Folding: Fold Tag Attributes"
+			],
+			[
+				"wra",
+				"Word Wrap: Toggle"
+			],
+			[
+				"ide",
+				"IndentX: Indent"
+			],
+			[
+				"re",
+				"Indentation: Reindent Lines"
+			],
+			[
+				"spaces",
+				"Indentation: Convert to Spaces"
+			],
+			[
+				"ident",
+				"Indentation: Convert to Tabs"
+			],
+			[
+				"rei",
+				"Indentation: Reindent Lines"
+			],
+			[
+				"pckdis",
+				"Package Control: Disable Package"
+			],
+			[
+				"color",
+				"Color Picker"
+			],
+			[
+				"enable",
+				"Package Control: Enable Package"
+			],
+			[
+				"close",
+				"File: Close All"
+			],
+			[
+				"disable",
+				"Package Control: Disable Package"
+			],
+			[
+				"vin",
+				"Vintageous: Reset"
+			],
+			[
+				"insta",
+				"Package Control: Install Package"
+			],
+			[
+				"pck",
+				"Package Control: Install Package"
+			],
+			[
+				"disable ",
+				"Package Control: Disable Package"
+			],
+			[
+				"pckenab",
+				"Package Control: Enable Package"
+			],
+			[
+				"add",
+				"Project: Add Folder"
+			]
+		],
+		"width": 453.0
+	},
+	"console":
+	{
+		"height": 281.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = 'eb2297e1a458f27d836c04bb0cbaf282' + 'd0e7a3098092775ccb37ca9d6b2e4b7d'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by) "
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/home/nick/projects/SANIC/src"
+	],
+	"file_history":
+	[
+		"/home/nick/projects/SANIC/src/main.cpp",
+		"/home/nick/.config/sublime-text-3/Packages/User/C++YouCompleteMe.sublime-settings",
+		"/home/nick/.config/sublime-text-3/Packages/C++YouCompleteMe/C++YouCompleteMe.sublime-settings",
+		"/home/nick/.config/sublime-text-3/Packages/User/Preferences.sublime-settings",
+		"/home/nick/Syava/Sources/ScriptingMP/LuaEntity.cpp",
+		"/home/nick/projects/vor3.cpp",
+		"/home/nick/.config/sublime-text-3/Packages/Default/Preferences.sublime-settings",
+		"/home/nick/projects/grorep/wsgi/grorep/grorep/settings.py",
+		"/home/nick/projects/grorep/wsgi/grorep/mods/models.py",
+		"/home/nick/projects/grorep/wsgi/grorep/mods/views.py",
+		"/home/nick/projects/grorep/wsgi/grorep/mods/urls.py",
+		"/home/nick/projects/grorep/.openshift/action_hooks/deploy",
+		"/home/nick/dolls.txt",
+		"/home/nick/desc.txt",
+		"/home/nick/Syava/Sources/ScriptingMP/Tools/EnemyBaseProps.h",
+		"/home/nick/Syava/Sources/EntitiesMP/PlayerAnimator.es",
+		"/home/nick/Syava/Sources/EntitiesMP/Player.es",
+		"/home/nick/Syava/Sources/Engine/Classes/PlayerEntity.h",
+		"/home/nick/Syava/Sources/Engine/Entities/PlayerCharacter.h",
+		"/home/nick/Syava/Sources/GameGUIMP/DlgPlayerAppearance.h",
+		"/home/nick/Syava/Sources/Models/Player_old/SeriousSam/PlayerPromo.h",
+		"/home/nick/Syava/Sources/ScriptingMP/Tools/TODO for CPlayer",
+		"/home/nick/Syava/Sources/Engine/Network/PlayerBuffer.h",
+		"/home/nick/Syava/Sources/Engine/Network/PlayerSource.h",
+		"/home/nick/Syava/Sources/Engine/Network/PlayerTarget.h",
+		"/home/nick/Syava/Sources/Engine/Classes/PlayerEntity_tables.h",
+		"/home/nick/projects/grorep/wsgi/grorep/mods/admin.py",
+		"/home/nick/Syava/Sources/ScriptingMP/Tools/PlayerProps.h",
+		"/home/nick/.steam/steam/steamapps/appmanifest_239070.acf",
+		"/home/nick/.steam/steam/steamapps/appmanifest_204300.acf",
+		"/home/nick/.steam/steam/steamapps/appmanifest_49520.acf",
+		"/home/nick/.steam/steam/steamapps/appmanifest_41070.acf",
+		"/home/nick/.steam/steam/steamapps/appmanifest_8930.acf",
+		"/home/nick/.steam/steam/steamapps/appmanifest_730.acf",
+		"/home/nick/.steam/steam/steamapps/appmanifest_570.acf",
+		"/home/nick/.cache/.fr-Pr6EZJ/ScriptingMP/LuaEntity.h",
+		"/home/nick/.config/gtk-3.0/bookmarks",
+		"/home/nick/.gtkrc-2.0",
+		"/home/nick/projects/grorep/.openshift/action_hooks/post_deploy",
+		"/home/nick/projects/plasma-widget-menubar/CMakeLists.txt",
+		"/home/nick/projects/PlasmoidMenubar/CMakeLists.txt",
+		"/home/nick/projects/SANIC/CMakeLists.txt",
+		"/home/nick/Syava/Sources/ScriptingMP/Generic.h",
+		"/home/nick/Syava/Sources/ScriptingMP/Generic.cpp",
+		"/home/nick/Syava/Sources/ScriptingMP/LuaEntity.h",
+		"/usr/share/themes/Zukitre/gtk-2.0/widgets/panel.rc",
+		"/var/tmp/kdecache-nick/krun/5657_0_window-menu.h",
+		"/home/nick/projects/grorep/wsgi/grorep/grorep/urls.py",
+		"/home/nick/.themes/Greybird Topmenu/gtk-2.0/apps/xfce-panel.rc",
+		"/home/nick/whisker.desktop",
+		"/home/nick/Downloads/list(4).xml",
+		"/home/nick/primer",
+		"/home/nick/song.txt",
+		"/home/nick/candybox",
+		"/home/nick/arena.result",
+		"/home/nick/.themes/Mint-X XFCE/gtk-2.0/gtkrc",
+		"/home/nick/projects/grorep/grorep/urls.py",
+		"/home/nick/Skype/XMLFile1.xml",
+		"/home/nick/projects/grorep/mods/urls.py",
+		"/home/nick/projects/grorep/mods/tests.py",
+		"/home/nick/projects/grorep/grorep/settings.py",
+		"/home/nick/projects/topmenu-gtk/module/appmenu.h",
+		"/home/nick/projects/topmenu-gtk/xfce-applet/topmenu-xfce-panel-applet.c",
+		"/home/nick/projects/topmenu-gtk/libtopmenu-client/topmenu-appmenubar.h",
+		"/home/nick/projects/topmenu-gtk/libtopmenu-client/Makefile.am",
+		"/home/nick/projects/topmenu-gtk/Makefile.am",
+		"/home/nick/projects/topmenu-qt/module/appmenu.h",
+		"/home/nick/projects/topmenu-qt/README",
+		"/home/nick/projects/topmenu-gtk/libtopmenu-client/topmenu-monitor.c",
+		"/home/nick/projects/topmenu-gtk/libtopmenu-client/topmenu-monitor.h",
+		"/home/nick/projects/topmenu-gtk/libtopmenu-client/topmenu-menubar-proxy.h",
+		"/home/nick/projects/topmenu-gtk/libtopmenu-server/topmenu-widget.c",
+		"/home/nick/projects/topmenu-gtk/libtopmenu-server/topmenu-server.h",
+		"/home/nick/projects/topmenu-gtk/global.h",
+		"/home/nick/projects/topmenu-gtk/config.h.in",
+		"/home/nick/projects/topmenu-gtk/configure.ac",
+		"/home/nick/projects/topmenu-gtk/COPYING",
+		"/home/nick/projects/topmenu-gtk/module/gtk3privates.h",
+		"/home/nick/projects/topmenu-gtk/module/data.h",
+		"/home/nick/projects/topmenu-gtk/module/data.c",
+		"/home/nick/projects/topmenu-gtk/module/appmenu.c",
+		"/home/nick/projects/topmenu-gtk/module/main.c",
+		"/home/nick/projects/topmenu-gtk/libtopmenu-server/topmenu-widget.h",
+		"/home/nick/.local/share/xfce4/terminal/colorschemes/xubuntu-light.theme",
+		"/home/nick/.cache/.fr-hnVVBL/jboss-eap-quickstarts-6.4.0.GA/helloworld/src/main/java/org/jboss/as/quickstarts/helloworld/HelloService.java",
+		"/home/nick/.cache/.fr-ZL9wIX/jboss-eap-quickstarts-6.4.0.GA/helloworld/src/main/java/org/jboss/as/quickstarts/helloworld/HelloWorldServlet.java",
+		"/home/nick/projects/topmenu-gtk/libtopmenu-client/topmenu-appmenubar.c",
+		"/home/nick/.themes/Zukitwo Topmenu/gtk-2.0/thunar.rc",
+		"/home/nick/projects/topmenu-gtk/test/server.c",
+		"/home/nick/projects/topmenu-gtk/test/client.c",
+		"/home/nick/projects/topmenu-gtk/xfce-applet/topmenu.desktop.in",
+		"/home/nick/projects/topmenu-gtk/xfce-applet/topmenu-xfce-panel-applet.h",
+		"/home/nick/projects/topmenu-gtk/mate-applet/main.c",
+		"/home/nick/projects/topmenu-gtk/mate-applet/org.mate.panel.applet.TopMenuMatePanelAppletFactory.service.in",
+		"/home/nick/projects/topmenu-gtk/mate-applet/topmenu-mate-panel-applet.c",
+		"/home/nick/projects/topmenu-gtk/mate-applet/topmenu-mate-panel-applet.h",
+		"/home/nick/.profile",
+		"/home/nick/.themes/Greybird Topmenu/gtk-3.0/apps/granite-widgets.css",
+		"/home/nick/.themes/Greybird Topmenu/gtk-3.0/apps/xfce.css",
+		"/home/nick/.themes/Zukitwo Topmenu/gtk-2.0/widgets/panel.rc",
+		"/home/nick/projects/topmenu-gtk/libtopmenu-server/topmenu-server.c",
+		"/home/nick/projects/topmenu-gtk/libtopmenu-server/Makefile.am",
+		"/home/nick/.themes/Greybird Topmenu/gtk-3.0/gtk-widgets.css",
+		"/home/nick/.themes/Zukitwo Topmenu/gtk-2.0/gtkrc",
+		"/home/nick/.themes/Greybird Topmenu/gtk-2.0/gtkrc",
+		"/home/nick/.themes/Greybird Topmenu/README",
+		"/home/nick/.themes/Greybird Topmenu/index.theme",
+		"/home/nick/projects/topmenu-gtk/libtopmenu-client/topmenu-client.c",
+		"/home/nick/projects/topmenu-gtk/libtopmenu-client/topmenu-client.h",
+		"/home/nick/.themes/Greybird Topmenu/gtk-3.0/apps/gnome-applications.css",
+		"/home/nick/.themes/Greybird Topmenu/gtk-3.0/gtk.css",
+		"/home/nick/.themes/Greybird Topmenu/xfce-notify-4.0/gtkrc",
+		"/home/nick/.config/plank/dock1/launchers/firefox.dockitem",
+		"/home/nick/.config/plank/dock1/settings",
+		"/home/nick/Documents/trace.htm",
+		"/home/nick/projects/stats/tgpstats_new/wsgi/tgpstats/urls.py",
+		"/home/nick/projects/stats/tgpstats_new/wsgi/stats/urls.py",
+		"/home/nick/projects/stats/tgpstats_new/wsgi/templates/stats/base.html",
+		"/home/nick/projects/stats/tgpstats_new/wsgi/templates/stats/player.html",
+		"/home/nick/projects/tgpstats/wsgi/stats/models.py",
+		"/home/nick/projects/tgpstats/wsgi/stats/views.py",
+		"/home/nick/projects/tgpstats/wsgi/templates/stats/player.html",
+		"/home/nick/projects/tgpstats/wsgi/templates/stats/base.html",
+		"/home/nick/projects/tgpstats/wsgi/templates/stats/weapon.html",
+		"/home/nick/projects/tgpstats/wsgi/tgpstats/settings.py",
+		"/home/nick/projects/tgpstats/wsgi/static/tgpstats/css/weapons.css",
+		"/home/nick/projects/tgpstats/wsgi/stats/tests.py",
+		"/home/nick/projects/tgpstats/tgpstats.py"
+	],
+	"find":
+	{
+		"height": 34.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"SetPlayerAppe",
+			"en_pcCharacter",
+			"SetPlayerAppearance",
+			"GetBody",
+			"TORSO",
+			"Body",
+			"Head",
+			"texture",
+			">\n",
+			"username",
+			"<td></td>"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"<td />"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 0,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"encoding_helper_encoding": "",
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 24.0
+	},
+	"input":
+	{
+		"height": 33.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.CppYCM.2":
+	{
+		"height": 0.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "",
+	"project": "untitled.sublime-project",
+	"replace":
+	{
+		"height": 44.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"bas",
+				"wsgi/templates/stats/base.html"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+		"_vintageous_reset_during_init": true,
+		"vintage":
+		{
+			"_cmdline_cd": "/home/nick/projects/tgpstats/wsgi/templates/stats"
+		}
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 264.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

@@ -1,0 +1,4 @@
+/home/seriousalexej/Projects/bullet-2.82-r2704/src/BulletCollision/CMakeFiles/BulletCollision.dir
+/home/seriousalexej/Projects/bullet-2.82-r2704/src/LinearMath/CMakeFiles/LinearMath.dir
+/home/seriousalexej/Projects/bullet-2.82-r2704/src/BulletDynamics/CMakeFiles/BulletDynamics.dir
+/home/seriousalexej/Projects/bullet-2.82-r2704/src/BulletSoftBody/CMakeFiles/BulletSoftBody.dir

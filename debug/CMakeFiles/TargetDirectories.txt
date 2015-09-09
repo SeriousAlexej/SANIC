@@ -1,0 +1,3 @@
+/home/nick/projects/SANIC/debug/game/CMakeFiles/game.dir
+/home/nick/projects/SANIC/debug/src/CMakeFiles/SANIC.dir
+/home/nick/projects/SANIC/debug/test/CMakeFiles/tests.dir

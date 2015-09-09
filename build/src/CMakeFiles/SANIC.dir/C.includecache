@@ -1,0 +1,42 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/nick/projects/SANIC/src/dialogs/tinyfiledialogs.c
+stdio.h
+-
+stdlib.h
+-
+string.h
+-
+ctype.h
+-
+tinyfiledialogs.h
+/home/nick/projects/SANIC/src/dialogs/tinyfiledialogs.h
+Windows.h
+-
+Shlobj.h
+-
+sys/stat.h
+-
+limits.h
+-
+unistd.h
+-
+dirent.h
+-
+termios.h
+-
+sys/utsname.h
+-
+
+/home/nick/projects/SANIC/src/dialogs/tinyfiledialogs.h
+stddef.h
+-
+tinyfiledialogs.h
+/home/nick/projects/SANIC/src/dialogs/tinyfiledialogs.h
+
