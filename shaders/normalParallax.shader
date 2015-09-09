@@ -79,11 +79,11 @@ uniform lowp vec3 dirLightAmbient;
 uniform lowp vec3 dirLightDiffuse;
 uniform lowp vec3 DLightDir;
 
- vec2 poissonDisk[4] =  vec2[]( 
-   vec2( -0.94201624, -0.39906216 ), 
-   vec2( 0.94558609, -0.76890725 ), 
-   vec2( -0.094184101, -0.92938870 ), 
-   vec2( 0.34495938, 0.29387760 )
+lowp vec2 poissonDisk[4] = lowp vec2[]( 
+  lowp vec2( -0.94201624, -0.39906216 ), 
+  lowp vec2( 0.94558609, -0.76890725 ), 
+  lowp vec2( -0.094184101, -0.92938870 ), 
+  lowp vec2( 0.34495938, 0.29387760 )
 );
 
 lowp float clamp(lowp float f, int mn, int mx)
@@ -145,9 +145,9 @@ void main(){
 		{
 			if(HQShadow)
 			{
-				visibility-=0.25*(1.0-texture( shadowMap,  vec3(ShadowCoord.xy + poissonDisk[i]/2500.0,  (ShadowCoord.z-bias)/ShadowCoord.w) ));
+				visibility-=0.25*(1.0-texture( shadowMap, lowp vec3(ShadowCoord.xy + poissonDisk[i]/2500.0,  (ShadowCoord.z-bias)/ShadowCoord.w) ));
 			} else {
-				visibility-=0.25*(1.0-texture( shadowMap_LQ,  vec3(ShadowCoord_LQ.xy + poissonDisk[i]/1500.0,  (ShadowCoord_LQ.z-bias)/ShadowCoord_LQ.w) ));
+				visibility-=0.25*(1.0-texture( shadowMap_LQ, lowp vec3(ShadowCoord_LQ.xy + poissonDisk[i]/1500.0,  (ShadowCoord_LQ.z-bias)/ShadowCoord_LQ.w) ));
 			}
 		}
 	}

@@ -66,11 +66,11 @@ uniform lowp vec3 dirLightAmbient;
 uniform lowp vec3 dirLightDiffuse;
 uniform lowp vec3 DLightDir;
 
-vec2 poissonDisk[4] =  vec2[]( 
-   vec2( -0.94201624, -0.39906216 ), 
-   vec2( 0.94558609, -0.76890725 ), 
-   vec2( -0.094184101, -0.92938870 ), 
-   vec2( 0.34495938, 0.29387760 )
+lowp vec2 poissonDisk[4] = lowp vec2[]( 
+  lowp vec2( -0.94201624, -0.39906216 ), 
+  lowp vec2( 0.94558609, -0.76890725 ), 
+  lowp vec2( -0.094184101, -0.92938870 ), 
+  lowp vec2( 0.34495938, 0.29387760 )
 );
 
 lowp float clamp(lowp float f, int mn, int mx)
@@ -125,69 +125,12 @@ void main(){
 		{
 			if(HQShadow)
 			{
-				visibility-=0.25*(1.0-texture( shadowMap,  vec3(ShadowCoord.xy + poissonDisk[i]/2500.0,  (ShadowCoord.z-bias)/ShadowCoord.w) ));
+				visibility-=0.25*(1.0-texture( shadowMap, lowp vec3(ShadowCoord.xy + poissonDisk[i]/2500.0,  (ShadowCoord.z-bias)/ShadowCoord.w) ));
 			} else {
-				visibility-=0.25*(1.0-texture( shadowMap_LQ,  vec3(ShadowCoord_LQ.xy + poissonDisk[i]/1500.0,  (ShadowCoord_LQ.z-bias)/ShadowCoord_LQ.w) ));
+				visibility-=0.25*(1.0-texture( shadowMap_LQ, lowp vec3(ShadowCoord_LQ.xy + poissonDisk[i]/1500.0,  (ShadowCoord_LQ.z-bias)/ShadowCoord_LQ.w) ));
 			}
 		}
 	}
-/*
-	if(dirShadows != 0.0 && HQShadow)
-	{
-		lowp vec2 sc = ShadowCoord.xy;
-		lowp float shadowMapSize = 2048.0;
-		lowp float unitLength = 1.0/shadowMapSize;
-		lowp float unitHalfLength = 0.5*unitLength;
-		sc.x = floor(sc.x*shadowMapSize)/shadowMapSize + unitHalfLength;
-		sc.y = floor(sc.y*shadowMapSize)/shadowMapSize + unitHalfLength;
-		lowp vec2 posRel = ShadowCoord.xy - sc;
-		lowp float zVal = (ShadowCoord.z-bias)/ShadowCoord.w;
-		bool texelInShadow = texture( shadowMap, lowp vec3( sc,  zVal )) < 1.0;
-		bool insideUnitSphere = length(posRel) < unitHalfLength;
-		if(insideUnitSphere && texelInShadow)
-		{
-			visibility -= 1.0;
-		} else if(!insideUnitSphere)
-		{
-			//fragment is in corner, check nearby texels
-			bool texelInShadowU = texture( shadowMap, lowp vec3( sc + lowp vec2(0.0, unitLength), zVal )) < 1.0;
-			bool texelInShadowR = texture( shadowMap, lowp vec3( sc + lowp vec2(unitLength, 0.0), zVal )) < 1.0;
-			bool texelInShadowUR = texture( shadowMap, lowp vec3( sc + lowp vec2(unitLength, unitLength), zVal )) < 1.0;
-			bool texelInShadowD = texture( shadowMap, lowp vec3( sc + lowp vec2(0.0, -unitLength), zVal )) < 1.0;
-			bool texelInShadowL = texture( shadowMap, lowp vec3( sc + lowp vec2(-unitLength, 0.0), zVal )) < 1.0;
-			bool texelInShadowLD = texture( shadowMap, lowp vec3( sc + lowp vec2(-unitLength, -unitLength), zVal )) < 1.0;
-			bool texelInShadowLU = texture( shadowMap, lowp vec3( sc + lowp vec2(-unitLength, unitLength), zVal )) < 1.0;
-			bool texelInShadowDR = texture( shadowMap, lowp vec3( sc + lowp vec2(unitLength, -unitLength), zVal )) < 1.0;
-			if(posRel.x >= 0.0 && posRel.y >= 0.0)
-			{ //first quarter
-				if(texelInShadowR && texelInShadow || texelInShadowU && texelInShadow || texelInShadowU && texelInShadowR || texelInShadowUR && texelInShadow)
-				{
-					visibility -= 1.0;
-				}
-			} else
-			if(posRel.x < 0.0 && posRel.y < 0.0)
-			{ //third quarter
-				if(texelInShadowL && texelInShadow || texelInShadowD && texelInShadow || texelInShadowD && texelInShadowL || texelInShadowLD && texelInShadow)
-				{
-					visibility -= 1.0;
-				}
-			} else
-			if(posRel.x < 0.0 && posRel.y >= 0.0)
-			{ //second quarter
-				if(texelInShadowL && texelInShadow || texelInShadowU && texelInShadow || texelInShadowU && texelInShadowL || texelInShadowLU && texelInShadow)
-				{
-					visibility -= 1.0;
-				}
-			} else {
-			// fourth quarter
-				if(texelInShadowR && texelInShadow || texelInShadowD && texelInShadow || texelInShadowD && texelInShadowR || texelInShadowDR && texelInShadow)
-				{
-					visibility -= 1.0;
-				}
-			}
-		}
-	}
-*/
 	
 	if(dirShadows != 0.0)
 	{
