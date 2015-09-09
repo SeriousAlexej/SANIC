@@ -4,6 +4,28 @@
 #include "entity.h"
 #include "entityevent.h"
 
+#define LUA_GETTER(x, y, z) \
+lua.CreateFunction<x()>([&, y]() { \
+    return y->z; \
+})
+
+#define LUA_SETTER(x, y, z) \
+lua.CreateFunction<void(x)>([&, y](x a) { \
+    y->z = a; \
+})
+
+#define LUA_UGETTER(x, y, z) \
+lua.CreateFunction<LuaUserdata<x>()>([&, y]() { \
+    auto eud = lua.CreateUserdata(y->z); \
+    if(y->z != nullptr) y->z->registerLua(eud); \
+    return eud; \
+})
+
+#define LUA_USETTER(x, y, z) \
+lua.CreateFunction<void(LuaUserdata<x>)>([&, y](LuaUserdata<x> a) { \
+    y->z = a.GetPointer(); \
+})
+
 void registerEvents(Lua& lua)
 {
     auto newEvent = lua.CreateFunction<LuaUserdata<EntityEvent>(std::string)>(
@@ -13,22 +35,10 @@ void registerEvents(Lua& lua)
         {
             EventDamage* ped = new EventDamage(nullptr, 0);
             auto lud = lua.CreateUserdata<EntityEvent>(new EventDamage(nullptr, 0));
-            lud.Set("getAmount", lua.CreateFunction<int()>([&, ped]() {
-                return ped->amount;
-            }));
-            lud.Set("getDamager", lua.CreateFunction<LuaUserdata<Entity>()>([&, ped]() {
-                auto eud = lua.CreateUserdata(ped->penDamager);
-                if(ped->penDamager != nullptr) {
-                    ped->penDamager->registerLua(eud);
-                }
-                return eud;
-            }));
-            lud.Set("setAmount", lua.CreateFunction<void(int)>([&, ped](int a) {
-                ped->amount = a;
-            }));
-            lud.Set("setDamager", lua.CreateFunction<void(LuaUserdata<Entity>)>([&, ped](LuaUserdata<Entity> eud) {
-                ped->penDamager = eud.GetPointer();
-            }));
+            lud.Set("getAmount", LUA_GETTER(int, ped, amount));
+            lud.Set("getDamager", LUA_UGETTER(Entity, ped, penDamager));
+            lud.Set("setAmount", LUA_SETTER(int, ped, amount));
+            lud.Set("setDamager", LUA_USETTER(Entity, ped, penDamager));
             return lud;
         }
     });
@@ -36,6 +46,13 @@ void registerEvents(Lua& lua)
     dtable.Set("new", newEvent);
     lua.GetGlobalEnvironment().Set("EntityEvent", dtable);
 }
+
+/* ???
+#undef LUA_GETTER
+#undef LUA_SETTER
+#undef LUA_UGETTER
+#undef LUA_USETTER
+*/
 
 #endif // REGISTEREVENTS_H
 

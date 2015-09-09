@@ -97,6 +97,8 @@ void World::update()
 		{
 			entities[i]->update();
 		}
+        if(sf::Keyboard::isKeyPressed(sf::Keyboard::P))
+		physics.update();
     }
     if(pGraphics != nullptr)
     {

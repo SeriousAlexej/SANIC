@@ -1,11 +1,13 @@
 #include <boost/filesystem.hpp>
 #include "eggineinstance.h"
 #include "global.h"
+#include "registerevents.h"
 
 EggineInstance::EggineInstance()
 {
     InitFs();
     startupWorld = "";
+    registerEvents(egg::getInstance().g_lua);
 }
 
 EggineInstance::~EggineInstance()
