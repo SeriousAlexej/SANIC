@@ -104,7 +104,7 @@ on windows it only make sense for console applications */
 
 static int gWarningDisplayed = 0 ;
 static char gTitle[] = "missing software ! (so we switch to basic console input)" ;
-//static char gMessageWin[] = "tiny file dialogs on Windows needs:\n\ta graphic display or dialog.exe (enhanced console mode)" ;
+static char gMessageWin[] = "tiny file dialogs on Windows needs:\n\ta graphic display or dialog.exe (enhanced console mode)" ;
 
 static char gMessageUnix[] = "tiny file dialogs on UNIX needs:\n\tapplescript\
 \nor\tzenity (version 3 for the color chooser)\nor\tkdialog\
@@ -264,7 +264,7 @@ static void replaceSubStr ( char const * const aSource ,
 	strcat ( aoDestination , p ) ;
 }
 
-/*
+
 static int replaceChr ( char * const aString ,
 						char const aOldChr ,
 						char const aNewChr )
@@ -290,7 +290,7 @@ static int replaceChr ( char * const aString ,
 	}
 	return lRes ;
 }
-*/
+
 
 static int filenameValid( char const * const aFileNameWithoutPath )
 {

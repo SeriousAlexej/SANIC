@@ -1,5 +1,7 @@
 #include <cstring> //memset
 #include "input_handler.h"
+#include "global.h"
+#include "editorGUI.h"
 
 InputHandler::InputHandler(sf::Window* w)
 {
@@ -51,7 +53,7 @@ void InputHandler::registerKeyRelease(int keyCode)
 			if(lockMouse)
 			{
                 mouseOldPosition = sf::Mouse::getPosition(*mainWindow);
-				sf::Mouse::setPosition(sf::Vector2i(windowSize.x/2,windowSize.y/2), *mainWindow);
+				sf::Mouse::setPosition(sf::Vector2i(mainWindow->getSize().x/2,mainWindow->getSize().y/2), *mainWindow);
 			} else {
 				mouseDelta.x = 0.0f;
 				mouseDelta.y = 0.0f;
@@ -104,7 +106,8 @@ bool InputHandler::mouseButtonPressed(int mouseButton) const
 bool InputHandler::cursorIsInsideWindow() const
 {
     sf::Vector2i mpos = sf::Mouse::getPosition(*mainWindow);
-    return mpos.x > 0 && mpos.y > 0 && mpos.x < static_cast<int>(windowSize.x) && mpos.y < static_cast<int>(windowSize.y);
+    sf::Vector2u wsz = mainWindow->getSize();
+    return mpos.x > (egg::getInstance().g_Editor?leftWndWidth:0) && mpos.y > (egg::getInstance().g_Editor?topWndHeight:0) && mpos.x < static_cast<int>(wsz.x) && mpos.y < static_cast<int>(wsz.y);
 }
 
 void InputHandler::setFocus(bool _f)
@@ -125,46 +128,47 @@ void InputHandler::update()
 {
 	if(allowCheck)
 	{
-	for(int i=0; i<101; i++)
-	{
-		bool pressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Key(i));
-		if(!keyStatesNew[i] && pressed)
-		{
-			this->registerKeyPress(i);
-		}
-		else
-		if(keyStatesNew[i] && !pressed)
-		{
-			this->registerKeyRelease(i);
-		}
-		else
-		{
-			keyStatesOld[i] = keyStatesNew[i];
-		}
-	}
-	for(int i=0; i<5; i++)
-	{
-		bool pressed = sf::Mouse::isButtonPressed(sf::Mouse::Button(i));
-		if(!mouseKeysNew[i] && pressed)
-		{
-			this->registerMousePress(i);
-		}
-		else
-		if(mouseKeysNew[i] && !pressed)
-		{
-			this->registerMouseRelease(i);
-		}
-		else
-		{
-			mouseKeysOld[i] = mouseKeysNew[i];
-		}
-	}
+        for(int i=0; i<101; i++)
+        {
+            bool pressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Key(i));
+            if(!keyStatesNew[i] && pressed)
+            {
+                this->registerKeyPress(i);
+            }
+            else
+            if(keyStatesNew[i] && !pressed)
+            {
+                this->registerKeyRelease(i);
+            }
+            else
+            {
+                keyStatesOld[i] = keyStatesNew[i];
+            }
+        }
+        for(int i=0; i<5; i++)
+        {
+            bool pressed = sf::Mouse::isButtonPressed(sf::Mouse::Button(i));
+            if(!mouseKeysNew[i] && pressed)
+            {
+                this->registerMousePress(i);
+            }
+            else
+            if(mouseKeysNew[i] && !pressed)
+            {
+                this->registerMouseRelease(i);
+            }
+            else
+            {
+                mouseKeysOld[i] = mouseKeysNew[i];
+            }
+        }
 	}
 	if(lockMouse)
 	{
 		sf::Vector2i mpos = sf::Mouse::getPosition(*mainWindow);
-		mouseDelta.x = float(windowSize.x/2 - float(mpos.x));
-		mouseDelta.y = float(windowSize.y/2 - float(mpos.y));
-		sf::Mouse::setPosition(sf::Vector2i(windowSize.x/2,windowSize.y/2), *mainWindow);
+		sf::Vector2i mp = (egg::getInstance().g_Editor?sf::Vector2i(mainWindow->getSize().x/2,mainWindow->getSize().y/2):sf::Vector2i(windowSize.x/2,windowSize.y/2));
+		mouseDelta.x = float(mp.x - float(mpos.x));
+		mouseDelta.y = float(mp.y - float(mpos.y));
+		sf::Mouse::setPosition(mp, *mainWindow);
 	}
 }

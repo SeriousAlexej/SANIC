@@ -1,6 +1,10 @@
 #include "entitypointer.h"
 #include <rapidjson/document.h>
 
+extern std::map<EntityPointer*, Entity*> pensOwner;
+extern std::vector<EntityPointer*> pensToRetarget;
+extern Entity* beingDeserialized;
+
 EntityPointer::EntityPointer()
 {
     penTarget = nullptr;
@@ -39,14 +43,14 @@ std::string EntityPointer::Name() const
     return name;
 }
 
-Entity* EntityPointer::Value() const
-{
-    return penTarget;
-}
-
 bool EntityPointer::operator==(const EntityPointer& other) const
 {
     return penTarget == other.penTarget;
+}
+
+bool EntityPointer::operator==(const Entity* other) const
+{
+    return penTarget == other;
 }
 
 EntityPointer& EntityPointer::operator=(const EntityPointer& other)
@@ -83,6 +87,15 @@ EntityPointer& EntityPointer::operator=(Entity* other)
     return *this;
 }
 
+Entity* EntityPointer::operator->() const
+{
+    if(penTarget == nullptr)
+    {
+        throw null_entitypointer();
+    }
+    return penTarget;
+}
+
 rapidjson::Value EntityPointer::Serialize(rapidjson::Document& d)
 {
 	using JsonValue = rapidjson::Value;
@@ -105,4 +118,29 @@ void EntityPointer::Deserialize(rapidjson::Value& d)
 	JsonValue& val = d;
 	name = val["name"].GetString();
 	enID = val["enID"].GetInt();
+	if(enID != -1)
+    {
+        pensToRetarget.push_back(this);
+        pensOwner[this] = beingDeserialized;
+    }
+}
+
+void EntityPointer::registerLua(LuaUserdata<EntityPointer>& l)
+{
+    Lua& lua = egg::getInstance().g_lua;
+    auto constructor = lua.CreateFunction<LuaUserdata<EntityPointer>()>([&]() {
+        auto lud = lua.CreateUserdata<EntityPointer>(new EntityPointer);
+        lud.Set("GetEntity", lua.CreateFunction<LuaUserdata<Entity>()>([&]() {
+            auto eud = lua.CreateUserdata<Entity>(penTarget);
+            if(penTarget != nullptr) penTarget->registerLua(eud);
+            return eud;
+        }));
+        lud.Set("SetEntity", lua.CreateFunction<void(LuaUserdata<Entity>)>([&](LuaUserdata<Entity> arg) {
+            penTarget = arg.GetPointer();
+        }));
+        return lud;
+    });
+    auto table = lua.CreateTable();
+    table.Set("new", constructor);
+    lua.GetGlobalEnvironment().Set("EntityPointer", table);
 }

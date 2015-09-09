@@ -8,8 +8,7 @@
 #include "dirtools.h"
 #include "default_model.h"
 #include "modelLoader/objParser.h"
-
-extern std::string g_WorkingDir;
+#include "global.h"
 
 unsigned Mesh::defVertexbuffer = 0;
 unsigned Mesh::defNormalbuffer = 0;
@@ -167,7 +166,7 @@ Mesh::Mesh(std::string path)
 	defaultAnim.length = 1;
 	defaultAnim.secondsPerFrame = 1.0f;
 	defaultAnim.firstFrame = 0;
-	animations["default"] = defaultAnim;
+	animations[""] = defaultAnim;
 
 	normalbuffer = 0;
 	uvbuffer = 0;
@@ -267,7 +266,7 @@ bool Mesh::loadModel(std::string path)
 {
     if(path!="")
     {
-        path = g_WorkingDir + path.substr(1);
+        path = egg::getInstance().g_WorkingDir + path.substr(1);
     }
 	std::replace(path.begin(), path.end(), '\\', '/');
 
@@ -315,7 +314,7 @@ bool Mesh::loadModel(std::string path)
 	for(int i=0; i<sz; i++)
 	{
 		glm::vec3 fromCenterToVx = tvertices[i] - boundingSphereCenter;
-		float len = fromCenterToVx.length();
+		float len = glm::length(fromCenterToVx);
 		boundingSphereRadius = std::max(len, boundingSphereRadius);
 	}
 	}

@@ -1,13 +1,13 @@
 #include "world_graphics.h"
+#include "global.h"
+#include <algorithm>
 
 WorldGraphics::WorldGraphics()
 {
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glEnableVertexAttribArray(2);
-		glEnableVertexAttribArray(3);
-		glEnableVertexAttribArray(4);
-		glEnableVertexAttribArray(5);
+    backgroundModels = 0u;
+    dirLightUsers = 0u;
+    directionalLight = nullptr;
+    shadowShader = new Shader("./shaders/shadow");
 }
 
 WorldGraphics::~WorldGraphics()
@@ -27,21 +27,94 @@ WorldGraphics::~WorldGraphics()
 	shaders.clear();
 	textures.clear();
 	lights.clear();
+	delete shadowShader;
+    if(directionalLight != nullptr)
+    {
+        delete directionalLight;
+        directionalLight = nullptr;
+    }
+}
+
+void WorldGraphics::sortForBackground()
+{
+    std::sort(models.begin(), models.end(), [](ModelInstance* i, ModelInstance* j) { return !j->background && i->background; });
+    for(unsigned i=0; i<models.size(); ++i)
+    {
+        if(!models[i]->background)
+        {
+            break;
+        } else {
+            ++backgroundModels;
+        }
+    }
 }
 
 void WorldGraphics::render()
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(3);
+    glEnableVertexAttribArray(4);
+    glEnableVertexAttribArray(5);
+
 	//render visible model instances
 	int sz = models.size();
+
+    Light* dirLight = (egg::getInstance().g_UseDirectionalLight?directionalLight:nullptr);
+
+    //render shadows
+    if(dirLight != nullptr)
+    {
+        shadowShader->bind();
+        glm::mat4 dlMatrix = dirLight->getMatrix();
+
+        //first pass - low quality shadow
+        //second pass - high quality shadow
+        for(int p=0; p<2; p++)
+        {
+            camera.setShadowRenderMode((p==0?Camera::LQ:Camera::HQ));
+
+            camera.setShadowViewMatrix(dlMatrix);
+            camera.preShadowRender();
+            glClear(GL_DEPTH_BUFFER_BIT);
+            for(int i=0; i<sz; i++)
+            {
+                if( !models[i]->background && camera.sphereIsVisibleForShadow(models[i]->getRenSphere()))
+                {
+                    models[i]->renderForShadow(camera, shadowShader);
+                }
+            }
+        }
+
+        //cleanup
+        camera.postShadowRender();
+    }
+    if(egg::getInstance().g_Editor)
+    {
+        glViewport(egg::getInstance().g_DrawOrigin.x, egg::getInstance().g_DrawOrigin.y, egg::getInstance().g_Resolution.x, egg::getInstance().g_Resolution.y);
+    }
+
+    glClear( (egg::getInstance().g_Editor?GL_COLOR_BUFFER_BIT:0) | GL_DEPTH_BUFFER_BIT);
+
 	for(int i=0; i<sz; i++)
 	{
-		if(camera.sphereIsVisible(models[i]->getRenSphere()))
-		//if(camera.boxIsVisible(models[i]->getRenBoxCenter(), models[i]->getRenBoxHalfSizes()))
+		if( (models[i]->background && !egg::getInstance().g_Editor) || camera.sphereIsVisible(models[i]->getRenSphere()))
 		{
-			models[i]->render(camera, pickBestLights(models[i]));
+		    if(i == backgroundModels && !egg::getInstance().g_Editor)
+            {
+                glClear(GL_DEPTH_BUFFER_BIT);
+            }
+			models[i]->render(camera, pickBestLights(models[i]), dirLight);
 		}
 	}
+
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
+    glDisableVertexAttribArray(3);
+    glDisableVertexAttribArray(4);
+    glDisableVertexAttribArray(5);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindTexture(GL_TEXTURE_2D, 0); //unbind, just in case
@@ -60,73 +133,37 @@ ModelInstance* WorldGraphics::createModel(
 
 
 	//find shader id
-	#ifdef SANIC_DEBUG
-	printf("Wanted shader is \"%s\", current shader count is %lu\n", shaderPath.c_str(), shaders.size());
-	#endif // SANIC_DEBUG
 	int sz = shaders.size();
 	for(int i=0; i<sz; i++)
 	{
-        #ifdef SANIC_DEBUG
-        printf("\tFound shader \"%s\" ", shaders[i]->getSrcFnm().c_str());
-        #endif // SANIC_DEBUG
 		if(shaders[i]->getSrcFnm() == shaderPath)
 		{
-            #ifdef SANIC_DEBUG
-            printf("Shader matches!\n");
-            #endif // SANIC_DEBUG
 			shaderIndex = i; //if shader was found - use it
 			break;
 		}
-        #ifdef SANIC_DEBUG
-        printf("\n");
-        #endif // SANIC_DEBUG
 	}
 	if(shaderIndex == -1) //shader not found - create it
 	{
-        #ifdef SANIC_DEBUG
-        printf("\t\tCreating NEW shader!\n");
-        #endif // SANIC_DEBUG
 		shaderIndex = shaders.size(); //index of new shader will be the last one
 		shaders.push_back(new Shader(shaderPath));
 	}
-	#ifdef SANIC_DEBUG
-	printf("\tNow shader count is %lu\n\n", shaders.size());
-	#endif // SANIC_DEBUG
 	//find textures id's
-	#ifdef SANIC_DEBUG
-	printf("Wanted textures are:\n\t\"%s\"\n\t\"%s\"\n\t\"%s\"\ncurrent texture count is %lu\n", diffTexture.c_str(), normTexture.c_str(), heightTexture.c_str(), textures.size());
-	#endif // SANIC_DEBUG
 	sz = textures.size();
 	for(int i=0; i<sz; i++)
 	{
 	    std::string texName = textures[i]->getSrcFnm();
-        #ifdef SANIC_DEBUG
-	    printf("\tFound texture \"%s\"", texName.c_str());
-        #endif // SANIC_DEBUG
 		if(texName == diffTexture)
 		{
-            #ifdef SANIC_DEBUG
-            printf(" Diffuse texture matches!");
-            #endif // SANIC_DEBUG
 			textureDiffuseIndex = i;
 		}
 		if(texName == normTexture)
 		{
-            #ifdef SANIC_DEBUG
-            printf(" Normal texture matches!");
-            #endif // SANIC_DEBUG
 			textureNormalIndex = i;
 		}
 		if(texName == heightTexture)
         {
-            #ifdef SANIC_DEBUG
-            printf(" Displacement texture matches!");
-            #endif // SANIC_DEBUG
             textureHeightIndex = i;
         }
-        #ifdef SANIC_DEBUG
-        printf("\n");
-        #endif // SANIC_DEBUG
 		if(textureDiffuseIndex != -1 && textureNormalIndex != -1 && textureHeightIndex != -1)
         {
             break;
@@ -134,9 +171,6 @@ ModelInstance* WorldGraphics::createModel(
 	}
 	if(textureDiffuseIndex == -1)
 	{
-        #ifdef SANIC_DEBUG
-        printf("\t\tCreating NEW diffuse texture!\n");
-        #endif // SANIC_DEBUG
 		textureDiffuseIndex = textures.size();
 		textures.push_back(new Texture(diffTexture));
 		if(normTexture == diffTexture)
@@ -150,9 +184,6 @@ ModelInstance* WorldGraphics::createModel(
 	}
 	if(textureNormalIndex == -1)
 	{
-        #ifdef SANIC_DEBUG
-        printf("\t\tCreating NEW normal texture!\n");
-        #endif // SANIC_DEBUG
 		textureNormalIndex = textures.size();
 		textures.push_back(new Texture(normTexture));
 		if(normTexture == heightTexture)
@@ -162,49 +193,25 @@ ModelInstance* WorldGraphics::createModel(
 	}
 	if(textureHeightIndex == -1)
     {
-        #ifdef SANIC_DEBUG
-        printf("\t\tCreating NEW displacement texture!\n");
-        #endif // SANIC_DEBUG
         textureHeightIndex = textures.size();
         textures.push_back(new Texture(heightTexture));
     }
-	#ifdef SANIC_DEBUG
-	printf("\tNow texture count is %lu\n\n", textures.size());
-	#endif // SANIC_DEBUG
 	//find mesh
 
-	#ifdef SANIC_DEBUG
-	printf("Wanted mesh is \"%s\", current mesh count is %lu\n", modelPath.c_str(), meshes.size());
-	#endif // SANIC_DEBUG
 	sz = meshes.size();
 	for(int i=0; i<sz; i++)
 	{
-        #ifdef SANIC_DEBUG
-	    printf("\tFound mesh \"%s\" ", meshes[i]->getSrcFnm().c_str());
-        #endif // SANIC_DEBUG
 		if(meshes[i]->getSrcFnm() == modelPath)
 		{
-            #ifdef SANIC_DEBUG
-		    printf("Mesh matches!\n");
-            #endif // SANIC_DEBUG
 			meshIndex = i;
 			break;
 		}
-        #ifdef SANIC_DEBUG
-		printf("\n");
-        #endif // SANIC_DEBUG
 	}
 	if(meshIndex == -1)
 	{
-        #ifdef SANIC_DEBUG
-	    printf("\t\tCreating NEW mesh!\n");
-        #endif // SANIC_DEBUG
 		meshIndex = meshes.size();
 		meshes.push_back(new Mesh(modelPath));
 	}
-	#ifdef SANIC_DEBUG
-	printf("\tNow mesh count is %lu\n\n", meshes.size());
-	#endif // SANIC_DEBUG
 
 	//now we're ready to create model instance
 	int index = models.size();
@@ -316,9 +323,29 @@ void WorldGraphics::deleteLight(Light*& light)
 	}
 }
 
+Light* WorldGraphics::createDirLight()
+{
+    ++dirLightUsers;
+    if(directionalLight == nullptr)
+    {
+        directionalLight = new Light();
+    }
+    return directionalLight;
+}
+
+void WorldGraphics::deleteDirLight()
+{
+    --dirLightUsers;
+    if(directionalLight != nullptr && dirLightUsers == 0u)
+    {
+        delete directionalLight;
+        directionalLight = nullptr;
+    }
+}
+
 std::vector<Light*> WorldGraphics::pickBestLights(ModelInstance* mi)
 {
-    std::vector<Light*> light_chart = {NULL, NULL, NULL, NULL};
+    std::vector<Light*> light_chart(4, nullptr);
 	int sz = lights.size();
 	if(mi == NULL || sz < 1) return light_chart;
 
@@ -348,7 +375,7 @@ std::vector<Light*> WorldGraphics::pickBestLights(ModelInstance* mi)
 		arr[v] = lights[i];
 	}
 	std::sort(values.begin(), values.end());
-	for(int i=std::min(4, sz); i>=0; i--)
+	for(int i=std::min(3, sz); i>=0; i--)
     {
         light_chart[i] = arr[values[i]];
     }

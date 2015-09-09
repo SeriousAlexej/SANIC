@@ -10,21 +10,33 @@
 #include "solidbody.h"
 #include "modelinstance.h"
 #include "entityevent.h"
-#include "world_graphics.h"
-#include "world_physics.h"
-#include "world.h"
 #include "properties.h"
 #include "entitypointer.h"
 #include "entities/incubator.h"
+#include <luacppinterface.h>
+#include <type_traits>
+#include "global.h"
 
 class Entity;
 class EntityPointer;
+class EntityEvent;
+class WorldGraphics;
+class WorldPhysics;
 class World;
 
 typedef void (*stateCallback)(EntityEvent*,Entity*);
-typedef void STATE;
+#define IMPLEMENT_STATE(c, s) \
+    void c::s(EntityEvent* ee, Entity* cl) { c *caller = dynamic_cast<c *>(cl);
 #define DECLARE_STATE(x) \
     static void x(EntityEvent* ee, Entity* caller)
+#define nextwait(t) \
+    caller->_autowait(t, __LINE__); return; } case __LINE__: {
+#define autowait(t, i) \
+    caller->_autowait(t, i); return;
+#define switchEvent \
+    switch(ee->eventCode)
+#define switchAutowait \
+    EventAutowaitCallback *eac = dynamic_cast<EventAutowaitCallback*>(ee); switch(eac->index)
 
 struct DrawableElement
 {
@@ -69,8 +81,8 @@ public:
 	}
 	void	handleEvents(std::list<EntityEvent*> &events)
 	{
-		if(waitTime > 0.0f) waitTime -= g_Delta;
-		if(waitTime < 0.0f){ retInd = retIndBackup; events.push_back(new EventTimer()); }
+        if(waitTime > 0.0f) { waitTime -= egg::getInstance().g_Delta; if(waitTime == 0.0f) waitTime = -1.0f; }
+		if(waitTime < 0.0f) { retInd = retIndBackup; events.push_back(new EventTimer()); }
 		while(!events.empty())
 		{
 			callback(events.front(), caller);
@@ -109,13 +121,6 @@ class Entity : public Touchable, public Unique, public FamilyTree, public Serial
 {
 public:
 
-	enum Orientation
-	{
-		BY_BODY,
-		BY_DESIRE,
-		NONE,
-	};
-
 			 Entity();
 	virtual ~Entity();
 	virtual void			initialize();
@@ -134,20 +139,9 @@ public:
     string getName();
 	const SolidBody*		getBody() const { return body; }//for moving purposes
 	const ModelInstance*	getModelInstance() const { return model; }//for anim playing
-	glm::vec3				getDesiredLDir() const { return desiredLinearDirection; }
-	glm::vec3				getDesiredADir() const { return desiredAngularDirection; }
-	glm::vec3				getDesiredRotation() const { return desiredRotation; }
-	float					getRotationSpeed() const { return rotationSpeed; }
-	Orientation				getOrientationType() const { return orientationType; }
-	bool					isTranslatedByBody() const { return translatedByBody; }
+	const inline bool       isTouchable() const { return touchable; }
 
     void					setName(std::string newName);
-	void					setDesiredLDir(glm::vec3 dir) { desiredLinearDirection = dir; }
-	void					setDesiredADir(glm::vec3 dir) { desiredAngularDirection = dir; }
-	void					setDesiredRotation(glm::vec3 rot) { desiredRotation = rot; }
-	void					setRotationSpeed(float speed) { if(speed >=0.0f) rotationSpeed = speed; }
-	void					setOrientationType(Orientation type) { orientationType = type; }
-	void					setTranslatedByBody(bool value) { translatedByBody = value; }
 
 	void					setupModel(std::string shaderPath,
 									   std::string modelPath, std::string diffTexture,
@@ -159,21 +153,57 @@ public:
 	void                    setParent(Entity* p);
 	Entity*                 getParent() const;
 
+	void                    setPosition(glm::vec3 pos);
+	void                    setRotation(glm::quat rot);
+
 	void                    pointerAdded(EntityPointer* pen);
 	void                    pointerLeft(EntityPointer* pen);
 
+    virtual void            registerLua(LuaUserdata<Entity>& lua);
+
+    template<class C>
+    typename std::enable_if<std::is_base_of<FromLua, C>::value>::type addToLua(LuaUserdata<Entity>& l, string s, C c)
+    {
+        Lua *pLua = &egg::getInstance().g_lua;
+        l.Set("get"+s, pLua->CreateFunction<LuaUserdata<C>()>([&, s]() {
+            auto lud = pLua->CreateUserdata<C>(&(getProperty<C>(s)));
+            if(lud.GetPointer() != nullptr) lud->registerLua(lud);
+            return lud;
+        }));
+        l.Set("set"+s, pLua->CreateFunction<void(LuaUserdata<C>)>([&, s](LuaUserdata<C> arg) {
+            setProperty<C>(s, *(arg.GetPointer()));
+        }));
+    }
+    template<class C>
+    typename std::enable_if<!std::is_base_of<FromLua, C>::value>::type addToLua(LuaUserdata<Entity>& l, string s, C c)
+    {
+        Lua *pLua = &egg::getInstance().g_lua;
+        l.Set("get"+s, pLua->CreateFunction<C()>([&, s]() {
+            return getProperty<C>(s);
+        }));
+        l.Set("set"+s, pLua->CreateFunction<void(C)>([&, s](C arg) {
+            setProperty<C>(s, arg);
+        }));
+    }
+
+    template<class C, class... T>
+    void addToLua(LuaUserdata<Entity> &l, string s, C c, T... args)
+    {
+        addToLua(l, s, c);
+        addToLua(l, args...);
+    }
+
 protected:
 	//states:
-	DECLARE_STATE(dummy);
 	DECLARE_STATE(autowaitState);
 
-	void					autowait(float time, int returnIndex);
+	void					_autowait(float time, int returnIndex);
 	void					pushState(stateCallback callback, float waitTime = 0.0f);
 	void					replaceState(stateCallback callback, float waitTime = 0.0f);
-	void					popState(EntityEvent* ee = NULL);
-	void					syncEntitySpeed();
+	void					popState(EntityEvent* ee = nullptr);
+	void					syncEntityRotation();
 	void					update();
-	void                    updatePosition();
+	void                    updatePosition(); //inform children about position change
 	void                    parentMoved();
 	bool                    childrenContain(Entity* e) const;
 
@@ -190,20 +220,19 @@ protected:
 	std::stack<EntityState*>	states;
 	std::list<EntityEvent*>		events;
 
-	glm::vec3					desiredLinearDirection;
-	glm::vec3					desiredAngularDirection;
-	glm::vec3					desiredRotation; //doesn't affect physics, just the visible part
 	float						rotationSpeed;
 	bool						editor;
-	Orientation					orientationType;
-	bool						translatedByBody;
 	SolidBody*					body;
 	ModelInstance*				model;
     map<string, Property*>      properties;
     std::string					name;
+    bool                        touchable;
 
     template<class T>
     T&                          getProperty(std::string);
+
+    template<class T>
+    void                        setProperty(string s, T& val);
 
     virtual void    addProperties();
     vector<vector<DrawableElement>> guiElements;
@@ -251,26 +280,9 @@ protected:
 	WorldGraphics*				wldGFX; //fill theese
 	WorldPhysics*				wldPHY; //from class World
 	World*						wld;
-    //virtual void                drawProperty(string name, Property* prop);
 
 	friend class World;
-};
-
-class LiveEntity : public Entity
-{
-public:
-			 LiveEntity();
-	virtual ~LiveEntity();
-
-	virtual void initialize();
-
-	virtual void receiveDamage(Entity* inflictor, float damage, glm::vec3 direction);
-	float		 getHealth() const { return health; }
-	float		 getMaxHealth() const { return maxHealth; }
-
-protected:
-	float	health;
-	float	maxHealth;
+	friend class Editor;
 };
 
 #endif

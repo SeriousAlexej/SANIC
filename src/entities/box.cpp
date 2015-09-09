@@ -5,14 +5,12 @@ ADD_TO_INCUBATOR(Box);
 Box::Box()
 {
 	setClass("Box");
-	setName("Box");
-	setTranslatedByBody(false);
-	orientationType = BY_BODY;
 }
 
 void Box::addProperties()
 {
     Entity::addProperties();
+    setName("Box");
 }
 
 void Box::initialize()

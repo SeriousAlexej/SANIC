@@ -1,5 +1,7 @@
 #include "pointlight.h"
 #include "../dialogs/tinyfiledialogs.h"
+#include "global.h"
+#include "world_graphics.h"
 
 ADD_TO_INCUBATOR(PointLight);
 
@@ -19,9 +21,7 @@ static void TW_CALL pickColor(void *colorPtr)
 PointLight::PointLight()
 {
     setClass("PointLight");
-	setTranslatedByBody(false);
-	orientationType = NONE;
-	lightSource = NULL;
+	lightSource = nullptr;
 }
 
 PointLight::~PointLight()
@@ -62,7 +62,10 @@ void PointLight::initialize()
 			   "./models/editor/sprite.obj",
 			   "./models/editor/light.png",
 			   "", "");
-	setupCollision(0.0f, glm::vec3(0.25f, 0.25f, 0.25f));
+    if(egg::getInstance().g_Editor)
+    {
+	    setupCollision(0.0f, glm::vec3(0.25f, 0.25f, 0.25f));
+    }
 	switchToEditorModel();
 	pushState(main);
 	lightSource = wldGFX->createLight();
@@ -72,9 +75,9 @@ void PointLight::initialize()
 
 void PointLight::adjustMoving()
 {
-    if(lightSource && body)
+    if(lightSource && model)
     {
-        lightSource->setPosition(body->getPosition());
+        lightSource->setPosition(model->getPosition());
     }
 }
 
@@ -112,7 +115,7 @@ void PointLight::editorSelect()
     Entity::editorSelect();
 }
 
-STATE PointLight::main(EntityEvent *ee, Entity *caller)
+void PointLight::main(EntityEvent *ee, Entity *caller)
 {
 	return;
 }

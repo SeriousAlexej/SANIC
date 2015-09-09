@@ -13,7 +13,7 @@ void    GLDebugDrawer::drawLine(const btVector3& from,const btVector3& to,const 
 	glBegin(GL_LINES);
 		glColor3f(color.getX(), color.getY(), color.getZ());
 		glVertex3d(from.getX(), from.getY(), from.getZ());
-		glColor3f(color.getX(), color.getY(), color.getZ());
+		//glColor3f(color.getX(), color.getY(), color.getZ());
 		glVertex3d(to.getX(), to.getY(), to.getZ());
 	glEnd();
 }

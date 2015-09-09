@@ -1,6 +1,12 @@
 #ifndef _ENTITY_EVENT_H_
 #define _ENTITY_EVENT_H_
+#include <luacppinterface.h>
+#include <memory>
+#include "entity.h"
 
+class Entity;
+
+using std::make_shared;
 
 /*********************************************************************/
 
@@ -72,5 +78,16 @@ public:
 
 /*********************************************************************/
 
+const int EventCode_Damage = 5;
+class EventDamage : public EntityEvent
+{
+public:
+    Entity* penDamager;
+    int amount;
+    EventDamage(Entity* pen, int a) : penDamager(pen), amount(a) {}
+};
+
+
+/*********************************************************************/
 
 #endif

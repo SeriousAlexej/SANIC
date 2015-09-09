@@ -8,13 +8,12 @@
 #include <vector>
 #include <list>
 #include <string>
-
-extern bool g_Editor;
+#include <luacppinterface.h>
 
 class Movable
 {
 public:
-	Movable();
+    Movable();
 	virtual ~Movable();
 
 	glm::vec3	getOffset();
@@ -26,7 +25,7 @@ public:
 
 	void		setPosition(glm::vec3 pos);
 	void		setRotation(glm::vec3 rot);
-	void		setRotation(float angle, glm::vec3 dir);
+	void        setRotation(glm::quat q);
 	void		setRotation(glm::mat4 rot);
 	void		setScale(glm::vec3 sca);
 	void		setOffset(glm::vec3 off);
@@ -105,7 +104,8 @@ public:
 	virtual int	getMultipass() { return multipass; }
 private:
 	static std::vector<int>	registeredMultipasses;
-	int		multipass; //LILUKORBENDALAS!
+    int		multipass; //LILUKORBENDALAS!
+    // TODO: uint multipass!!!
 };
 
 //this class is used for storing results of 'custom callback' from Bullet
@@ -163,4 +163,8 @@ private:
 	std::string		currentClass;
 };
 
+class FromLua
+{
+    // simple as fuck
+};
 #endif

@@ -1,6 +1,5 @@
 #include "shader.h"
-
-extern std::string g_WorkingDir;
+#include "global.h"
 
 Shader::Shader(std::string shaderPath)
 {
@@ -8,13 +7,23 @@ Shader::Shader(std::string shaderPath)
 	shaderID = 0;
 	MatrixID = 0;
 	mID = 0;
-	CamPosID = 0;
 	NormalTextureID = 0;
 	DiffuseTextureID = 0;
 	HeightTextureID = 0;
+	FrameProgressID = 0;
 	normStrengthID = 0;
 	parallaxScaleID = 0;
 	parallaxOffsetID = 0;
+	CamPosID = 0;
+	BiasMVP = 0;
+	DLightAmbient = 0;
+	DLightDiffuse = 0;
+	DirShadowBool = 0;
+	ShadowMap = 0;
+	DLightDir = 0;
+	ShadowMap_LQ = 0;
+	BiasMVP_LQ = 0;
+	ShadowBorder = 0;
 	for(int i=0; i<4; i++)
     {
         LightPositionID[i] = 0;
@@ -26,7 +35,7 @@ Shader::Shader(std::string shaderPath)
     std::string toUse = shaderPath;
     if(toUse!="")
     {
-        toUse = g_WorkingDir + toUse.substr(1);
+        toUse = egg::getInstance().g_WorkingDir + toUse.substr(1);
     }
 	loadShaders(toUse);
 }
@@ -124,6 +133,15 @@ void Shader::loadShaders(std::string shaderPath)
 	normStrengthID = glGetUniformLocation(shaderID, "normalStrength");
 	parallaxScaleID = glGetUniformLocation(shaderID, "parallaxScale");
 	parallaxOffsetID = glGetUniformLocation(shaderID, "parallaxOffset");
+	BiasMVP = glGetUniformLocation(shaderID, "ShadowBiasMVP");
+	DLightAmbient = glGetUniformLocation(shaderID, "dirLightAmbient");
+	DLightDiffuse = glGetUniformLocation(shaderID, "dirLightDiffuse");
+	DirShadowBool = glGetUniformLocation(shaderID, "directionalShadows");
+	ShadowMap = glGetUniformLocation(shaderID, "shadowMap");
+	DLightDir = glGetUniformLocation(shaderID, "DLightDir");
+	BiasMVP_LQ = glGetUniformLocation(shaderID, "ShadowBiasMVP_LQ");
+	ShadowMap_LQ = glGetUniformLocation(shaderID, "shadowMap_LQ");
+	ShadowBorder = glGetUniformLocation(shaderID, "shadowBorder");
 
 	for(int i=0; i<4; i++)
     {

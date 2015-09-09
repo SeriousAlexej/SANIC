@@ -63,10 +63,9 @@ SolidBody::SolidBody(float _mass, ModelInstance *mi)
 		&mesh->frames[0].vertices[0][0],
 		sizeof(glm::vec3));
 
-	btVector3 aabbMin(-1000,-1000,-1000),aabbMax(1000,1000,1000);
-	trimeshShape  = new btBvhTriangleMeshShape(indexVertexArrays,true,aabbMin,aabbMax);
+	trimeshShape  = new btBvhTriangleMeshShape(indexVertexArrays,true);
 	collShape = trimeshShape;
-	btTriangleInfoMap* triangleInfoMap = new btTriangleInfoMap();
+	triangleInfoMap = new btTriangleInfoMap();
 	btGenerateInternalEdgeInfo(trimeshShape,triangleInfoMap);
 
 	collisionType = CollMesh;
@@ -79,6 +78,7 @@ SolidBody::~SolidBody()
 	if(collisionType == CollMesh)
 	{
 		if(trimeshShape)	delete trimeshShape;
+		if(triangleInfoMap) delete triangleInfoMap;
 	} else {
 		if(collShape)		delete collShape;
 	}
@@ -225,13 +225,12 @@ void SolidBody::setRotation(glm::vec3 rot)
 	rigidBody->setWorldTransform(t);
 }
 
-void SolidBody::setRotation(float angle, glm::vec3 dir)
+void SolidBody::setRotation(glm::quat q)
 {
 	if(!rigidBody) return;
-	btQuaternion q;
-	q.setRotation(btVector3(dir.x, dir.y, dir.z), angle);
+	btQuaternion qr(q.x, q.y, q.z, q.w);
 	btTransform t = rigidBody->getWorldTransform();
-	t.setRotation(q);
+	t.setRotation(qr);
 	rigidBody->setWorldTransform(t);
 }
 
@@ -336,10 +335,4 @@ void* SolidBody::getOwner()
 		return compoundShape->getUserPointer();
 	}
 	return nullptr;
-}
-
-void SolidBody::enableTouching()
-{
-	if(rigidBody)
-		rigidBody->setCollisionFlags(rigidBody->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
 }

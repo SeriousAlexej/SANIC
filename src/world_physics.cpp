@@ -1,5 +1,6 @@
 #include "world_physics.h"
 #include "entity.h"
+#include "solidbody.h"
 
 extern ContactProcessedCallback		gContactProcessedCallback;
 
@@ -15,16 +16,43 @@ static bool CustomProcessedCallback(btManifoldPoint& cp, void* body0,void* body1
 	{
 		Entity* t0 = static_cast<Entity*>(up0);
 		Entity* t1 = static_cast<Entity*>(up1);
-		t0->touch(up1);
-		t1->touch(up0);
+		if(t0->isTouchable())
+            t0->touch(up1);
+        if(t1->isTouchable())
+            t1->touch(up0);
 	}
 	return true;
 }
 
 WorldPhysics::WorldPhysics()
 {
+    createPhysics();
+}
 
+WorldPhysics::~WorldPhysics()
+{
+    deletePhysics();
+}
 
+void WorldPhysics::deletePhysics()
+{
+	if(dynamicsWorld)
+	{
+		for (int i=bodies.size()-1; i>=0; i--)
+		{
+			bodies[i]->removeFromWorld();
+		}
+		bodies.clear();
+		delete dynamicsWorld;
+	}
+	if(solver)					delete solver;
+	if(collisionConfiguration)	delete collisionConfiguration;
+	if(dispatcher)				delete dispatcher;
+	if(broadphase)				delete broadphase;
+}
+
+void WorldPhysics::createPhysics()
+{
     broadphase				= new btDbvtBroadphase();
     collisionConfiguration	= new btDefaultCollisionConfiguration();
     dispatcher				= new btCollisionDispatcher(collisionConfiguration);
@@ -45,26 +73,15 @@ WorldPhysics::WorldPhysics()
 	gContactProcessedCallback = CustomProcessedCallback;
 }
 
-WorldPhysics::~WorldPhysics()
+void WorldPhysics::Clear()
 {
-	if(dynamicsWorld)
-	{
-		for (int i=bodies.size()-1; i>=0; i--)
-		{
-			bodies[i]->removeFromWorld();
-		}
-		bodies.clear();
-		delete dynamicsWorld;
-	}
-	if(solver)					delete solver;
-	if(collisionConfiguration)	delete collisionConfiguration;
-	if(dispatcher)				delete dispatcher;
-	if(broadphase)				delete broadphase;
+    deletePhysics();
+    createPhysics();
 }
 
 void WorldPhysics::update()
 {
-	dynamicsWorld->stepSimulation(g_Delta,1);
+    dynamicsWorld->stepSimulation(egg::getInstance().g_Delta,1);
 }
 
 SolidBody* WorldPhysics::addBody(float mass, float radius)

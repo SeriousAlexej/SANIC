@@ -1,14 +1,33 @@
 #ifndef INCUBATOR_H
 #define INCUBATOR_H
 #include <map>
+#include <vector>
 #include <string>
+#include <luacppinterface.h>
+
+class not_in_cookbook : public std::exception
+{
+    virtual const char* what() const throw()
+    {
+        return "No such entity in cookbook";
+    }
+};
+class cant_create : public std::exception
+{
+    virtual const char* what() const throw()
+    {
+        return "Can't create entity";
+    }
+};
 
 class Incubator
 {
     public:
-        static void deleteInstance();
-        static void* Create(std::string className);
+        static void* Create(const std::string &className);
         static void addToCookBook(std::string className, size_t bytes, void (*ctorCaller)(void*));
+        static Incubator& getInstance();
+        static std::vector<std::string> getRegisteredClasses();
+
     private:
         Incubator() {}
         ~Incubator() {}
@@ -18,9 +37,8 @@ class Incubator
             size_t bytes;
             void (*ctorCaller)(void*);
         };
-
-        static Incubator* instance;
         std::map<std::string,ClassInfo> cookBook;
+        friend class World;
 };
 
 class FromIncubator

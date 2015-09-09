@@ -150,9 +150,9 @@ int const ObjScannerBase::s_dfa__[][37] =
 
     // The first value is the rule index
     // The second value is the FLAG: see the scannerbase.h file
-    // 1: Final     4: Count        11: Final/BOL,Inc     
+    // 1: Final     4: Count        11: Final/BOL,Inc
     // 2: Inc.      5: Final,Count  13: Final/BOL,Count
-    // 3: Final,Inc 9: Final/BOL    
+    // 3: Final,Inc 9: Final/BOL
     // The third value is the LOP count value (valid for Count flags)
 size_t const ObjScannerBase::s_rfc__[][3] =
 {
@@ -419,9 +419,9 @@ ObjScannerBase::ActionType__ ObjScannerBase::actionType__(size_t range)
     if (d_matched.size())
         return ActionType__::ECHO_FIRST;    // no match, echo the 1st char
 
-    return range != s_rangeOfEOF__ ? 
-                ActionType__::ECHO_CH 
-            : 
+    return range != s_rangeOfEOF__ ?
+                ActionType__::ECHO_CH
+            :
                 ActionType__::RETURN;
 }
 
@@ -435,8 +435,8 @@ void ObjScannerBase::accept(size_t nChars)          // old name: less
 }
 
   // The size of d_matched is determined:
-  //    The current state is a known final state (as determined by 
-  // inspectRFCs__(), just prior to calling matched__). 
+  //    The current state is a known final state (as determined by
+  // inspectRFCs__(), just prior to calling matched__).
   //    The contents of d_matched are reduced to d_final's size or (if set)
   // to the LOP-rule's tail size.
 void ObjScannerBase::determineMatchedSize(FinData const &final)
@@ -460,7 +460,7 @@ size_t ObjScannerBase::matched__(size_t ch)
     if (!d_atBOL)
         d_final.atBOL.rule = std::numeric_limits<size_t>::max();
 
-    FinData &final = d_final.atBOL.rule == std::numeric_limits<size_t>::max() ? 
+    FinData &final = d_final.atBOL.rule == std::numeric_limits<size_t>::max() ?
                             d_final.notAtBOL
                         :
                             d_final.atBOL;
@@ -494,14 +494,14 @@ void ObjScannerBase::continue__(int ch)
 
 void ObjScannerBase::echoCh__(size_t ch)
 {
-    *d_out << static_cast<char>(ch);
+    //*d_out << static_cast<char>(ch);
     d_atBOL = ch == '\n';
 }
 
 
    // At this point there is no continuation. The last character is
    // pushed back into the input stream as well as all but the first char. in
-   // the buffer. The first char. in the buffer is echoed to stderr. 
+   // the buffer. The first char. in the buffer is echoed to stderr.
    // If there isn't any 1st char yet then the current char doesn't fit any
    // rules and that char is then echoed
 void ObjScannerBase::echoFirst__(size_t ch)
@@ -512,19 +512,19 @@ void ObjScannerBase::echoFirst__(size_t ch)
 }
 
     // Inspect all s_rfc__ elements associated with the current state
-    //  If the s_rfc__ element has its COUNT flag set then set the 
-    // d_tailCount[rule] value to the element's tailCount value, if it has its 
+    //  If the s_rfc__ element has its COUNT flag set then set the
+    // d_tailCount[rule] value to the element's tailCount value, if it has its
     // INCREMENT flag set then increment d_tailCount[rule]
     //  If neither was set set the d_tailCount[rule] to numeric_limits<size_t>::max()
-    // 
+    //
     // If the s_rfc__ element has its FINAL flag set then store the rule number
     // in d_final.second. If it has its FINAL + BOL flags set then store the
     // rule number in d_final.first
 void ObjScannerBase::inspectRFCs__()
 {
-    for 
+    for
     (
-        size_t begin = d_dfaBase__[d_state][s_finacIdx__], 
+        size_t begin = d_dfaBase__[d_state][s_finacIdx__],
                  end = d_dfaBase__[d_state][s_finacIdx__ + 1];
             begin != end;
                 ++begin
@@ -536,7 +536,7 @@ void ObjScannerBase::inspectRFCs__()
 
         if (flag & INCREMENT)
             ++d_tailCount[rule];
-        else 
+        else
             d_tailCount[rule] = (flag & COUNT) ? rfc[ACCCOUNT] : std::numeric_limits<size_t>::max();
 
         if (flag & FINAL)
@@ -549,7 +549,7 @@ void ObjScannerBase::inspectRFCs__()
 
 void ObjScannerBase::reset__()
 {
-    d_final = Final { {std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max() }, 
+    d_final = Final { {std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max() },
                       {std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max() } };
     d_state = 0;
     d_return = true;

@@ -1,19 +1,18 @@
 #include <glm/gtx/vector_angle.hpp>
 #include "player.h"
+#include "world_graphics.h"
 
 ADD_TO_INCUBATOR(Player);
 
 Player::Player()
 {
 	setClass("Player");
-	setName("Sanic");
-	setTranslatedByBody(false);
-	orientationType = NONE;
 }
 
 void Player::addProperties()
 {
     Entity::addProperties();
+	setName("Sanic");
 }
 
 void Player::initialize()
@@ -24,7 +23,6 @@ void Player::initialize()
 			   "", "");
 	setupCollision(20.0f, 1.0f);
 	switchToModel();
-	body->enableTouching();
 	camera = wldGFX->getCamera();
 	camera->setOffset(glm::vec3(0,2,6));
 	camera->setPosition(body->getPosition());
@@ -66,7 +64,7 @@ Player::~Player()
 {
 }
 
-STATE Player::main(EntityEvent *ee, Entity *caller)
+void Player::main(EntityEvent *ee, Entity *caller)
 {
 	return;
 }

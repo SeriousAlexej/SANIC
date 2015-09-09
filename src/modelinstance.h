@@ -8,11 +8,10 @@
 #include "texture.h"
 #include "light.h"
 
-extern sf::Clock g_Clock;
-
 class ModelInstance : public Movable
 {
 public:
+
 	ModelInstance(Mesh* mesh, Shader* shader, Texture* diffuse, Texture* normal, Texture* height);
 	virtual ~ModelInstance();
 
@@ -24,12 +23,14 @@ public:
 	void		activate() { active = true; }
 	void		deactivate() { active = false; }
 
+	bool            background;
     float           normalStrength;
     float           parallaxScale;
     float           parallaxOffset;
 
 private:
-	void		render(Camera& cam, std::vector<Light*> lights);
+	void		render(Camera& cam, std::vector<Light*> lights, Light* dirLight);
+	void        renderForShadow(Camera& cam, Shader* shader);
 
 	Mesh*			pMesh;
 	Shader*			pShader;

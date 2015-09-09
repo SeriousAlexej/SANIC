@@ -1,9 +1,8 @@
 #ifndef _WORLD_H_
 #define _WORLD_H_
-#include "input_handler.h"
 #include "world_physics.h"
 #include "world_graphics.h"
-#include "entity.h"
+#include <luacppinterface.h>
 
 class Entity;
 
@@ -20,35 +19,33 @@ public:
 
 class World
 {
+    friend class Game;
+	friend class Editor;
 public:
-	World(sf::Window* w);
+	World();
 	~World();
 
 	void	update();
 	void	updateEditor();
-	Entity* createEntity(std::string entityName);
+    Entity* createEntity(const std::string &entityName);
 	void	removeEntity(Entity* e);
 
 	RayCastInfo	castRay(glm::vec3 origin, glm::vec3 direction);
-	RayCastInfo	castRayScreen(bool fromCenter = false);
 
-	InputHandler *getInputHandler() const { return input; }
+    void Clear(); //complementation of entities
+    void Save(const std::string& filename);
+    void Love(const std::string& filename); // Lyubov porojdaet mir
 
-//private:
-	InputHandler*			input;
+    std::vector<Entity*>& getEntities() { return entities; }
+
+private:
+    void deleteAllEntities(); //red button
+
 	std::vector<Entity*>	entities;
-	WorldGraphics			graphics;
+	std::vector<Entity*>    obsoleteEntitties; // entities to be deleted upon next update, populated on Entity::destroy()
+	WorldGraphics*			pGraphics;   // there are thigs possible to render with nothing but heart
 	WorldPhysics			physics;
-
-	//editor stuff
-	enum EditorMode { Fly, Moving, Pulling, Idle };
-
-	Entity*					selectedEntity;
-	float					editorFlySpeed;
-	glm::vec2               mposOffsetMoving;
-	EditorMode              edMode;
-
-	TwBar*					entitiesList;
+    void registerEntity(const std::string& name);
 
 private:
 

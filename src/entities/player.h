@@ -14,7 +14,7 @@ public:
 
 private:
 	//states
-	static STATE main(EntityEvent* ee, Entity* caller);
+	DECLARE_STATE(main);
 
 	//~states
 	virtual void            addProperties();
