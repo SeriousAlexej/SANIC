@@ -3,7 +3,7 @@
 #include "editor.h"
 #include "game.h"
 #include <catch.hpp>
-#include "../test/Serialization.h"
+//#include "../test/Serialization.h"
 
 unsigned char flagEditor = 1 << 0,
               flagWorld  = 1 << 1;

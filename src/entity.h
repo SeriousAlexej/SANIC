@@ -24,7 +24,22 @@ class WorldGraphics;
 class WorldPhysics;
 class World;
 
-typedef void (*stateCallback)(EntityEvent*,Entity*);
+typedef std::function<void(EntityEvent*,Entity*)> stateCallback;
+typedef LuaFunction<void(LuaUserdata<EntityEvent>, LuaUserdata<Entity>)> luaCallbackFunction;
+
+class LuaCallback : public stateCallback // TODO: you know this should be less lame
+{
+public:
+	LuaCallback(luaCallbackFunction _f) : func(_f) {}
+	void operator()(EntityEvent* ee, Entity* e) {
+		LuaUserdata<EntityEvent> eeud = egg::getInstance().g_lua.CreateUserdata(ee);
+		LuaUserdata<Entity> eud = egg::getInstance().g_lua.CreateUserdata(e);
+		func.Invoke(eeud, eud);
+	}
+private:
+	luaCallbackFunction func;
+};
+
 #define IMPLEMENT_STATE(c, s) \
     void c::s(EntityEvent* ee, Entity* cl) { c *caller = dynamic_cast<c *>(cl);
 #define DECLARE_STATE(x) \

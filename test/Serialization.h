@@ -6,6 +6,7 @@
 #include <rapidjson/writer.h>
 #include <fstream>
 #include "global.h"
+#include <catch.hpp>
 
 #include <boost/crc.hpp>
 

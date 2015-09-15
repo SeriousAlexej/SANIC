@@ -47,6 +47,15 @@ void registerEvents(Lua& lua)
     lua.GetGlobalEnvironment().Set("EntityEvent", dtable);
 }
 
+//void registerStates(Lua& lua)
+//{
+//	auto newstate = lua.CreateFunction<LuaFunction<void(LuaUserdata<EntityEvent>, LuaUserdata<Entity>)>>(
+//		[&]() -> LuaFunction<LuaUserdata<EntityEvent>, LuaUserdata<Entity>>
+//		{
+//
+//		});
+//}
+
 /* ???
 #undef LUA_GETTER
 #undef LUA_SETTER

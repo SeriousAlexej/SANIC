@@ -7,7 +7,6 @@
 #include <SFML/Window/Keyboard.hpp>
 #include "global.h"
 #include "entity.h"
-#include "registerevents.h"
 
 //these vars assist EntityPointer deserialization
 std::map<int, Entity*> enByOldId; //get entity by ID it was saved with
@@ -21,11 +20,10 @@ World::World()
     // lua.GetRegistry();
     //penGraphics = nullptr;
     pGraphics = new WorldGraphics();
-    for(auto kv : Incubator::getInstance().cookBook)
+	for(auto kv : Incubator::getInstance().cookBook)
     {
         registerEntity(kv.first);
     }
-    registerEvents(egg::getInstance().g_lua);
 }
 
 void World::deleteAllEntities()
