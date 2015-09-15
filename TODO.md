@@ -11,7 +11,7 @@ Wannabe-game engine
 * **Events** - WIP.
 
 #### Editor
-* Editor - TODO.
+* Some sort of editor API for Lua - TODO.
 * Script Entity - TODO.
 
 #### Game
