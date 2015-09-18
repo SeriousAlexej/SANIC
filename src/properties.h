@@ -116,6 +116,12 @@ public:
 
     template<class T>
     void ChangeLocation(T* val);
+	/**
+	 * @brief Changes target pointer
+	 * 
+	 * @param val New instance of property
+	 * @return void
+	 */
 };
 
 template<class T>
