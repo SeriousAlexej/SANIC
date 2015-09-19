@@ -24,7 +24,22 @@ class WorldGraphics;
 class WorldPhysics;
 class World;
 
-typedef void (*stateCallback)(EntityEvent*,Entity*);
+typedef std::function<void(EntityEvent*,Entity*)> stateCallback;
+typedef LuaFunction<void(LuaUserdata<EntityEvent>, LuaUserdata<Entity>)> luaCallbackFunction;
+
+class LuaCallback : public stateCallback // TODO: you know this should be less lame
+{
+public:
+	LuaCallback(luaCallbackFunction _f) : func(_f) {}
+	void operator()(EntityEvent* ee, Entity* e) {
+		LuaUserdata<EntityEvent> eeud = egg::getInstance().g_lua.CreateUserdata(ee);
+		LuaUserdata<Entity> eud = egg::getInstance().g_lua.CreateUserdata(e);
+		func.Invoke(eeud, eud);
+	}
+private:
+	luaCallbackFunction func;
+};
+
 #define IMPLEMENT_STATE(c, s) \
     void c::s(EntityEvent* ee, Entity* cl) { c *caller = dynamic_cast<c *>(cl);
 #define DECLARE_STATE(x) \
@@ -38,6 +53,9 @@ typedef void (*stateCallback)(EntityEvent*,Entity*);
 #define switchAutowait \
     EventAutowaitCallback *eac = dynamic_cast<EventAutowaitCallback*>(ee); switch(eac->index)
 
+/**
+ * @brief Defines gui control for entity prop
+ */
 struct DrawableElement
 {
     enum ElemType
@@ -62,6 +80,9 @@ struct DrawableElement
     std::string enumTypes;
 };
 
+/**
+ * @brief Encapsulates routines of state machine
+ */
 class EntityState
 {
 public:
@@ -117,46 +138,150 @@ private:
 	bool						holdEx;
 };
 
+/**
+ * @brief Base class for all objects in World
+ */
 class Entity : public Touchable, public Unique, public FamilyTree, public Serial, protected FromIncubator
 {
 public:
 
 			 Entity();
 	virtual ~Entity();
+
+    /** @brief Setup and load needed stuff
+     * @return void
+     */
 	virtual void			initialize();
+
+    /** @brief Perform entity-specific corrections of position/orientation etc
+     * @return void
+     */
 	virtual void			adjustMoving();
 
+    /** @brief Inform World, that this entity is to be deleted at the next update
+     * @return void
+     */
 	void					destroy();
 
+    /** @brief Inform entity about certain event
+     * @param ee The event
+     * @return void
+     */
 	void					sendEvent(EntityEvent* ee);
 
+    /** @brief Hide entity and disable it's physics (if any)
+     * @return void
+     */
 	void					switchToEditorModel();
+
+    /** @brief Unhide entity and enable it's physics (if any)
+     * @return void
+     */
 	void					switchToModel();
 
+    /** @brief Deserializes class from JSON object
+     * @param d Document object
+     * @return void
+     */
     virtual void Deserialize(rapidjson::Value& d);
+
+    /** @brief Serializes class into JSON objects
+     * @param d Document object, need for encoding and stuff
+     * @return rapidjson::Value
+     */
     virtual rapidjson::Value Serialize(rapidjson::Document& d);
 
+    /** @brief Get entity's name
+     * @return std::string
+     */
     string getName();
-	const SolidBody*		getBody() const { return body; }//for moving purposes
-	const ModelInstance*	getModelInstance() const { return model; }//for anim playing
+
+    /** @brief Get physical body(@ref SolidBody) of entity
+     * @return SolidBody*
+     */
+	const SolidBody*		getBody() const { return body; }
+
+    /** @brief Get visual(@ref ModelInstance) representation of entity
+     * @return ModelInstance*
+     */
+	const ModelInstance*	getModelInstance() const { return model; }
+
+    /** @brief Check if entity can react to touching
+     * @return bool
+     */
 	const inline bool       isTouchable() const { return touchable; }
 
+    /** @brief Set entity's name
+     * @param newName Sen
+     * @return void
+     */
     void					setName(std::string newName);
 
+    /** @brief Create visual(@ref ModelInstance) representation for this entity
+     * @param shaderPath Path to shader (enter "" if not specified)
+     * @param modelPath Path to 3D model (enter "" if not specified)
+     * @param diffTexture Path to diffuse texture (enter "" if not specified)
+     * @param normTexture Path to normal texture (enter "" if not specified)
+     * @param heightTexture Path to height texture (enter "" if not specified)
+     * @return void
+     */
 	void					setupModel(std::string shaderPath,
 									   std::string modelPath, std::string diffTexture,
 									   std::string normTexture, std::string heightTexture);
-	void					setupCollision(float mass); //from model
-	void					setupCollision(float mass, float radius); //sphere
-	void					setupCollision(float mass, glm::vec3 halfExtents); //box
 
+    /** @brief Let the physical body of this entity be in form of it's visual representation
+     * @param mass Mass in kilos
+     * @return void
+     */
+	void					setupCollision(float mass);
+
+    /** @brief Let the physical body of this entity be in form sphere
+     * @param mass Mass in kilos
+     * @param radius Radius of sphere in meters
+     * @return void
+     */
+	void					setupCollision(float mass, float radius);
+
+    /** @brief Let the physical body of this entity be in form of box
+     * @param mass Mass in kilos
+     * @param halfExtents Box half-sizes
+     * @return void
+     */
+	void					setupCollision(float mass, glm::vec3 halfExtents);
+
+    /** @brief Attach this entity to another entity
+     * @param p Entity to be attached to
+     * @return void
+     */
 	void                    setParent(Entity* p);
+
+    /** @brief Get the entity I am attached to
+     * @return Entity*
+     */
 	Entity*                 getParent() const;
 
+    /** @brief Set the position of both visual(@ref ModelInstance) representation of entity, and it's physical body(@ref SolidBody)
+     * @param pos Position in 3D space, units are meters
+     * @return void
+     */
 	void                    setPosition(glm::vec3 pos);
+
+    /** @brief Set the rotation of both visual(@ref ModelInstance) representation of entity, and it's physical body(@ref SolidBody)
+     * @param rot Rotation in 3D space, represented by quaternion
+     * @return void
+     */
 	void                    setRotation(glm::quat rot);
 
+    /** @brief Inform entity, that some pointer(@ref EntityPointer) is targeted at it
+     * @param pen Pointer object, which target is this entity
+     * @return void
+     */
 	void                    pointerAdded(EntityPointer* pen);
+
+    /** @brief Inform entity, that some pointer(@ref EntityPointer) which was targeted at it, now points somewhere else
+     * @param pen Pointer object, which betrayed this entity
+     * @return void
+     */
 	void                    pointerLeft(EntityPointer* pen);
 
     virtual void            registerLua(LuaUserdata<Entity>& lua);
@@ -197,23 +322,94 @@ protected:
 	//states:
 	DECLARE_STATE(autowaitState);
 
+    /** @brief (USE MACRO autowait INSTEAD) Internal method for suspending AI for a given period of time
+     * @param time How much AI should be suspended
+     * @param returnIndex Used for defining the point at which the AI should continue execution
+     * @return void
+     */
 	void					_autowait(float time, int returnIndex);
+
+    /** @brief Push new state in stack
+     * @param callback State which handles the events
+     * @param waitTime Period of time, after which a Timer Event is sent to the entity
+     * @return void
+     */
 	void					pushState(stateCallback callback, float waitTime = 0.0f);
+
+    /** @brief Replace current state in the stack with another
+     * @param callback State which handles the events
+     * @param waitTime Period of time, after which a Timer Event is sent to the entity
+     * @return void
+     */
 	void					replaceState(stateCallback callback, float waitTime = 0.0f);
+
+    /** @brief Removes current state from stack
+     * @param ee Event to be passed to underlying state in stack
+     * @return void
+     */
 	void					popState(EntityEvent* ee = nullptr);
+
+    /** @brief Sync rotation of visual representation of entity and it's physical body
+     * @return void
+     */
 	void					syncEntityRotation();
+
+    /** @brief Process incoming events and update the entity
+     * @return void
+     */
 	void					update();
-	void                    updatePosition(); //inform children about position change
+
+    /** @brief Inform attached entities about position change
+     * @return void
+     */
+	void                    updatePosition();
+
+    /** @brief React to the change of position of the entity I am attached to
+     * @return void
+     */
 	void                    parentMoved();
+
+    /** @brief Recursively determine if specified entity is attached to this one
+     * @param e Entity to check
+     * @return void
+     */
 	bool                    childrenContain(Entity* e) const;
 
+    /** @brief Register entity's pointers(@ref EntityPointer) as properties
+     * @return void
+     */
     void                    registerPointers();
-    std::string             pointersString; //gui enum is made from this string
+
+    std::string             pointersString; /**< gui enum is made from this string */
+
+    /** @brief Get pointer(@ref EntityPointer) object at current Entity::pointerIndex
+     * @return EntityPointer*
+     */
     EntityPointer*          getTargetPointer();
+
+    /** @brief Get description of entity at which current pointer at Entity::pointerIndex is targeted
+     * @return std::string
+     */
     std::string             getPointerDescr();
+
+    /** @brief Perform editor-specific updates (i.e. props gui etc)
+     * @return void
+     */
 	virtual void            editorUpdate();
+
+    /** @brief Draw props gui for editor
+     * @return void
+     */
 	virtual void            editorSelect();
+
+    /** @brief Kill props gui for editor
+     * @return void
+     */
 	virtual void            editorDesselect();
+
+    /** @brief Render red arrow so above as below selected (this) entity
+     * @return void
+     */
 	virtual void            renderSelectionIndicator();
 
 	std::stack<EntityState*>	statesObsolete;
@@ -234,11 +430,27 @@ protected:
     template<class T>
     void                        setProperty(string s, T& val);
 
+    /** @brief Register entity's properties
+     * @return void
+     */
     virtual void    addProperties();
     vector<vector<DrawableElement>> guiElements;
+
+    /** @brief Display one prop gui element in a specific way
+     * @param elem Element object to be displayed
+     * @return void
+     */
     void    drawSingleElement(DrawableElement &elem);
+
+    /** @brief Display all prop gui elements(@ref DrawableElement)
+     * @return void
+     */
     void    drawGuiElements();
 
+    /** @brief Register following gui elements
+     * @param lle List of gui elements(@ref DrawableElement)
+     * @return void
+     */
     void    addDrawableElements(initializer_list<initializer_list<DrawableElement>> lle);
 
     // SOME BLACK MAGIC

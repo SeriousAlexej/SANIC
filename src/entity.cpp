@@ -92,6 +92,10 @@ void Entity::registerLua(LuaUserdata<Entity>& lua) // TODO: Make it more "generi
             "PosZ",    position[2],
             "Parent",  pointers[0]
     );
+	auto statefunction = egg::getInstance().g_lua.CreateFunction<void(luaCallbackFunction)>([&](luaCallbackFunction lcb) {
+		this->pushState(LuaCallback(lcb));
+	});
+	lua.Set("Add state", statefunction);
 }
 
 void Entity::addProperties()

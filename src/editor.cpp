@@ -132,6 +132,8 @@ int Editor::run()
     glCullFace(GL_BACK);
     glDepthFunc(GL_LESS);
     glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	TwInit(TW_OPENGL, NULL);
 	TwCopyStdStringToClientFunc(CopyStdStringToClient);
