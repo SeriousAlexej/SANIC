@@ -31,6 +31,7 @@ void Game::setup()
     cs.depthBits = 24;
     cs.majorVersion = 3;
     cs.minorVersion = 3;
+    cs.attributeFlags = sf::ContextSettings::Core;
 
     egg::getInstance().g_Resolution = sf::Vector2u(1024u, 768u);
     egg::getInstance().g_DrawOrigin = sf::Vector2u(0u, 0u);

@@ -11,6 +11,8 @@
 #include "entity.h"
 #include "global.h"
 #include "editorGUI.h"
+#include <dirtools.h>
+#include <istream>
 
 class IncuButton : public sfg::Button
 {
@@ -109,6 +111,93 @@ void Editor::setup()
 
 }
 
+void Editor::eventsAlways(sf::Event& event, sf::Window& window)
+{
+    switch(event.type)
+    {
+    case sf::Event::LostFocus:
+        {
+            p_input->setFocus(false);
+            break;
+        }
+    case sf::Event::GainedFocus:
+        {
+            p_input->setFocus(true);
+            break;
+        }
+    case sf::Event::Closed:
+        {
+            window.close();
+            break;
+        }
+    case sf::Event::MouseWheelMoved:
+        {
+            p_input->registerWheelDelta(event.mouseWheel.delta);
+            break;
+        }
+    case sf::Event::Resized:
+        {
+            unsigned width(event.size.width), height(event.size.height);
+            bool fixSize = false;
+            if(width < wndMinWidth)
+            {
+                fixSize = true;
+                width = wndMinWidth;
+            }
+            if(height < wndMinHeight)
+            {
+                fixSize = true;
+                height = wndMinHeight;
+            }
+            if(fixSize)
+            {
+                window.setSize(sf::Vector2u(width, height));
+            }
+            resizeGUIComponents(width, height);
+            break;
+        }
+    default: break;
+    }
+}
+
+void Editor::eventsMenu(sf::Event &event)
+{
+    switch(event.type)
+    {
+    case sf::Event::TextEntered:
+        if(event.text.unicode < 128) {
+            char key = static_cast<char>(event.text.unicode);
+            if(actions.count(key) == 0) {
+                changeMode(Idle);
+            }
+            else {
+                if(sf::Keyboard::isKeyPressed(sf::Keyboard::LControl)) {
+                    ctrl_actions[key].run();
+                    std::cout << "CTRL" << std::endl;
+                }
+                else {
+                    actions[key].run();
+                    std::cout << "NONCTRL" << std::endl;
+                }
+                if(!sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)) {
+                    changeMode(Idle);
+                }
+            }
+        }
+        return;
+    }
+}
+
+void Editor::eventsIdle(sf::Event &event)
+{
+    if(event.type == sf::Event::KeyReleased) {
+        if(event.key.code == sf::Keyboard::A) {
+            changeMode(InMenu);
+            return;
+        }
+    }
+}
+
 int Editor::run()
 {
     printf(egg::getInstance().logo.c_str());
@@ -123,6 +212,7 @@ int Editor::run()
     window.setVerticalSyncEnabled(true);
 	window.setFramerateLimit(60);
     window.setActive();
+    window.setKeyRepeatEnabled(false);
 
 	glewExperimental=true;
 	glewInit();
@@ -167,6 +257,8 @@ int Editor::run()
         auto btnLoad = sfg::Button::Create("Load World");
         auto btnSaveAs = sfg::Button::Create("Save As");
         auto btnSave = sfg::Button::Create("Save");
+        modeStatus = sfg::Label::Create("Idle");
+
         btnNew->SetRequisition(sf::Vector2f(100.0f, 0.0f));
         btnLoad->SetRequisition(sf::Vector2f(100.0f, 0.0f));
         btnSaveAs->SetRequisition(sf::Vector2f(100.0f, 0.0f));
@@ -179,6 +271,8 @@ int Editor::run()
         topBox->Pack(btnLoad, false, true);
         topBox->Pack(btnSaveAs, false, true);
         topBox->Pack(btnSave, false, true);
+        topBox->Pack(modeStatus, true, true);
+
         topWindow->Add(topBox);
     }
     //~fill windows here
@@ -187,10 +281,13 @@ int Editor::run()
     resizeGUIComponents(window.getSize().x, window.getSize().y);
     desktop.Update( 0.f );
 
+    loadAddons();
+
     if(!startupWorld.empty())
     {
         p_world->Love(startupWorld);
     }
+
 
     egg::getInstance().g_Clock.restart();
     while (window.isOpen())
@@ -208,52 +305,16 @@ int Editor::run()
             if(!handled)
             {
                 p_input->allowCheck = true;
-
-                switch(event.type)
+                switch(edMode)
                 {
-                case sf::Event::LostFocus:
-                    {
-                        p_input->setFocus(false);
-                        break;
-                    }
-                case sf::Event::GainedFocus:
-                    {
-                        p_input->setFocus(true);
-                        break;
-                    }
-                case sf::Event::Closed:
-                    {
-                        window.close();
-                        break;
-                    }
-                case sf::Event::MouseWheelMoved:
-                    {
-                        p_input->registerWheelDelta(event.mouseWheel.delta);
-                        break;
-                    }
-                case sf::Event::Resized:
-                    {
-                        unsigned width(event.size.width), height(event.size.height);
-                        bool fixSize = false;
-                        if(width < wndMinWidth)
-                        {
-                            fixSize = true;
-                            width = wndMinWidth;
-                        }
-                        if(height < wndMinHeight)
-                        {
-                            fixSize = true;
-                            height = wndMinHeight;
-                        }
-                        if(fixSize)
-                        {
-                            window.setSize(sf::Vector2u(width, height));
-                        }
-                        resizeGUIComponents(width, height);
-                        break;
-                    }
-                default: break;
+                case InMenu:
+                    eventsMenu(event);
+                    break;
+                case Idle:
+                    eventsIdle(event);
+                    break;
                 }
+                eventsAlways(event, window);
             }
             else //if TwEventSFML handled
             {
@@ -291,7 +352,7 @@ int Editor::run()
 Editor::Editor()
 {
 	editorFlySpeed = 3.0f;
-	edMode = Idle;
+    edMode = Idle;
 	selectedEntity = nullptr;
 }
 
@@ -306,6 +367,92 @@ Editor::Ptr Editor::Create()
     egg::getInstance().g_Editor = true;
     Editor::Ptr ed(new Editor());
     return ed;
+}
+
+void Editor::registerLua()
+{
+    auto hello = egg::getInstance().g_lua.CreateFunction<void(string)>([&](string world) {
+        std::cout << world << std::endl;
+    });
+    auto registerAction = egg::getInstance().g_lua.CreateFunction<void(std::string, std::string, LuaFunction<void()>)>(
+        [&](std::string name, std::string key, LuaFunction<void()> func) {
+            actions[key[0]] = LuaAction(name, func);
+            std::cout << "NEW ACTION" << std::endl;
+        }
+    );
+    auto registerCtrlAction = egg::getInstance().g_lua.CreateFunction<void(std::string, std::string, LuaFunction<void()>)>(
+        [&](std::string name, std::string key, LuaFunction<void()> func) {
+            ctrl_actions[key[0]] = LuaAction(name, func);
+            std::cout << "NEW ACTION" << std::endl;
+        }
+    );
+    auto getCameraPos = egg::getInstance().g_lua.CreateFunction<LuaTable()>([&]() {
+        auto table = egg::getInstance().g_lua.CreateTable();
+        Camera* cam = p_world->pGraphics->getCamera();
+        table.Set("x", cam->getPosition().x);
+        table.Set("y", cam->getPosition().y);
+        table.Set("z", cam->getPosition().z);
+        std::cout << cam->getPosition().x << ":" << cam->getPosition().y << ":" << cam->getPosition().z << std::endl;
+        return table;
+    });
+    auto setCameraPos = egg::getInstance().g_lua.CreateFunction<void(LuaTable)>([&](LuaTable table) {
+        int x = table.Get<int>("x");
+        int y = table.Get<int>("y");
+        int z = table.Get<int>("z");
+        Camera* cam = p_world->pGraphics->getCamera();
+        cam->setPosition({x, y, z});
+    });
+    auto table = egg::getInstance().g_lua.CreateTable();
+    table.Set("registerAction", registerAction);
+    table.Set("registerCtrlAction", registerCtrlAction);
+    table.Set("getCameraPos", getCameraPos);
+    table.Set("setCameraPos", setCameraPos);
+    table.Set("hello", hello);
+    egg::getInstance().g_lua.GetGlobalEnvironment().Set("Editor", table);
+}
+
+void Editor::loadAddons()
+{
+    registerLua();
+    string scriptsdir = egg::getInstance().g_WorkingDir + "/plugins/";
+    std::cout << scriptsdir << std::endl;
+    auto scripts = GetFilesOfFormat(scriptsdir, "lua");
+    std::cout << scripts.size() << " scripts found." << std::endl;
+    for(auto script : scripts) {
+        ifstream in;
+        in.open(scriptsdir+script);
+        stringstream buffer;
+        buffer << in.rdbuf();
+        in.close();
+        std::cout << "Script loaded: " << buffer.str() << std::endl;
+        std::cout << egg::getInstance().g_lua.RunScript(buffer.str()) << std::endl; // TODO: dangerous!
+    }
+}
+
+void Editor::changeMode(EditorMode newMode)
+{
+    switch(newMode) {
+    case Fly:
+        edMode = Fly;
+        modeStatus->SetText("Fly");
+        break;
+    case Idle:
+        edMode = Idle;
+        modeStatus->SetText("Idle");
+        break;
+    case InMenu:
+        edMode = InMenu;
+        modeStatus->SetText("Menu");
+        break;
+    case Pulling:
+        edMode = Pulling;
+        modeStatus->SetText("Pulling");
+        break;
+    case Moving:
+        edMode = Moving;
+        modeStatus->SetText("Moving");
+        break;
+    }
 }
 
 RayCastInfo Editor::castRayScreen(bool fromCenter)
@@ -369,9 +516,11 @@ void Editor::update()
     static float moveModeTime = doubleClickTime;
     static float moveModePeriod = 1.0f;
     float tmNow = egg::getInstance().g_Clock.getElapsedTime().asSeconds();
-	if(p_input->lockMouse)
+
+
+    if(p_input->lockMouse) // TODO: deprecated, to remove!
 	{
-        edMode = Fly;
+        changeMode(Fly);
 		if(p_input->wheelDelta > 0)
 		{
 			p_input->wheelDelta = 0;
@@ -414,7 +563,7 @@ void Editor::update()
 	} else {
         if(edMode == Fly)
         {
-            edMode = Idle;
+            changeMode(Idle);
         }
 		if(p_input->cursorIsInsideWindow())
 		{
@@ -458,14 +607,14 @@ void Editor::update()
 
 		if(selectedEntity != NULL && edMode == Idle && p_input->keyPressed(sf::Keyboard::LControl) && p_input->mouseButtonJustPressed(sf::Mouse::Right))
 		{
-		    edMode = Pulling;
+            changeMode(Pulling);
             sf::Vector2i mpos = sf::Mouse::getPosition(*p_input->mainWindow);
             mposOffsetMoving = glm::vec2(mpos.x, mpos.y);
 		}
 
 		if(edMode == Pulling)
         {
-            if(selectedEntity == NULL) { edMode = Idle; return; }
+            if(selectedEntity == NULL) { changeMode(Idle); return; }
             sf::Vector2i mpos = sf::Mouse::getPosition(*p_input->mainWindow);
             glm::vec3 camPos = graphics.getCamera()->getPosition();
             camPos = camPos - selectedEntity->position;
@@ -490,7 +639,7 @@ void Editor::update()
             }
 		    doubleClickTime = tmNow;
 
-            edMode = Moving;
+            changeMode(Moving);
             moveModeTime = tmNow;
             sf::Vector2i mpos = sf::Mouse::getPosition(*p_input->mainWindow);
             mpos.y = p_input->windowSize.y - mpos.y;
@@ -503,7 +652,7 @@ void Editor::update()
 
 		if(edMode == Moving)
 		{
-            if(selectedEntity == NULL) { edMode = Idle; return; }
+            if(selectedEntity == NULL) { changeMode(Idle); return; }
             glm::mat4 camMat = graphics.getCamera()->getProjectionMatrix() * graphics.getCamera()->getViewMatrix();
             glm::vec4 entPos = glm::vec4(selectedEntity->position.x, selectedEntity->position.y, selectedEntity->position.z, 1.0f);
             entPos =  camMat * entPos;
@@ -520,7 +669,7 @@ void Editor::update()
 
 		if(p_input->mouseButtonJustReleased(sf::Mouse::Right))
 		{
-            if(edMode != Idle) { edMode = Idle; return; }
+            if(edMode != Idle) { changeMode(Idle); return; }
 		}
 
 		if(p_input->mouseButtonJustReleased(sf::Mouse::Left))
@@ -531,7 +680,7 @@ void Editor::update()
                 {
                     moveModePeriod = tmNow - moveModeTime;
                 }
-                edMode = Idle;
+                changeMode(Idle);
                 return;
             }
 
@@ -556,4 +705,5 @@ void Editor::update()
 		}
 		}
 	}
+    //*/
 }
