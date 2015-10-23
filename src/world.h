@@ -46,6 +46,7 @@ private:
 	WorldGraphics*			pGraphics;   // there are thigs possible to render with nothing but heart
 	WorldPhysics			physics;
     void registerEntity(const std::string& name);
+    void registerLua();
 
 private:
 

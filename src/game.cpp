@@ -30,7 +30,7 @@ void Game::setup()
     cs.antialiasingLevel = 4;
     cs.depthBits = 24;
     cs.majorVersion = 3;
-    cs.minorVersion = 3;
+    cs.minorVersion = 0;
     cs.attributeFlags = sf::ContextSettings::Core;
 
     egg::getInstance().g_Resolution = sf::Vector2u(1024u, 768u);

@@ -4,6 +4,7 @@
 #include <stack>
 #include <string>
 #include <map>
+#include <functional>
 #include <initializer_list>
 #include <AntTweakBar.h>
 #include "basic.h"

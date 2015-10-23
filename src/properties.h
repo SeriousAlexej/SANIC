@@ -57,8 +57,8 @@ public:
     string m_name;
     size_t m_tid; // Typeid hash for our safety!
 
-    Property() {}; // Private constructor
-    ~Property() { };
+    Property() {} // Private constructor
+    ~Property() { }
 
 public:
     template<class T>
@@ -107,14 +107,6 @@ public:
 	void Deserialize(rapidjson::Value& value);
 
     template<class T>
-    /**
-	 * @brief Deprecated
-	 * 
-	 * @return T&
-	 */
-	T& ref();
-
-    template<class T>
     void ChangeLocation(T* val);
 	/**
 	 * @brief Changes target pointer
@@ -152,14 +144,6 @@ void Property::ChangeLocation(T* val)
     if(val == nullptr) throw invalid_argument("Property is targeted at nullptr");
     if(typeid(T).hash_code() != m_tid) throw bad_typeid();
     this->m_data = val;
-}
-
-template<class T>
-T& Property::ref()
-{
-    if(typeid(T).hash_code() != m_tid) throw bad_typeid();
-    T* t_data = static_cast<T*>(m_data); // TODO: don't work
-    return *t_data;
 }
 
 #endif // PROPERTIES

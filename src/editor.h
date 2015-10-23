@@ -6,6 +6,9 @@
 #include <functional>
 #include <luacppinterface.h>
 #include <SFML/Window.hpp>
+#include <SFML/Graphics.hpp>
+#include <SFGUI/SFGUI.hpp>
+#include <SFGUI/Widgets.hpp>
 #include "global.h"
 
 using std::map;
@@ -19,6 +22,7 @@ namespace sfg
 {
     class Window;
     class Label;
+    class Desktop;
 }
 
 class Editor : public EggineInstance, public std::enable_shared_from_this<Editor>
@@ -65,18 +69,33 @@ private:
 
 	void resizeGUIComponents(unsigned width, unsigned height);
 
-    void eventsAlways(sf::Event &event, sf::Window &window);
-    void eventsMenu(sf::Event &event);
+    void eventsAlways(sf::Event &event);
+    void eventsLuaMenu(sf::Event &event);
     void eventsIdle(sf::Event &event);
+    void eventsMenu(sf::Event &event);
+    void eventsFly(sf::Event &event);
+    void eventsMoving(sf::Event &event);
+    void eventsPulling(sf::Event &event);
+
+    void fillActionsMenu();
 
     World* p_world;
 	InputHandler* p_input;
+    sf::RenderWindow* window;
+    sfg::Desktop desktop;
+
     RayCastInfo castRayScreen(bool fromCenter = false);
     void updateEntity(Entity* pen);
 
-    enum EditorMode { Fly, Moving, Pulling, Idle, InMenu };
+    enum EditorMode { Fly, Moving, Pulling, Idle, LuaMenu, Menu };
     void changeMode(EditorMode newMode);
     std::shared_ptr<sfg::Label> modeStatus;
+
+    glm::vec3                   vCameraSpeed;
+    float                       fLastClick;
+
+    std::shared_ptr<sfg::Window> popup;
+    std::vector<std::shared_ptr<sfg::Window>> custom;
 
 	Entity*					selectedEntity;
 	float					editorFlySpeed;

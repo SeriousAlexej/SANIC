@@ -42,6 +42,7 @@ public:
 	void		moveFront(float dist);
 	void		moveRight(float dist);
 	void		moveUp(float dist);
+    void        moveFree(glm::vec3 dist);
 	void		translate(glm::vec3 addpos);
 	void		setPosition(glm::vec3 pos);
 	glm::vec3	getPosition();

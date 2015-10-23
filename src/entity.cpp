@@ -95,7 +95,12 @@ void Entity::registerLua(LuaUserdata<Entity>& lua) // TODO: Make it more "generi
 	auto statefunction = egg::getInstance().g_lua.CreateFunction<void(luaCallbackFunction)>([&](luaCallbackFunction lcb) {
 		this->pushState(LuaCallback(lcb));
 	});
-	lua.Set("Add state", statefunction);
+    lua.Set("pushState", statefunction);
+    //auto getStateStack = egg::getInstance().g_lua.CreateFunction<LuaTable()>([&]() { // TODO
+        //LuaTable stack = egg::getInstance().g_lua.CreateTable();
+        //for(auto state : states) {
+        //}
+    //});
 }
 
 void Entity::addProperties()
@@ -617,7 +622,7 @@ void Entity::editorSelect()
     char idStr[15]; //example "Model::Mountain(ID=42)"
     sprintf(idStr, "(ID=%d)", getMultipass());
     std::string barLabel = (getClass()+"::"+getName()+idStr);
-    std::string barPosition = "position='"+std::to_string(leftWndWidth)+" "+std::to_string(topWndHeight)+"' ";
+    std::string barPosition = "position='"+std::to_string(0)+" "+std::to_string(topWndHeight)+"' ";
     std::string barSize = "size='"+std::to_string(barWidth)+" "+std::to_string(egg::getInstance().g_Resolution.y)+"' ";
     TwDefine((" EntityBar label='"+barLabel+"' color='70 70 70' alpha=200 valueswidth="+std::to_string(barWidth/2)+" fontSize=2 resizable=false movable=false iconifiable=false " + barPosition + barSize).c_str());
 
