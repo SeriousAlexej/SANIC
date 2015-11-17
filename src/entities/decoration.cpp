@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "decoration.h"
 #include "../dialogs/tinyfiledialogs.h"
 #include "global.h"
@@ -18,28 +19,10 @@ static std::string relativePath(std::string absPath)
     return absPath;
 }
 
-static void TW_CALL pickShader(void *stringPtr)
-{
-    std::string &path = *static_cast<std::string*>(stringPtr);
-    const char* filter[] = { "*.shader" };
-    const char * result = tinyfd_openFileDialog("Select shader","./",1,filter,0);
-    if(result) {
-        path = relativePath(result);
-    }
-}
-static void TW_CALL pickTexture(void *stringPtr)
-{
-    std::string &path = *static_cast<std::string*>(stringPtr);
-    const char* filter[] = { "*.jpg", "*.png", "*.tga" };
-    const char * result = tinyfd_openFileDialog("Select Texture","./",3,filter,0);
-    if(result) {
-        path = relativePath(result);
-    }
-}
 static void TW_CALL pickModel(void *stringPtr)
 {
     std::string &path = *static_cast<std::string*>(stringPtr);
-    const char* filter[] = { "*.obj" };
+    const char* filter[] = { "*.mconf" };
     const char * result = tinyfd_openFileDialog("Select Model","./",1,filter,0);
     if(result) {
         path = relativePath(result);
@@ -54,14 +37,11 @@ void TW_CALL updateParameters(void *decorPtr)
 
 Decoration::Decoration()
 {
-	setClass("Decoration");
 	startAnim = "";
 	collision = true;
+	background = false;
 	mass = 0.0f;
-	radius = 0.5f;
-	collBoxSize = glm::vec3(1.0f,1.0f,1.0f);
 	mdlScale = glm::vec3(1.0f, 1.0f, 1.0f);
-	bodyType = 0;
 }
 
 Decoration::~Decoration()
@@ -74,23 +54,8 @@ void Decoration::addProperties()
 
     registerProperties(
                 "ModelPath",     &modelPath,
-                "DTextPath",     &dTexturePath,
-                "NTextPath",     &nTexturePath,
-                "HTextPath",     &hTexturePath,
-                "ShaPath",       &shaderPath,
-                "Background",    &model->background,
-                "NStrength",     &model->normalStrength,
-                "HScale",        &model->parallaxScale,
-                "HOffset",       &model->parallaxOffset,
+                "Background",    &background,
                 "Mass",          &mass,
-                "BodyType",      &bodyType,
-                "Radius",        &radius,
-                "CBoxX",         &collBoxSize[0],
-                "CBoxY",         &collBoxSize[1],
-                "CBoxZ",         &collBoxSize[2],
-                "COffX",         &collOffset[0],
-                "COffY",         &collOffset[1],
-                "COffZ",         &collOffset[2],
                 "ScaleX",        &mdlScale[0],
                 "ScaleY",        &mdlScale[1],
                 "ScaleZ",        &mdlScale[2],
@@ -111,35 +76,9 @@ void Decoration::addProperties()
                 DrawableElement{DrawableElement::PT_FLOAT, "ScaleZ", "label='Z' step=0.01"}
             },
             {
-                DrawableElement{DrawableElement::PT_STRING, "DTextPath", "label='Diffuse map' "},
-                DrawableElement{DrawableElement::PT_BUTTON, "PickDText", "label='    Pick' ", &dTexturePath, pickTexture},
-                DrawableElement{DrawableElement::PT_STRING, "NTextPath", "label='Normal map' "},
-                DrawableElement{DrawableElement::PT_BUTTON, "PickNText", "label='    Pick' ", &nTexturePath, pickTexture},
-                DrawableElement{DrawableElement::PT_STRING, "HTextPath", "label='Height map' "},
-                DrawableElement{DrawableElement::PT_BUTTON, "PickHText", "label='    Pick' ", &hTexturePath, pickTexture}
-            },
-            {
-                DrawableElement{DrawableElement::PT_STRING, "ShaPath", "label='Shader' "},
-                DrawableElement{DrawableElement::PT_BUTTON, "PickSha", "label='    Pick' ", &shaderPath, pickShader}
-            },
-            {
-                DrawableElement{DrawableElement::PT_FLOAT, "NStrength", "label='Normal strength' step=0.01 "},
-                DrawableElement{DrawableElement::PT_FLOAT, "HScale", "label='Parallax scale' step=0.001 "},
-                DrawableElement{DrawableElement::PT_FLOAT, "HOffset", "label='Parallax offset' step=0.01 "}
-            },
-            {
                 DrawableElement{DrawableElement::PT_BOOL, "Collide", ""},
-                DrawableElement{DrawableElement::PT_ENUM, "BdType", "label='Collision'", &bodyType, NULL, "Box,Sphere,Model"},
                 DrawableElement{DrawableElement::PT_BUTTON, "CollParams", "label='Collision params'", NULL, NULL},
                 DrawableElement{DrawableElement::PT_FLOAT, "Mass", "step=0.2 min=0"},
-                DrawableElement{DrawableElement::PT_FLOAT, "Radius", "min=0 step=0.2"},
-                DrawableElement{DrawableElement::PT_FLOAT, "CBoxX", "label='Width' min=0 step=0.2"},
-                DrawableElement{DrawableElement::PT_FLOAT, "CBoxY", "label='Height' min=0 step=0.2"},
-                DrawableElement{DrawableElement::PT_FLOAT, "CBoxZ", "label='Length' min=0 step=0.2"},
-                DrawableElement{DrawableElement::PT_BUTTON, "CollOffset", "label='Collision offset'", NULL, NULL},
-                DrawableElement{DrawableElement::PT_FLOAT, "COffX", "label='X' min=0 step=0.2"},
-                DrawableElement{DrawableElement::PT_FLOAT, "COffY", "label='Y' min=0 step=0.2"},
-                DrawableElement{DrawableElement::PT_FLOAT, "COffZ", "label='Z' min=0 step=0.2"}
             },
             {
                 DrawableElement{DrawableElement::PT_BUTTON, "UpdateButton", "label='Update parameters' ", this, updateParameters}
@@ -158,52 +97,22 @@ void Decoration::Deserialize(rapidjson::Value& d)
 
 void Decoration::reloadRig()
 {
-    glm::vec3 mutValues(model->normalStrength, model->parallaxOffset, model->parallaxScale);
-    bool bcg = model->background;
-    glm::vec3 lastPos = model->getPosition();
-    glm::quat lastRot = model->getRotationQuat();
-    glm::vec3 lastSca = model->getScale();
-    glm::vec3 lastOff = model->getOffset();
-    setupModel(shaderPath,
-               modelPath,
-               dTexturePath,
-               nTexturePath,
-               hTexturePath);
-    model->setScale(lastSca);
-    model->setOffset(lastOff);
+    glm::vec3 lastPos = modelset->getPosition();
+    glm::quat lastRot = modelset->getRotationQuat();
+    glm::vec3 lastSca = modelset->getScale();
+    glm::vec3 lastOff = modelset->getOffset();
+    setupModel(modelPath);
+    modelset->setScale(lastSca);
+    modelset->setOffset(lastOff);
     if(collision || egg::getInstance().g_Editor)
     {
-        switch(bodyType)
-        {
-            case 2:
-            {
-                setupCollision(0.0f);
-                mass = 0.0f; //somewhy mesh objects fail to collide when mass > 0... F*king bullet
-                break;
-            }
-            case 1:
-            {
-                setupCollision(mass, radius);
-                break;
-            }
-            case 0:
-            default:
-            {
-                setupCollision(mass, collBoxSize*0.5f);
-                break;
-            }
-        }
-        body->setOffset(collOffset);
+        setupCollision(mass);
     }
     setRotation(lastRot);
     setPosition(lastPos);
 
-    model->background = bcg;
-    model->normalStrength = mutValues.x;
-    model->parallaxOffset = mutValues.y;
-    model->parallaxScale = mutValues.z;
-    model->setScale(mdlScale);
-    updateShaderMutators();
+    modelset->setBackground(background);
+    modelset->setScale(mdlScale);
 
     if(editor)
     {
@@ -213,32 +122,16 @@ void Decoration::reloadRig()
 
 void Decoration::initialize()
 {
-    shaderPath     = "./shaders/fullbright.shader";
-    modelPath       = "./models/axis/axis.obj";
-    dTexturePath    = "./models/uv_checker.jpg";
-    nTexturePath    = "";
-    hTexturePath    = "";
-    setupModel(shaderPath,
-               modelPath,
-               dTexturePath,
-               nTexturePath,
-               hTexturePath);
+    modelPath = "./models/default.mconf";
+    setupModel(modelPath);
     if(egg::getInstance().g_Editor)
     {
-        setupCollision(0.0f, glm::vec3(0.5f, 0.5f, 0.5f));
+        setupCollision(0.0f);
     }
     switchToModel();
-    touchable = true;
+    //touchable = true;
 	pushState(main);
 	addProperties();
-}
-
-void Decoration::updateShaderMutators()
-{
-    properties["NStrength"]->ChangeLocation(&model->normalStrength);
-    properties["HScale"]->ChangeLocation(&model->parallaxScale);
-    properties["HOffset"]->ChangeLocation(&model->parallaxOffset);
-    properties["Background"]->ChangeLocation(&model->background);
 }
 
 void Decoration::updateParamsInternal()
@@ -255,28 +148,24 @@ void Decoration::editorSelect()
 
 IMPLEMENT_STATE(Decoration, main)
 
-    //printf(("Entity "+caller->getName()+" at state MAIN got state with code %d\n").c_str(), ee->eventCode);
-
 	switchEvent {
         case EventCode_Begin: {
-            if(caller->model != nullptr) { caller->model->playAnimation(caller->startAnim); }
+            if(caller->modelset != nullptr) { caller->modelset->playAnimation(caller->startAnim); }
             printf("Starting autowait!\n");
-            autowait(3.0f, 1)
+            autowait(3.0f, 1);
         }
         case EventCode_AutowaitCallback: {
             switchAutowait {
                 case 1: {
                     printf("Lets wait again!\n");
-                    nextwait(2.0f)
+                    nextwait(2.0f);
                     printf("Wait last time\n");
-                    nextwait(1.0f)
-                    printf("Ok, ok, stop waiting!\n");
+                    nextwait(1.0f);
+                    printf("Oki, ok, stop waiting!\n");
                     return;
                 }
             }
         }
         default : return; //this state ignores all other events
 	}
-	//usually you need to put this in states:
-	caller->popState();
-}
+END_STATE();

@@ -21,21 +21,13 @@ private:
 	void                    updateParamsInternal();
 	void                    reloadRig();
 
-	std::string             shaderPath;
 	std::string             modelPath;
-	std::string             dTexturePath;
-	std::string             nTexturePath;
-	std::string             hTexturePath;
 	float                   mass;
-	int                     bodyType;
-	float                   radius;
-	glm::vec3               collBoxSize;
-	glm::vec3               collOffset;
 	glm::vec3               mdlScale;
 	bool                    collision;
 	std::string             startAnim;
+	bool                    background;
 
-    void    updateShaderMutators();
 	friend void TW_CALL updateParameters(void *decorPtr);
 };
 

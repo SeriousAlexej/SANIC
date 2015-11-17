@@ -8,10 +8,10 @@
 #include <AntTweakBar.h>
 #include "basic.h"
 #include "solidbody.h"
-#include "modelinstance.h"
-#include "entityevent.h"
+#include "modelset.h"
 #include "properties.h"
 #include "entitypointer.h"
+#include "entityevent.h"
 #include "entities/incubator.h"
 #include <luacppinterface.h>
 #include <type_traits>
@@ -52,6 +52,8 @@ private:
     switch(ee->eventCode)
 #define switchAutowait \
     EventAutowaitCallback *eac = dynamic_cast<EventAutowaitCallback*>(ee); switch(eac->index)
+#define END_STATE() \
+    caller->popState(); }
 
 /**
  * @brief Defines gui control for entity prop
@@ -141,7 +143,7 @@ private:
 /**
  * @brief Base class for all objects in World
  */
-class Entity : public Touchable, public Unique, public FamilyTree, public Serial, protected FromIncubator
+class Entity : public Touchable, public Unique, public FamilyTree, public Serial
 {
 public:
 
@@ -191,6 +193,12 @@ public:
      */
     virtual rapidjson::Value Serialize(rapidjson::Document& d);
 
+    /** @brief Serialize class for copying in editor
+     * @param d Document object, need for encoding and stuff
+     * @return rapidjson::Value
+     */
+    virtual rapidjson::Value SerializeForCopying(rapidjson::Document& d);
+
     /** @brief Get entity's name
      * @return std::string
      */
@@ -201,10 +209,10 @@ public:
      */
 	const SolidBody*		getBody() const { return body; }
 
-    /** @brief Get visual(@ref ModelInstance) representation of entity
-     * @return ModelInstance*
+    /** @brief Get visual(@ref ModelSet) representation of entity
+     * @return ModelSet*
      */
-	const ModelInstance*	getModelInstance() const { return model; }
+	const ModelSet*         getModelSet() const { return modelset; }
 
     /** @brief Check if entity can react to touching
      * @return bool
@@ -217,17 +225,11 @@ public:
      */
     void					setName(std::string newName);
 
-    /** @brief Create visual(@ref ModelInstance) representation for this entity
-     * @param shaderPath Path to shader (enter "" if not specified)
-     * @param modelPath Path to 3D model (enter "" if not specified)
-     * @param diffTexture Path to diffuse texture (enter "" if not specified)
-     * @param normTexture Path to normal texture (enter "" if not specified)
-     * @param heightTexture Path to height texture (enter "" if not specified)
+    /** @brief Create visual(@ref ModelSet) representation for this entity
+     * @param modelConfigPath Path to model configuration file
      * @return void
      */
-	void					setupModel(std::string shaderPath,
-									   std::string modelPath, std::string diffTexture,
-									   std::string normTexture, std::string heightTexture);
+	void					setupModel(std::string modelConfigPath);
 
     /** @brief Let the physical body of this entity be in form of it's visual representation
      * @param mass Mass in kilos
@@ -240,14 +242,14 @@ public:
      * @param radius Radius of sphere in meters
      * @return void
      */
-	void					setupCollision(float mass, float radius);
+	void					setupCollision(float mass, float &radius);
 
     /** @brief Let the physical body of this entity be in form of box
      * @param mass Mass in kilos
      * @param halfExtents Box half-sizes
      * @return void
      */
-	void					setupCollision(float mass, glm::vec3 halfExtents);
+	void					setupCollision(float mass, glm::vec3 &halfExtents);
 
     /** @brief Attach this entity to another entity
      * @param p Entity to be attached to
@@ -260,13 +262,13 @@ public:
      */
 	Entity*                 getParent() const;
 
-    /** @brief Set the position of both visual(@ref ModelInstance) representation of entity, and it's physical body(@ref SolidBody)
+    /** @brief Set the position of both visual(@ref ModelSet) representation of entity, and it's physical body(@ref SolidBody)
      * @param pos Position in 3D space, units are meters
      * @return void
      */
 	void                    setPosition(glm::vec3 pos);
 
-    /** @brief Set the rotation of both visual(@ref ModelInstance) representation of entity, and it's physical body(@ref SolidBody)
+    /** @brief Set the rotation of both visual(@ref ModelSet) representation of entity, and it's physical body(@ref SolidBody)
      * @param rot Rotation in 3D space, represented by quaternion
      * @return void
      */
@@ -418,17 +420,23 @@ protected:
 
 	float						rotationSpeed;
 	bool						editor;
-	SolidBody*					body;
-	ModelInstance*				model;
+	SolidBody*                  body;
+	ModelSet*                   modelset;
     map<string, Property*>      properties;
     std::string					name;
     bool                        touchable;
 
     template<class T>
-    T&                          getProperty(std::string);
+    T&                          getProperty(std::string)
+    {
+        return properties[name]->GetValue<T>();
+    }
 
     template<class T>
-    void                        setProperty(string s, T& val);
+    void                        setProperty(string s, T& val)
+    {
+        properties[s]->SetValue<T>(val);
+    }
 
     /** @brief Register entity's properties
      * @return void

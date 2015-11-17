@@ -128,7 +128,7 @@ public:
 	FamilyTree() : ancestorClasses(""), currentClass("") {}
 	virtual ~FamilyTree() {}
 
-	virtual void	setClass(std::string myClass)
+	virtual void	_setClass(std::string myClass)
 	{
 		//can't have empty classname
 		//can't have classname with '&'

@@ -2,11 +2,7 @@
 #define _ENTITY_EVENT_H_
 #include <luacppinterface.h>
 #include <memory>
-#include "entity.h"
-
-class Entity;
-
-using std::make_shared;
+#include "entitypointer.h"
 
 /*********************************************************************/
 
@@ -82,11 +78,95 @@ const int EventCode_Damage = 5;
 class EventDamage : public EntityEvent
 {
 public:
-    Entity* penDamager;
+    EntityPointer penDamager;
     int amount;
-    EventDamage(Entity* pen, int a) : penDamager(pen), amount(a) {}
+    EventDamage(Entity* pen, int a) : amount(a)
+    {
+        eventCode = EventCode_Damage;
+        penDamager = pen;
+    }
+    EventDamage(EntityPointer &pen, int a) : amount(a)
+    {
+        eventCode = EventCode_Damage;
+        penDamager = pen;
+    }
 };
 
+
+/*********************************************************************/
+
+const int EventCode_Trigger = 6;
+class EventTrigger : public EntityEvent
+{
+public:
+    EntityPointer penCaused;
+    EventTrigger(Entity* pen)
+    {
+        eventCode = EventCode_Trigger;
+        penCaused = pen;
+    }
+    EventTrigger(EntityPointer &pen)
+    {
+        eventCode = EventCode_Trigger;
+        penCaused = pen;
+    }
+};
+
+
+/*********************************************************************/
+
+const int EventCode_Start = 7;
+class EventStart : public EntityEvent
+{
+public:
+    EntityPointer penCaused;
+    EventStart(Entity* pen)
+    {
+        eventCode = EventCode_Start;
+        penCaused = pen;
+    }
+    EventStart(EntityPointer &pen)
+    {
+        eventCode = EventCode_Start;
+        penCaused = pen;
+    }
+};
+
+/*********************************************************************/
+
+const int EventCode_Activate = 8;
+class EventActivate : public EntityEvent
+{
+public:
+    EventActivate()
+    {
+        eventCode = EventCode_Activate;
+    }
+};
+
+/*********************************************************************/
+
+const int EventCode_Deactivate = 9;
+class EventDeactivate : public EntityEvent
+{
+public:
+    EventDeactivate()
+    {
+        eventCode = EventCode_Deactivate;
+    }
+};
+
+/*********************************************************************/
+
+const int EventCode_Stop = 10;
+class EventStop : public EntityEvent
+{
+public:
+    EventStop()
+    {
+        eventCode = EventCode_Stop;
+    }
+};
 
 /*********************************************************************/
 

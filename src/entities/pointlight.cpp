@@ -20,7 +20,6 @@ static void TW_CALL pickColor(void *colorPtr)
 
 PointLight::PointLight()
 {
-    setClass("PointLight");
 	lightSource = nullptr;
 }
 
@@ -58,13 +57,10 @@ void PointLight::addProperties()
 
 void PointLight::initialize()
 {
-	setupModel("./shaders/sprite.shader",
-			   "./models/editor/sprite.obj",
-			   "./models/editor/light.png",
-			   "", "");
+	setupModel("./models/editor/pointLight.mconf");
     if(egg::getInstance().g_Editor)
     {
-	    setupCollision(0.0f, glm::vec3(0.25f, 0.25f, 0.25f));
+	    setupCollision(0.0f);
     }
 	switchToEditorModel();
 	pushState(main);
@@ -75,17 +71,17 @@ void PointLight::initialize()
 
 void PointLight::adjustMoving()
 {
-    if(lightSource && model)
+    if(lightSource && modelset)
     {
-        lightSource->setPosition(model->getPosition());
+        lightSource->setPosition(modelset->getPosition());
     }
 }
 
 void PointLight::renderSelectionIndicator()
 {
     Entity::renderSelectionIndicator();
-    if(!lightSource || !model) return;
-    glm::vec3 pos = model->getPosition();
+    if(!lightSource || !modelset) return;
+    glm::vec3 pos = modelset->getPosition();
     glTranslatef(pos.x, pos.y, pos.z);
 	glDisable(GL_CULL_FACE);
 	glBlendFunc(GL_ONE, GL_SRC_ALPHA);

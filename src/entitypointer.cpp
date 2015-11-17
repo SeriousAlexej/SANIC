@@ -1,3 +1,4 @@
+#include "entity.h"
 #include "entitypointer.h"
 #include <rapidjson/document.h>
 

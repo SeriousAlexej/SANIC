@@ -10,8 +10,11 @@
 extern std::map<int, Entity*> enByOldId;
 
 IMPLEMENT_STATE(Entity, autowaitState)
-	caller->popState();
-}
+    switchEvent {
+        case EventCode_Begin : return; break;
+        default : {}
+    }
+END_STATE();
 
 void TW_CALL clearPointer(void *boolPtr)
 {
@@ -44,9 +47,9 @@ Entity::Entity()
 	editor = false;
 	entityBar = nullptr;
 	body = nullptr;
-	model = nullptr;
+	modelset = nullptr;
 	touchable = false;
-	setClass("Entity");
+	_setClass("Entity");
 	rotationQuat = glm::quat();
 	rotationEuler = glm::vec3(0,0,0);
 	rotationQuatO = glm::quat();
@@ -147,15 +150,15 @@ Entity::~Entity()
 		assert(wldPHY);
 		wldPHY->remBody(body);
 	}
-	if(model)
+	if(modelset)
 	{
 		assert(wldGFX);
-		wldGFX->deleteModel(model);
+		wldGFX->deleteModelSet(modelset);
 	}
 
 	for(int i=children.size()-1; i>=0; i--)
 	{
-        children[i]->parent = nullptr;
+        children[i]->setParent(nullptr);//parent = nullptr;
 	}
 	children.clear();
 
@@ -193,7 +196,7 @@ std::string Entity::getName()  {
 void Entity::setName(string newName) {
     properties["Name"]->SetValue<std::string>(newName);
 }
-
+/*
 template<class T>
 T& Entity::getProperty(std::string name)
 {
@@ -205,7 +208,7 @@ void Entity::setProperty(string s, T& val)
 {
     properties[s]->SetValue<T>(val);
 }
-
+*/
 void Entity::sendEvent(EntityEvent *ee)
 {
 	if(ee)
@@ -238,8 +241,8 @@ void Entity::switchToEditorModel()
     editor = true;
     if(!egg::getInstance().g_Editor)
 	{
-		if(model)
-			model->deactivate();
+		if(modelset)
+			modelset->deactivate();
 		if(body)
 			body->deactivate();
 	}
@@ -248,8 +251,8 @@ void Entity::switchToEditorModel()
 void Entity::switchToModel()
 {
 	editor = false;
-	if(model)
-		model->activate();
+	if(modelset)
+		modelset->activate();
 	if(body)
 		body->activate();
 }
@@ -305,7 +308,6 @@ void Entity::destroy()
 {
 	assert(wld);
 	wld->removeEntity(this);
-	return; //is that needed? x)
 }
 
 void Entity::_autowait(float time, int returnIndex)
@@ -320,9 +322,9 @@ void Entity::_autowait(float time, int returnIndex)
 
 void Entity::syncEntityRotation()
 {
-    if(body && model)
+    if(body && modelset)
     {
-        model->setRotation(body->getRotationQuat());
+        modelset->setRotation(body->getRotationQuat());
     }
     /*
 	//sync moving and rotation speeds here!
@@ -365,9 +367,9 @@ void Entity::update()
 
 	if(!editor)
 	{
-		if(model && body)
+		if(modelset && body)
 		{ //sync physical and graphical worlds :3
-			model->setPosition(body->getPosition());
+			modelset->setPosition(body->getPosition());
 		}
 	}
 	//sync rotation
@@ -378,7 +380,26 @@ void Entity::update()
 
 void Entity::renderSelectionIndicator()
 {
-    if(!model) return;
+    if(!modelset) return;
+    float renSphere = 0.0f;
+    switch(modelset->collision)
+    {
+        case ModelSet::CT_BOX : {
+            renSphere = std::max(std::max(modelset->collisionHalfBox.x,
+                                          modelset->collisionHalfBox.y),
+                                 modelset->collisionHalfBox.z);
+            break;
+        }
+        case ModelSet::CT_SPHERE : {
+            renSphere = modelset->collisionRadius;
+            break;
+        }
+        //case CT_MESH : {
+        default : {
+            renSphere = modelset->collisionMesh->getBoundingSphereRadius();
+            break;
+        }
+    }
 	glUseProgram(0);
 	glm::mat4 proj = wldGFX->getCamera()->getProjectionMatrix();
 	glm::mat4 view = wldGFX->getCamera()->getViewMatrix();
@@ -389,16 +410,16 @@ void Entity::renderSelectionIndicator()
 	glLoadIdentity();
 	glMultMatrixf(&view[0][0]);
 	glPushMatrix();
-	glm::vec3 spherePos = model->getRenBoxCenter();
-	spherePos.y += model->getRenBoxHalfSizes().y + model->getRenSphere().w*0.125;
+	glm::vec3 spherePos = modelset->collisionOffset + position;
+	spherePos.y += renSphere*1.125f;
 	glTranslatef(spherePos.x, spherePos.y, spherePos.z);
 	glRotatef(-90.0f, 1,0,0);
 	glColor3f(1.0f, 0.0f, 0.0f);
 	glDisable(GL_CULL_FACE);
 	GLUquadricObj* quadric = gluNewQuadric();
-	gluCylinder(quadric, 0, model->getRenSphere().w*0.125f, model->getRenSphere().w*0.25f, 8, 1);
-	glTranslatef(0,0,model->getRenSphere().w*0.25f);
-	gluCylinder(quadric, model->getRenSphere().w*0.04f, model->getRenSphere().w*0.04f, model->getRenSphere().w*0.25f, 8, 1);
+	gluCylinder(quadric, 0, renSphere*0.125f, renSphere*0.25f, 8, 1);
+	glTranslatef(0,0,renSphere*0.25f);
+	gluCylinder(quadric, renSphere*0.04f, renSphere*0.04f, renSphere*0.25f, 8, 1);
 	gluDeleteQuadric(quadric);
 	glEnable(GL_CULL_FACE);
 	glPopMatrix();
@@ -406,12 +427,12 @@ void Entity::renderSelectionIndicator()
 
 void Entity::parentMoved()
 {
-    glm::mat4 newPos = parent->model->getMatrix() * relativeTransform;
+    glm::mat4 newPos = parent->modelset->getMatrix() * relativeTransform;
     position = glm::vec3(newPos[3][0],newPos[3][1],newPos[3][2]);
     rotationQuat = glm::quat(newPos);
     setRotation(rotationQuat);
     setPosition(position);
-    oldMatrix = model->getMatrix();
+    oldMatrix = modelset->getMatrix();
     for(int i=children.size()-1; i>=0; i--)
     {
         children[i]->parentMoved();
@@ -421,14 +442,14 @@ void Entity::parentMoved()
 
 void Entity::updatePosition()
 {
-	if(model)
+	if(modelset)
 	{
-        glm::mat4 newMatrix = model->getMatrix();
+        glm::mat4 newMatrix = modelset->getMatrix();
         if(newMatrix != oldMatrix)
         {
             if(parent)
             {
-                relativeTransform = glm::inverse(parent->model->getMatrix()) * model->getMatrix();
+                relativeTransform = glm::inverse(parent->modelset->getMatrix()) * modelset->getMatrix();
             }
             for(int i=children.size()-1; i>=0; i--)
             {
@@ -451,6 +472,8 @@ bool Entity::childrenContain(Entity* e) const
 
 void Entity::setParent(Entity* p)
 {
+    if(modelset == nullptr) { return; }
+    if(p && p->modelset == nullptr) { return; }
     if(p == this || p == parent || childrenContain(p)) { return; }
     for(auto &pt : pointers)
     {
@@ -473,7 +496,7 @@ void Entity::setParent(Entity* p)
     if(parent)
     {
         parent->children.push_back(this);
-        relativeTransform = glm::inverse(parent->model->getMatrix()) * model->getMatrix();
+        relativeTransform = glm::inverse(parent->modelset->getMatrix()) * modelset->getMatrix();
     }
 }
 
@@ -666,26 +689,37 @@ void Entity::initialize()
     addProperties();
 }
 
-void Entity::setupModel(std::string shaderPath,
-						std::string modelPath, std::string diffTexture,
-						std::string normTexture, std::string heightTexture)
+void Entity::setupModel(std::string modelConfigPath)
 {
 	assert(wldGFX);
-	if(model)
-		wldGFX->deleteModel(model);
-	model = wldGFX->createModel(shaderPath, modelPath, diffTexture, normTexture, heightTexture);
+	if(modelset)
+		wldGFX->deleteModelSet(modelset);
+	modelset = wldGFX->createModelSet(modelConfigPath);
 }
 
 void Entity::setupCollision(float mass)
 {
-	assert(wldPHY);
-	if(body)
-		wldPHY->remBody(body);
-	body = wldPHY->addBody(mass, model); //model == NULL is handled iside the method
-	body->setOwner(static_cast<void*>(this));
+    assert(modelset);
+    if(modelset->collision == ModelSet::CT_BOX)
+    {
+        setupCollision(mass, modelset->collisionHalfBox);
+    } else
+    if(modelset->collision == ModelSet::CT_SPHERE)
+    {
+        setupCollision(mass, modelset->collisionRadius);
+    } else
+    if(modelset->collision == ModelSet::CT_MESH)
+    {
+        assert(wldPHY);
+        if(body)
+            wldPHY->remBody(body);
+        body = wldPHY->addBody(mass, modelset->collisionMesh); //NULL is handled iside the method
+        body->setOwner(static_cast<void*>(this));
+    }
+    body->setOffset(modelset->collisionOffset);
 }
 
-void Entity::setupCollision(float mass, float radius)
+void Entity::setupCollision(float mass, float &radius)
 {
 	assert(wldPHY);
 	if(body)
@@ -694,7 +728,7 @@ void Entity::setupCollision(float mass, float radius)
 	body->setOwner(static_cast<void*>(this));
 }
 
-void Entity::setupCollision(float mass, glm::vec3 halfExtents)
+void Entity::setupCollision(float mass, glm::vec3 &halfExtents)
 {
 	assert(wldPHY);
 	if(body)
@@ -711,6 +745,26 @@ rapidjson::Value Entity::Serialize ( rapidjson::Document& d )
     for (auto kv : properties) {
         Property* p = kv.second;
         std::string s = kv.first;
+        Value name;
+        name.SetString(s.c_str(), s.length());
+        entity_value.AddMember(name,  p->Serialize(d), d.GetAllocator());
+    }
+    return entity_value;
+}
+
+rapidjson::Value Entity::SerializeForCopying(rapidjson::Document& d)
+{
+    using namespace rapidjson;
+    Value entity_value;
+    entity_value.SetObject();
+    for (auto kv : properties) {
+        Property* p = kv.second;
+        std::string s = kv.first;
+        //do not copy pointers and position
+        if(s == "PosX" || s == "PosY" || s == "PosZ" || p->m_tid == typeid(EntityPointer).hash_code())
+        {
+            continue;
+        }
         Value name;
         name.SetString(s.c_str(), s.length());
         entity_value.AddMember(name,  p->Serialize(d), d.GetAllocator());
@@ -763,8 +817,8 @@ void Entity::Deserialize(rapidjson::Value& d)
 void Entity::setPosition(glm::vec3 pos)
 {
     position = pos;
-    if(model)
-        model->setPosition(pos);
+    if(modelset)
+        modelset->setPosition(pos);
     if(body)
         body->setPosition(pos);
 }
@@ -774,6 +828,6 @@ void Entity::setRotation(glm::quat rot)
     rotationQuat = rot;
     if(body)
         body->setRotation(rot);
-    if(model)
-        model->setRotation(rot);
+    if(modelset)
+        modelset->setRotation(rot);
 }

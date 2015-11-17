@@ -12,7 +12,7 @@ namespace sfg
     class Window;
 };
 
-class Editor : public EggineInstance, public std::enable_shared_from_this<Editor>
+class Editor : public EggineInstance
 {
 public:
     typedef std::shared_ptr<Editor> Ptr;
@@ -24,12 +24,16 @@ public:
     void NewWorld();
     void Load();
     void SaveAs();
+    void Save();
 
 private:
     Editor();
 	void update();
 
 	void resizeGUIComponents(unsigned width, unsigned height);
+	void copyEntity();
+	void pasteEntity();
+	void spawnEntity(std::string classname);
 
     World* p_world;
 	InputHandler* p_input;
@@ -44,6 +48,10 @@ private:
 	EditorMode 				edMode;
 	std::shared_ptr<sfg::Window> leftWindow;
 	std::shared_ptr<sfg::Window> topWindow;
+	std::string             copyEntitySerialized="";
+	std::string             currentWorld="";
+
+	friend class IncuButton;
 };
 
 #endif // EDITOR_H

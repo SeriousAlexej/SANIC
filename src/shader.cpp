@@ -1,9 +1,13 @@
+#include <functional>
 #include "shader.h"
 #include "global.h"
 
+GLuint Shader::currentShader = 0u;
+
 Shader::Shader(std::string shaderPath)
 {
-	srcShaFnm = shaderPath;
+	srcShaFnmHash = std::hash<std::string>()(shaderPath);
+
 	shaderID = 0;
 	MatrixID = 0;
 	mID = 0;
@@ -24,6 +28,9 @@ Shader::Shader(std::string shaderPath)
 	ShadowMap_LQ = 0;
 	BiasMVP_LQ = 0;
 	ShadowBorder = 0;
+	UVTilingD = 0;
+	UVTilingN = 0;
+	UVTilingH = 0;
 	for(int i=0; i<4; i++)
     {
         LightPositionID[i] = 0;
@@ -43,15 +50,19 @@ Shader::Shader(std::string shaderPath)
 Shader::~Shader()
 {
 	if(shaderID)
+    {
+        unbind();
+        glUseProgram(0u);
 		glDeleteProgram(shaderID);
+    }
 }
 
-void Shader::loadShaders(std::string shaderPath)
+void Shader::loadShaders(std::string &shaderPath)
 {
     GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
     GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
 
-    std::string ShaderVersion = "#version 330\n";
+    std::string ShaderVersion = "#version 130\n";
     std::string VertexShaderCode = ShaderVersion + "#define VERTEX_SHADER\n";
     std::string FragmentShaderCode = ShaderVersion + "#define FRAGMENT_SHADER\n";
 	std::ifstream ShaderStream(shaderPath.c_str(), std::ios::in);
@@ -70,10 +81,6 @@ void Shader::loadShaders(std::string shaderPath)
     int InfoLogLength;
 
     // Compile Vertex Shader
-#ifdef SANIC_DEBUG
-	printf("\nCompiling shader : %s\n", shaderPath.c_str());
-	printf("Vertex shader... ");
-#endif
     char const * VertexSourcePointer = VertexShaderCode.c_str();
     glShaderSource(VertexShaderID, 1, &VertexSourcePointer, NULL);
     glCompileShader(VertexShaderID);
@@ -83,12 +90,10 @@ void Shader::loadShaders(std::string shaderPath)
     glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
     std::vector<char> VertexShaderErrorMessage(InfoLogLength);
     glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
-#ifdef SANIC_DEBUG
-    fprintf(stdout, "%s\n", &VertexShaderErrorMessage[0]);
+    if(strlen(&VertexShaderErrorMessage[0]))
+        fprintf(stderr, "%s\n", &VertexShaderErrorMessage[0]);
 
     // Compile Fragment Shader
-	printf("Fragment shader... ");
-#endif
     char const * FragmentSourcePointer = FragmentShaderCode.c_str();
     glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer, NULL);
     glCompileShader(FragmentShaderID);
@@ -98,17 +103,19 @@ void Shader::loadShaders(std::string shaderPath)
     glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
     std::vector<char> FragmentShaderErrorMessage(InfoLogLength);
     glGetShaderInfoLog(FragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
-#ifdef SANIC_DEBUG
-    fprintf(stdout, "%s\n", &FragmentShaderErrorMessage[0]);
-#endif
+    if(strlen(&FragmentShaderErrorMessage[0]))
+        fprintf(stderr, "%s\n", &FragmentShaderErrorMessage[0]);
 
     // Link the program
-#ifdef SANIC_DEBUG
-    fprintf(stdout, "Linking program... ");
-#endif
     shaderID = glCreateProgram();
     glAttachShader(shaderID, VertexShaderID);
     glAttachShader(shaderID, FragmentShaderID);
+    glBindAttribLocation(shaderID, 0, "vertexPosition_modelspace");
+    glBindAttribLocation(shaderID, 1, "vertexUV");
+    glBindAttribLocation(shaderID, 2, "vertexNormal_modelspace");
+    glBindAttribLocation(shaderID, 3, "vertexTangent_modelspace");
+    glBindAttribLocation(shaderID, 4, "vertexBitangent_modelspace");
+    glBindAttribLocation(shaderID, 5, "vertexPosition_interpolation");
     glLinkProgram(shaderID);
 
     // Check the program
@@ -116,9 +123,8 @@ void Shader::loadShaders(std::string shaderPath)
     glGetProgramiv(shaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
 	std::vector<char> ProgramErrorMessage( glm::max(InfoLogLength, int(1)) );
     glGetProgramInfoLog(shaderID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
-#ifdef SANIC_DEBUG
-    fprintf(stdout, "%s\n\n", &ProgramErrorMessage[0]);
-#endif
+    if(strlen(&ProgramErrorMessage[0]))
+        fprintf(stderr, "%s\n\n", &ProgramErrorMessage[0]);
 
     glDeleteShader(VertexShaderID);
     glDeleteShader(FragmentShaderID);
@@ -142,6 +148,9 @@ void Shader::loadShaders(std::string shaderPath)
 	BiasMVP_LQ = glGetUniformLocation(shaderID, "ShadowBiasMVP_LQ");
 	ShadowMap_LQ = glGetUniformLocation(shaderID, "shadowMap_LQ");
 	ShadowBorder = glGetUniformLocation(shaderID, "shadowBorder");
+	UVTilingD = glGetUniformLocation(shaderID, "uvTilingD");
+	UVTilingN = glGetUniformLocation(shaderID, "uvTilingN");
+	UVTilingH = glGetUniformLocation(shaderID, "uvTilingH");
 
 	for(int i=0; i<4; i++)
     {
@@ -155,5 +164,14 @@ void Shader::loadShaders(std::string shaderPath)
 
 void Shader::bind()
 {
-	glUseProgram(shaderID);
+    if(currentShader != shaderID)
+    {
+        currentShader = shaderID;
+        glUseProgram(shaderID);
+    }
+}
+
+void Shader::unbind()
+{
+    currentShader = 0u;
 }

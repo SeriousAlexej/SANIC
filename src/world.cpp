@@ -7,7 +7,6 @@
 #include <SFML/Window/Keyboard.hpp>
 #include "global.h"
 #include "entity.h"
-#include "registerevents.h"
 
 //these vars assist EntityPointer deserialization
 std::map<int, Entity*> enByOldId; //get entity by ID it was saved with
@@ -25,24 +24,10 @@ World::World()
     {
         registerEntity(kv.first);
     }
-    registerEvents(egg::getInstance().g_lua);
 }
 
 void World::deleteAllEntities()
 {
-	for(int i=entities.size()-1; i>=0; i--)
-	{
-		//delete entities[i];
-        void* ptr = (dynamic_cast<FromIncubator*>(entities[i]))->ptr;
-        entities[i]->~Entity();
-        ::operator delete(ptr);
-	}
-	for(int i=obsoleteEntitties.size()-1; i>=0; i--)
-    {
-        void* ptr = (dynamic_cast<FromIncubator*>(obsoleteEntitties[i]))->ptr;
-        obsoleteEntitties[i]->~Entity();
-        ::operator delete(ptr);
-    }
 	entities.clear();
 	obsoleteEntitties.clear();
 }
@@ -82,12 +67,6 @@ void World::registerEntity(const std::string& name)
 
 void World::update()
 {
-    for(int i=obsoleteEntitties.size()-1; i>=0; i--)
-    {
-        void* ptr = (dynamic_cast<FromIncubator*>(obsoleteEntitties[i]))->ptr;
-        obsoleteEntitties[i]->~Entity();
-        ::operator delete(ptr);
-    }
     obsoleteEntitties.clear();
     if(!egg::getInstance().g_Editor)
 	{
@@ -109,15 +88,14 @@ void World::update()
 
 Entity* World::createEntity(const std::string& entityName)
 {
-    return createEntity(static_cast<Entity*>(Incubator::Create(entityName)));
+    return createEntity(Incubator::Create(entityName));
 }
 
-Entity* World::createEntity(Entity* e)
+Entity* World::createEntity(std::shared_ptr<Entity> e)
 {
 	//can't add already added or null entity
-    if(!(e != nullptr && e->wldGFX == nullptr && e->wldPHY == nullptr && e->wld == nullptr))
+    if(!(e.get() != nullptr && e->wldGFX == nullptr && e->wldPHY == nullptr && e->wld == nullptr))
     {
-        //std::cout << "Vse ploxo" << std::endl;
         throw cant_create();
     }
 
@@ -128,9 +106,9 @@ Entity* World::createEntity(Entity* e)
 	entities.push_back(e);
 	if(pGraphics != nullptr)
     {//useful in editor. If called from Load, then position will be reset anyway, so no harm done.
-        e->setPosition(pGraphics->camera.getPosition() + pGraphics->camera.getFront()*3.0f);
+        e->setPosition(pGraphics->camera.getPosition() + pGraphics->camera.getFront()*10.0f);
     }
-	return e;
+	return e.get();
 }
 
 void World::removeEntity(Entity *e)
@@ -139,13 +117,9 @@ void World::removeEntity(Entity *e)
 	{
 		for(int i=entities.size()-1; i>=0; i--)
 		{
-			if(entities[i]==e)
+			if(entities[i].get()==e)
 			{
-				//delete e;
-				//void* ptr = (dynamic_cast<FromIncubator*>(e))->ptr;
-				//e->~Entity();
-				//::operator delete(ptr);
-				obsoleteEntitties.push_back(e);
+				obsoleteEntitties.push_back(entities[i]);
 				entities.erase(entities.begin() + i);
 				return;
 			}
@@ -196,7 +170,7 @@ void World::Save(const string &filename)
     out.SetArray();
     for(auto en : entities)
     {
-        Entity& penEntity = *en;
+        Entity& penEntity = *(en.get());
         rapidjson::Value val = penEntity.Serialize(doc);
 
         rapidjson::Value classname;
@@ -260,4 +234,15 @@ void World::Love(const string &filename)
     {
         pGraphics->sortForBackground();
     }
+}
+
+Entity* World::Paste(std::string& src)
+{
+    rapidjson::Document doc;
+    doc.Parse(src.c_str());
+    auto it = doc.Begin();
+    std::string classname = (*it)["class"].GetString();
+    Entity* pen = createEntity(classname);
+    pen->Deserialize(*it);
+    return pen;
 }

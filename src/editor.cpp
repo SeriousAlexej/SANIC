@@ -11,12 +11,15 @@
 #include "entity.h"
 #include "global.h"
 #include "editorGUI.h"
+#include <rapidjson/document.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
 
 class IncuButton : public sfg::Button
 {
 public:
     typedef std::shared_ptr<IncuButton> Ptr;
-    static Ptr Create(const sf::String &lbl, World* w)
+    static Ptr Create(const sf::String &lbl, Editor* w)
     {
         std::shared_ptr<IncuButton> ib(new IncuButton(w));
         ib->SetLabel(lbl);
@@ -24,32 +27,18 @@ public:
     }
     void Spawn()
     {
-        assert(wld != nullptr);
-        wld->createEntity(GetLabel().toAnsiString());
+        assert(spm != nullptr);
+        spm->spawnEntity(GetLabel().toAnsiString());
     }
 private:
-    IncuButton(World* w) : wld(w) {}
-    World* wld;
+    IncuButton(Editor* w) : spm(w) {}
+    Editor* spm;
 };
 
 
 void TW_CALL CopyStdStringToClient(std::string& destinationClientString, const std::string& sourceLibraryString)
 {
   destinationClientString = sourceLibraryString;
-}
-
-static std::string relativePath(std::string absPath)
-{
-    std::replace(absPath.begin(), absPath.end(), '\\', '/');
-    if(absPath.find(egg::getInstance().g_WorkingDir)==0)
-    {
-        absPath = "." + absPath.substr(egg::getInstance().g_WorkingDir.length());
-    }
-    if(absPath[0] != '.')
-    {
-        absPath = "." + absPath;
-    }
-    return absPath;
 }
 
 void Editor::NewWorld()
@@ -60,26 +49,35 @@ void Editor::NewWorld()
         selectedEntity = nullptr;
     }
     p_world->Clear();
+    currentWorld = "";
 }
 
 void Editor::Load()
 {
-    std::string path;
-    const char * result = tinyfd_openFileDialog("Load world","./",0,NULL,0);
+    const char * result = tinyfd_openFileDialog("Load world",egg::getInstance().g_WorkingDir.c_str(),0,NULL,0);
     if(result) {
-        path = relativePath(result);
-        p_world->Love(path);
+        p_world->Love(result);
+        currentWorld = result;
     }
 }
 
 void Editor::SaveAs()
 {
-    std::string path;
-    const char * result = tinyfd_saveFileDialog("Save world as","./",0,NULL);
+    const char * result = tinyfd_saveFileDialog("Save world as",egg::getInstance().g_WorkingDir.c_str(),0,NULL);
     if(result) {
-        path = relativePath(result);
-        p_world->Save(path);
+        p_world->Save(result);
+        currentWorld = result;
     }
+}
+
+void Editor::Save()
+{
+    if(currentWorld.empty())
+    {
+        SaveAs();
+        return;
+    }
+    p_world->Save(currentWorld);
 }
 
 void Editor::resizeGUIComponents(unsigned width, unsigned height)
@@ -106,7 +104,6 @@ void Editor::resizeGUIComponents(unsigned width, unsigned height)
 
 void Editor::setup()
 {
-
 }
 
 int Editor::run()
@@ -117,7 +114,9 @@ int Editor::run()
 	cs.antialiasingLevel = 4;
 	cs.depthBits = 24;
 	cs.majorVersion = 3;
-	cs.minorVersion = 3;
+	cs.minorVersion = 0;
+	cs.stencilBits = 8;
+	cs.attributeFlags = sf::ContextSettings::Default;
 
     sf::RenderWindow window(sf::VideoMode(egg::getInstance().g_Resolution.x, egg::getInstance().g_Resolution.y), "Eggine Editor", sf::Style::Default, cs);
     window.setVerticalSyncEnabled(true);
@@ -152,7 +151,8 @@ int Editor::run()
         std::vector<std::string> classes = Incubator::getRegisteredClasses();
         for(std::string &cl : classes)
         {
-            auto btn = IncuButton::Create(cl, p_world);
+            if(cl == "Player") { continue; }
+            auto btn = IncuButton::Create(cl, this);
             btn->GetSignal( sfg::Widget::OnLeftClick ).Connect( std::bind( &IncuButton::Spawn, btn ) );
             leftBox->Pack(btn, true);
         }
@@ -176,7 +176,7 @@ int Editor::run()
         btnNew->GetSignal( sfg::Widget::OnLeftClick ).Connect( std::bind( &Editor::NewWorld, this) );
         btnLoad->GetSignal( sfg::Widget::OnLeftClick ).Connect( std::bind( &Editor::Load, this) );
         btnSaveAs->GetSignal( sfg::Widget::OnLeftClick ).Connect( std::bind( &Editor::SaveAs, this) );
-        //TODO: bind Save button
+        btnSave->GetSignal( sfg::Widget::OnLeftClick ).Connect( std::bind( &Editor::Save, this) );
         topBox->Pack(btnNew, false, true);
         topBox->Pack(btnLoad, false, true);
         topBox->Pack(btnSaveAs, false, true);
@@ -192,6 +192,7 @@ int Editor::run()
     if(!startupWorld.empty())
     {
         p_world->Love(startupWorld);
+        currentWorld=startupWorld;
     }
 
     egg::getInstance().g_Clock.restart();
@@ -355,6 +356,52 @@ void Editor::updateEntity(Entity *pen)
 
 }
 
+void Editor::copyEntity()
+{
+    copyEntitySerialized = "";
+    rapidjson::Document doc;
+    rapidjson::Value out;
+    out.SetArray();
+    rapidjson::Value val = selectedEntity->SerializeForCopying(doc);
+    rapidjson::Value classname;
+    std::string strClass = selectedEntity->getClass();
+    classname.SetString(strClass.c_str(), strClass.length(), doc.GetAllocator());
+    val.AddMember("class", classname, doc.GetAllocator());
+    out.PushBack(val, doc.GetAllocator());
+    rapidjson::StringBuffer strbuf;
+	rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+	out.Accept(writer);
+	copyEntitySerialized = strbuf.GetString();
+}
+
+void Editor::pasteEntity()
+{
+    if(copyEntitySerialized.empty()) { return; }
+    Entity* paste = p_world->Paste(copyEntitySerialized);
+    RayCastInfo rci = castRayScreen();
+    if(rci.enHit != nullptr)
+    {
+        paste->setPosition(rci.posHit);
+    }
+    if(selectedEntity != nullptr)
+    {
+        selectedEntity->editorDesselect();
+    }
+    selectedEntity = paste;
+    selectedEntity->editorSelect();
+}
+
+void Editor::spawnEntity(std::string classname)
+{
+    Entity* newEntity = p_world->createEntity(classname);
+    if(selectedEntity != nullptr)
+    {
+        selectedEntity->editorDesselect();
+    }
+    selectedEntity = newEntity;
+    selectedEntity->editorSelect();
+}
+
 void Editor::update()
 {
 	p_input->update();
@@ -432,7 +479,7 @@ void Editor::update()
             }
         }
 
-        if(edMode==Idle && p_input->keyJustReleased(sf::Keyboard::Q))
+        if(edMode==Idle && p_input->keyJustReleased(sf::Keyboard::Tilde))
         {
             if(selectedEntity != NULL)
             {
@@ -450,12 +497,25 @@ void Editor::update()
             {
                 if(ep->Name() == "Parent")
                 {
-                    selectedEntity->setParent(ri.enHit);
+                    if(ri.enHit==nullptr || ri.enHit->getModelSet()!=nullptr)
+                        selectedEntity->setParent(ri.enHit);
                 } else {
                     (*ep) = ri.enHit;
                 }
                 selectedEntity->pointerIndexPrevious = -1; //update target info string
             }
+        }
+
+        if(selectedEntity != nullptr && edMode == Idle && p_input->keyPressed(sf::Keyboard::LControl) && p_input->keyJustReleased(sf::Keyboard::C))
+        {
+            copyEntity();
+            return;
+        }
+
+        if(edMode == Idle && p_input->keyPressed(sf::Keyboard::LControl) && p_input->keyJustReleased(sf::Keyboard::V))
+        {
+            pasteEntity();
+            return;
         }
 
 		if(selectedEntity != NULL && edMode == Idle && p_input->keyPressed(sf::Keyboard::LControl) && p_input->mouseButtonJustPressed(sf::Mouse::Right))

@@ -20,7 +20,6 @@ static void TW_CALL pickColor(void *colorPtr)
 
 DirectionalLight::DirectionalLight()
 {
-    setClass("DirectionalLight");
 	lightSource = nullptr;
 }
 
@@ -55,13 +54,10 @@ void DirectionalLight::addProperties()
 
 void DirectionalLight::initialize()
 {
-	setupModel("./shaders/sprite.shader",
-			   "./models/editor/sprite.obj",
-			   "./models/editor/dlight.png",
-			   "", "");
+	setupModel("./models/editor/dirLight.mconf");
     if(egg::getInstance().g_Editor)
     {
-	    setupCollision(0.0f, glm::vec3(0.25f, 0.25f, 0.25f));
+	    setupCollision(0.0f);
     }
 	switchToEditorModel();
 	pushState(main);
@@ -73,9 +69,9 @@ void DirectionalLight::initialize()
 
 void DirectionalLight::adjustMoving()
 {
-    if(lightSource && model)
+    if(lightSource && modelset)
     {
-        lightSource->setRotation(model->getRotation());
+        lightSource->setRotation(modelset->getRotation());
     }
 }
 
@@ -83,9 +79,9 @@ void DirectionalLight::adjustMoving()
 void DirectionalLight::renderSelectionIndicator()
 {
     Entity::renderSelectionIndicator();
-    if(!lightSource || !model) return;
-    glm::vec3 pos = model->getPosition();
-    glm::vec4 zAxis = model->getMatrix()[2];
+    if(!lightSource || !modelset) return;
+    glm::vec3 pos = modelset->getPosition();
+    glm::vec4 zAxis = modelset->getMatrix()[2];
     glPushMatrix();
     glLineWidth(10.0f);
     glTranslatef(pos.x, pos.y, pos.z);

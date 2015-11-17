@@ -2,6 +2,8 @@
 #define _PLAYER_H_
 #include "../entity.h"
 
+class Camera;
+
 class Player : public Entity
 {
 public:

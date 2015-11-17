@@ -23,12 +23,7 @@ ModelInstance::ModelInstance(Mesh* mesh, Shader* shader, Texture* diffuse, Textu
 	active = true;
 	background = false;
 	lastRender = 0.0f;
-	strCurrAnim = "default";
-	uCurrFrame = 0u;
-	uNextFrame = 0u;
-	animInfo.length = 1;
-	animInfo.secondsPerFrame = 1.0f;
-	animInfo.firstFrame = 0;
+	stopAnimation();
 }
 
 ModelInstance::~ModelInstance()
@@ -39,7 +34,7 @@ ModelInstance::~ModelInstance()
 	pNormTexture->unSubscribe();
 }
 
-void ModelInstance::playAnimation(std::string anim)
+void ModelInstance::playAnimation(std::string &anim)
 {
 	if(pMesh->hasAnim(anim))
 	{
@@ -47,13 +42,20 @@ void ModelInstance::playAnimation(std::string anim)
 		animInfo = pMesh->getAnimInfo(anim);//&pMesh->animations[anim];
 		uCurrFrame = animInfo.firstFrame;
 		uNextFrame = uCurrFrame;
-	} else {
-		printf("WARNING: Model \"%s\" does not contain animation \"%s\"!\n",
-			pMesh->getSrcFnm().c_str(), anim.c_str());
 	}
 }
 
-void ModelInstance::render(Camera& cam, std::vector<Light*> lights, Light* dirLight)
+void ModelInstance::stopAnimation()
+{
+    strCurrAnim = "default";
+    uCurrFrame = 0u;
+    uNextFrame = 0u;
+	animInfo.length = 1;
+	animInfo.secondsPerFrame = 1.0f;
+	animInfo.firstFrame = 0;
+}
+
+void ModelInstance::render(glm::mat4 &modelMatrix, Camera& cam, std::vector<Light*> lights, Light* dirLight)
 {
     if(!active && !egg::getInstance().g_Editor) return;
 
@@ -91,7 +93,7 @@ void ModelInstance::render(Camera& cam, std::vector<Light*> lights, Light* dirLi
 
 	pShader->bind();
 
-	glm::mat4 Model = this->getMatrix();
+	glm::mat4 Model = modelMatrix * offsetMatrix * scaMx;// this->getMatrix();
 	glm::mat4 MVP;
 	if(background && !egg::getInstance().g_Editor)
     {
@@ -103,7 +105,12 @@ void ModelInstance::render(Camera& cam, std::vector<Light*> lights, Light* dirLi
 
 	glUniformMatrix4fv(pShader->getMatrixID(), 1, GL_FALSE, &MVP[0][0]);
 	glUniformMatrix4fv(pShader->getmID(), 1, GL_FALSE, &Model[0][0]);
-	glUniform3f(pShader->getCameraPositionID(), CamPos.x, CamPos.y, CamPos.z);
+	if(!background)
+    {
+        glUniform3f(pShader->getCameraPositionID(), CamPos.x, CamPos.y, CamPos.z);
+    } else {
+        glUniform3f(pShader->getCameraPositionID(), 0.0f, 0.0f, 0.0f);
+    }
 
 	glActiveTexture(GL_TEXTURE0);
 	pDiffTexture->bind();
@@ -162,6 +169,9 @@ void ModelInstance::render(Camera& cam, std::vector<Light*> lights, Light* dirLi
 	glUniform1f(pShader->getNormalStrengthID(), normalStrength);
 	glUniform1f(pShader->getParallaxOffsetID(), parallaxOffset);
 	glUniform1f(pShader->getParallaxScaleID(), parallaxScale);
+	glUniform2f(pShader->getUVTilingD(), UVTilingD.x, UVTilingD.y);
+	glUniform2f(pShader->getUVTilingN(), UVTilingN.x, UVTilingN.y);
+	glUniform2f(pShader->getUVTilingH(), UVTilingH.x, UVTilingH.y);
 
     for(int i=0; i<4; i++)
     {
@@ -191,7 +201,7 @@ void ModelInstance::render(Camera& cam, std::vector<Light*> lights, Light* dirLi
 	pMesh->render(uCurrFrame, uNextFrame);
 }
 
-void ModelInstance::renderForShadow(Camera& cam, Shader* shader)
+void ModelInstance::renderForShadow(glm::mat4 &modelMatrix, Camera& cam, Shader* shader)
 {
     if(!active && !egg::getInstance().g_Editor) return;
 
@@ -228,13 +238,16 @@ void ModelInstance::renderForShadow(Camera& cam, Shader* shader)
 	//uNextFrame and  frameProgress for interpolation
 
 
-	glm::mat4 Model = this->getMatrix();
+	glm::mat4 Model = modelMatrix * offsetMatrix;//this->getMatrix();
 	glm::mat4 MVP = cam.getCurrentShadowPVMatrix()*Model; ///projection matrix from camera, viewmatrix from camera AND light
 
 	glUniformMatrix4fv(shader->getMatrixID(), 1, GL_FALSE, &MVP[0][0]); /// shadow mvp here
 
 	//interpolation
 	glUniform1f(shader->getFrameProgressID(), frameProgress);
+	glUniform2f(pShader->getUVTilingD(), UVTilingD.x, UVTilingD.y);
+	glUniform2f(pShader->getUVTilingN(), UVTilingN.x, UVTilingN.y);
+	glUniform2f(pShader->getUVTilingH(), UVTilingH.x, UVTilingH.y);
 
 	glActiveTexture(GL_TEXTURE0);
 	pDiffTexture->bind();
@@ -243,16 +256,18 @@ void ModelInstance::renderForShadow(Camera& cam, Shader* shader)
 	pMesh->render(uCurrFrame, uNextFrame);
 }
 
+glm::vec4 ModelInstance::getRenSphereAt(glm::mat4 modelMatrix)
+{
+    modelMatrix = modelMatrix * offsetMatrix * scaMx;
+    glm::vec4 renSphere = modelMatrix * glm::vec4(pMesh->getBoundingSphereCenter(), 1.0f);
+    renSphere /= renSphere.w;
+	renSphere.w = pMesh->getBoundingSphereRadius();
+	return renSphere;
+}
+
 glm::vec4 ModelInstance::getRenSphere()
 {
-	glm::vec4 renSphere;
-	glm::vec3 bSphere = pMesh->getBoundingSphereCenter();
-	glm::vec4 rotated = getRotation()*glm::vec4(bSphere.x, bSphere.y, bSphere.z, 1.0f);
-	bSphere = getPosition();
-	renSphere.x = bSphere.x + rotated.x;
-	renSphere.y = bSphere.y + rotated.y;
-	renSphere.z = bSphere.z + rotated.z;
-	renSphere.w = pMesh->getBoundingSphereRadius();
+	glm::vec4 renSphere = glm::vec4(pMesh->getBoundingSphereCenter(), pMesh->getBoundingSphereRadius());
 	return renSphere;
 }
 

@@ -3,12 +3,13 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include "basic.h"
-#include "modelinstance.h"
 #include "btBulletDynamicsCommon.h"
 #include "btBulletCollisionCommon.h"
 #include "BulletCollision/CollisionDispatch/btInternalEdgeUtility.h"
 #include "BulletCollision/NarrowPhaseCollision/btRaycastCallback.h"
 #include "BulletCollision/CollisionShapes/btTriangleShape.h"
+
+class Mesh;
 
 enum CollisionType { CollBox, CollSphere, CollMesh };
 
@@ -17,7 +18,7 @@ class SolidBody
 public:
 	SolidBody(float _mass, float radius); // sphere
 	SolidBody(float _mass, glm::vec3 boxHalfExtents); // box
-	SolidBody(float _mass, ModelInstance* mi); // mesh
+	SolidBody(float _mass, Mesh* mesh); // mesh
 	~SolidBody();
 
 	void	activate();
@@ -42,6 +43,10 @@ public:
 	void		teleport(glm::vec3 pos, glm::vec3 rot);
 	void		stopMoving();
 	void		stopRotating();
+
+	bool        collidesWith(const SolidBody *b);
+
+	void        setPassable(bool p);
 
 	void		setOwner(void* owner);
 	void*		getOwner();

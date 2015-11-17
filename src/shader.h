@@ -13,9 +13,10 @@ public:
 	Shader(std::string shaderPath);
 	virtual ~Shader();
 
-	inline std::string  getSrcFnm() const { return srcShaFnm; }
+	inline std::size_t  getHash() const { return srcShaFnmHash; }
 
 	void	bind();
+	static void unbind();
 
 	inline GLuint  getMatrixID() const             { return MatrixID; }
 	inline GLuint  getmID() const                  { return mID; }
@@ -41,14 +42,19 @@ public:
     inline GLuint  getBiasMVP_LQ() const           { return BiasMVP_LQ; }
     inline GLuint  getShadowMap_LQ() const         { return ShadowMap_LQ; }
     inline GLuint  getShadowBorder() const         { return ShadowBorder; }
+    inline GLuint  getUVTilingD() const            { return UVTilingD; }
+    inline GLuint  getUVTilingN() const            { return UVTilingN; }
+    inline GLuint  getUVTilingH() const            { return UVTilingH; }
 
 private:
 
-	void loadShaders(std::string shaderPath);
+	void loadShaders(std::string &shaderPath);
 
-	std::string	srcShaFnm;
+	std::size_t	srcShaFnmHash;
 
 	GLuint		shaderID;
+	static GLuint currentShader;
+
 	GLuint		MatrixID;
 	GLuint		mID;
 	GLuint		NormalTextureID;
@@ -73,6 +79,9 @@ private:
 	GLuint      ShadowMap_LQ;
 	GLuint      BiasMVP_LQ;
 	GLuint      ShadowBorder;
+	GLuint      UVTilingD;
+	GLuint      UVTilingN;
+	GLuint      UVTilingH;
 };
 
 #endif

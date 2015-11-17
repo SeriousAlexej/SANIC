@@ -66,13 +66,29 @@ void Camera::createFrameBuffersAndTextures()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 
-	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, *texture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, *texture, 0);
 
 	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
 
-	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    auto reslt = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if(reslt != GL_FRAMEBUFFER_COMPLETE)
     {
         egg::getInstance().g_UseDirectionalLight = false;
+        #ifdef SANIC_DEBUG
+        switch(reslt)
+        {
+            case GL_FRAMEBUFFER_UNDEFINED : printf("GL_FRAMEBUFFER_UNDEFINED\n"); break;
+            case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT : printf("GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT\n"); break;
+            case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT : printf("GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT\n"); break;
+            case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER : printf("GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER\n"); break;
+            case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER : printf("GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER\n"); break;
+            case GL_FRAMEBUFFER_UNSUPPORTED : printf("GL_FRAMEBUFFER_UNSUPPORTED\n"); break;
+            case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE : printf("GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE\n"); break;
+            case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS : printf("GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS\n"); break;
+            default: printf("UNKNOWN ERROR %d !\n", reslt);
+        }
+        #endif // SANIC_DEBUG
     }
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

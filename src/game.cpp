@@ -30,7 +30,9 @@ void Game::setup()
     cs.antialiasingLevel = 4;
     cs.depthBits = 24;
     cs.majorVersion = 3;
-    cs.minorVersion = 3;
+    cs.minorVersion = 0;
+    cs.stencilBits = 8;
+    cs.attributeFlags = sf::ContextSettings::Core;
 
     egg::getInstance().g_Resolution = sf::Vector2u(1024u, 768u);
     egg::getInstance().g_DrawOrigin = sf::Vector2u(0u, 0u);
@@ -144,7 +146,7 @@ int Game::run()
 		{
             cam->moveUp(-editorFlySpeed*egg::getInstance().g_Delta);
 		}
-
+            //glClear(GL_COLOR_BUFFER_BIT);
             p_world->update();
             //p_world->physics.render(cam);
 		}

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <assert.h>
 #include <string.h>
+#include <functional>
 #include <GL/glew.h>
 #include "mesh.h"
 #include "dirtools.h"
@@ -154,7 +155,7 @@ static void indexVBO(
 
 Mesh::Mesh(std::string path)
 {
-	srcFile = path;
+	srcFileHash = std::hash<std::string>()(path);
 	if(numberOfMeshes == 0)
 	{
 		buildAxisModel();
@@ -383,7 +384,7 @@ bool Mesh::loadModel(std::string path)
 	std::reverse(origIndices.begin(), origIndices.end());
 
 	//now scan for anims
-	int found = path.find_last_of("/");
+	int found = path.find_last_of(".");
 	std::string animDir = path.substr(0,found+1) + "anims/";
 	if(DirectoryExists(animDir))
 	{

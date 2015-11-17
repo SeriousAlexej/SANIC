@@ -4,6 +4,9 @@
 #include <vector>
 #include <string>
 #include <luacppinterface.h>
+#include <functional>
+#include <memory>
+#include <entity.h>
 
 class not_in_cookbook : public std::exception
 {
@@ -23,8 +26,8 @@ class cant_create : public std::exception
 class Incubator
 {
     public:
-        static void* Create(const std::string &className);
-        static void addToCookBook(std::string className, size_t bytes, void (*ctorCaller)(void*));
+        static std::shared_ptr<Entity> Create(const std::string &className);
+        static void addToCookBook(std::string className, std::function<std::shared_ptr<Entity>()> ctorCaller);
         static Incubator& getInstance();
         static std::vector<std::string> getRegisteredClasses();
 
@@ -34,37 +37,25 @@ class Incubator
 
         struct ClassInfo
         {
-            size_t bytes;
-            void (*ctorCaller)(void*);
+            std::function<std::shared_ptr<Entity>()> ctorCaller;
         };
         std::map<std::string,ClassInfo> cookBook;
         friend class World;
 };
 
-class FromIncubator
-{
-public:
-    FromIncubator() : ptr(nullptr) {}
-    virtual ~FromIncubator() {}
-protected:
-    void* ptr;
-
-    friend class World;
-};
-
 #define FROM_INCUBATOR(x) \
-static void constructorCaller(void *p) \
+static std::shared_ptr<Entity> constructorCaller() \
 { \
-    new (p) x(); \
-    x* dp = static_cast<x*>(p); \
-    dp->ptr = p; \
+    std::shared_ptr<Entity> p = std::make_shared<x>(); \
+    p->_setClass(#x); \
+    return p; \
 } \
 static class _init \
 { \
   public: \
     _init() \
     { \
-        Incubator::addToCookBook(#x, sizeof(x), &(x::constructorCaller)); \
+        Incubator::addToCookBook(#x, &(x::constructorCaller)); \
     } \
 } _initializer;
 

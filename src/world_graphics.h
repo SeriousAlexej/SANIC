@@ -6,6 +6,7 @@
 #include "shader.h"
 #include "texture.h"
 #include "light.h"
+#include "modelset.h"
 
 class WorldGraphics
 {
@@ -16,10 +17,8 @@ public:
 	void		render(); //renders stuff
 	Camera*		getCamera() { return &camera; }
 
-	ModelInstance*	createModel(std::string shaderPath,
-		std::string modelPath, std::string diffTexture, std::string normTexture, std::string heightTexture);
-
-	void			deleteModel(ModelInstance*& mi);
+	ModelSet*       createModelSet(std::string &modelsetPath);
+	void            deleteModelSet(ModelSet*& ms);
 
 	Light*			createLight();
 	void			deleteLight(Light*& light);
@@ -28,23 +27,31 @@ public:
 	void            deleteDirLight();
 
 private:
-	std::vector<Light*>		pickBestLights(ModelInstance* mi);
-	void                    sortForBackground();
+	ModelInstance*	createModel(std::string shaderPath,
+		std::string modelPath, std::string diffTexture, std::string normTexture, std::string heightTexture);
+
+	void			deleteModel(ModelInstance*& mi);
+
+	std::vector<Light*>		    pickBestLights(glm::vec4 modelRenSphere);
+	void                        sortForBackground();
 
 	Camera						camera;
-	Shader*                     shadowShader;
+	std::shared_ptr<Shader>     shadowShader;
 
     unsigned int                backgroundModels;
-	std::vector<ModelInstance*>	models;
-	std::vector<Mesh*>			meshes;
-	std::vector<Shader*>		shaders;
-	std::vector<Texture*>		textures;
-	std::vector<Light*>			lights;
+	std::vector<std::shared_ptr<ModelInstance>>	models;
+	std::vector<std::shared_ptr<Mesh>>			meshes;
+	std::vector<std::shared_ptr<Shader>>		shaders;
+	std::vector<std::shared_ptr<Texture>>		textures;
+	std::vector<std::shared_ptr<Light>>			lights;
+	std::vector<std::shared_ptr<ModelSet>>      modelSets;
 
 	Light*                      directionalLight;
 	unsigned int                dirLightUsers;
 
 	friend class World;
+	friend class ModelLOD;
+	friend class ModelSet;
 };
 
 #endif

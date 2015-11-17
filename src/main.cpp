@@ -2,8 +2,6 @@
 #include <iostream>
 #include "editor.h"
 #include "game.h"
-#include <catch.hpp>
-#include "../test/Serialization.h"
 
 unsigned char flagEditor = 1 << 0,
               flagWorld  = 1 << 1;
@@ -64,8 +62,5 @@ int main(int argc, char **argv)
         app->setStartupWorld(wld);
     }
     app->setup();
-#ifdef SANIC_TEST
-    Catch::Session().run(argc, argv);
-#endif
     return app->run();
 }

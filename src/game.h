@@ -6,7 +6,7 @@
 class World;
 class InputHandler;
 
-class Game : public EggineInstance, public std::enable_shared_from_this<Game>
+class Game : public EggineInstance
 {
 public:
     typedef std::shared_ptr<Game> Ptr;

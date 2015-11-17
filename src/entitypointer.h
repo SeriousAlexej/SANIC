@@ -2,8 +2,9 @@
 #define ENTITYPOINTER_H
 
 #include <string>
+#include <luacppinterface.h>
 #include "properties.h"
-#include "entity.h"
+//#include "entity.h"
 
 class null_entitypointer : public std::exception
 {
@@ -14,6 +15,7 @@ class null_entitypointer : public std::exception
 };
 
 class Entity;
+class FromLua;
 
 class EntityPointer : public Serial, public FromLua
 {

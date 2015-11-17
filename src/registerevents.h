@@ -17,7 +17,7 @@ lua.CreateFunction<void(x)>([&, y](x a) { \
 #define LUA_UGETTER(x, y, z) \
 lua.CreateFunction<LuaUserdata<x>()>([&, y]() { \
     auto eud = lua.CreateUserdata(y->z); \
-    if(y->z != nullptr) y->z->registerLua(eud); \
+    if(y->z-> != nullptr) y->z->registerLua(eud); \
     return eud; \
 })
 
@@ -28,6 +28,7 @@ lua.CreateFunction<void(LuaUserdata<x>)>([&, y](LuaUserdata<x> a) { \
 
 void registerEvents(Lua& lua)
 {
+    /*
     auto newEvent = lua.CreateFunction<LuaUserdata<EntityEvent>(std::string)>(
     [&](std::string type) -> LuaUserdata<EntityEvent>
     {
@@ -45,6 +46,7 @@ void registerEvents(Lua& lua)
     auto dtable = lua.CreateTable();
     dtable.Set("new", newEvent);
     lua.GetGlobalEnvironment().Set("EntityEvent", dtable);
+    */
 }
 
 /* ???
