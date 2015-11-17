@@ -15,46 +15,104 @@ using namespace std;
 
 typedef float quatfirst_t;
 
+/**
+ * @brief Objects of this class can be (de)serialized into JSON
+ * 
+ */
 class Serial {
 public:
-    virtual void Deserialize(rapidjson::Value& d) = 0;
-    virtual rapidjson::Value Serialize(rapidjson::Document& d) = 0;
+	/**
+	 * @brief Deserializes object from JSON value
+	 * 
+	 * @param value JSON value
+	 * @return void
+	 */
+	virtual void Deserialize(rapidjson::Value& value) = 0;
+	/**
+	 * @brief Serializes class into JSON objects
+	 * 
+	 * @param document Document object, need for encoding and stuff
+	 * @return rapidjson::Value
+	 */
+	virtual rapidjson::Value Serialize(rapidjson::Document& document) = 0;
 
     virtual ~Serial() {}
 };
 
+/**
+ * @brief Powerful tool for storing properties that can be serialized and exported in Lua.
+ * 
+ */
 class Property : Serial {
 private:
 
 public:
-    void* m_data; // UNSAFE!
+	/**
+	 * @brief There can be *everything*.
+	 * Don't even try to work with it manually.
+	 * Use GetValue and SetValue instead for type-safety
+	 * 
+	 */
+	void* m_data;
     string m_name;
     size_t m_tid; // Typeid hash for our safety!
 
-    Property() {}; // Private constructor
-    ~Property() { };
+    Property() {} // Private constructor
+    ~Property() { }
 
 public:
     template<class T>
-    T& GetValue() const;
+    /**
+	 * @brief Type-safe way to get value from property
+	 * 
+	 * @return T&
+	 */
+	T& GetValue() const;
 
     template<class T>
-    void SetValue(T& val);
+    /**
+     * @brief Sets value and emits a signal in SignalListener
+	 * 
+	 * @param value Value
+	 * @return void
+	 */
+	void SetValue(T& value);
 
     template<class T>
     Property();
 
     template<class T>
-    static Property* create(T* val);
+    /**
+	 * @brief Don't even know why would use this, but there is safe way to create property
+	 * 
+	 * @param value Initial value
+	 * @return Property*
+	 */
+	static Property* create(T* value);
     
-    rapidjson::Value Serialize(rapidjson::Document& d);
-                void Deserialize(rapidjson::Value& d);
-
-    template<class T>
-    T& ref();
+	/**
+	 * @brief Property-specific serialization
+	 * 
+	 * @param document Same as in [Serial](@ref Serial)
+	 * @return rapidjson::Value
+	 */
+	rapidjson::Value Serialize(rapidjson::Document& document);
+	/**
+	 * @brief Deserializes JSON vaue into the property
+	 * 
+	 * @param value Same as in [Serial](@ref Serial)
+	 * @return void
+	 */
+	void Deserialize(rapidjson::Value& value);
 
     template<class T>
     void ChangeLocation(T* val);
+	/**
+	 * @brief Changes target pointer
+	 * 
+	 * @param val New instance of property
+	 * @return void
+	 */
 };
 
 template<class T>
@@ -85,14 +143,6 @@ void Property::ChangeLocation(T* val)
     if(val == nullptr) throw invalid_argument("Property is targeted at nullptr");
     if(typeid(T).hash_code() != m_tid) throw bad_typeid();
     this->m_data = val;
-}
-
-template<class T>
-T& Property::ref()
-{
-    if(typeid(T).hash_code() != m_tid) throw bad_typeid();
-    T* t_data = static_cast<T*>(m_data); // TODO: don't work
-    return *t_data;
 }
 
 #endif // PROPERTIES

@@ -167,4 +167,5 @@ class FromLua
 {
     // simple as fuck
 };
+
 #endif

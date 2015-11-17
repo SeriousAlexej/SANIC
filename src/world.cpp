@@ -20,11 +20,29 @@ World::World()
     // lua.GetRegistry();
     //penGraphics = nullptr;
     pGraphics = new WorldGraphics();
+    registerLua();
+}
+
+void World::registerLua()
+{
     for(auto kv : Incubator::getInstance().cookBook)
     {
         registerEntity(kv.first);
     }
+    auto getEntitiesList = egg::getInstance().g_lua.CreateFunction<LuaTable()>([&]() {
+        LuaTable result = egg::getInstance().g_lua.CreateTable();
+        for(auto pen : entities) {
+            LuaUserdata<Entity> eud = egg::getInstance().g_lua.CreateUserdata(pen.get());
+            pen->registerLua(eud);
+            result.Set<LuaUserdata<Entity>>(eud->getMultipass(), eud);
+        }
+        return result;
+    });
+    auto table = egg::getInstance().g_lua.CreateTable();
+    table.Set("getEntities", getEntitiesList);
+    egg::getInstance().g_lua.GetGlobalEnvironment().Set("World", table);
 }
+
 
 void World::deleteAllEntities()
 {

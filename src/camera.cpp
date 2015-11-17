@@ -363,6 +363,14 @@ void Camera::moveUp(float dist)
 	updateViewMatrix();
 }
 
+void Camera::moveFree(glm::vec3 dist)
+{
+    position += front * dist.z;
+    position += right * dist.x;
+    position += up    * dist.y;
+    updateViewMatrix();
+}
+
 void Camera::translate(glm::vec3 addpos)
 {
 	position += addpos;

@@ -43,6 +43,7 @@ private:
 	sf::Vector2i    mouseOldPosition;//restore this position after exiting fly mode
 
 	bool	lockMouse;
+    void    switchLockMouse(bool b);
 
 	bool	keyStatesNew[101];
 	bool	keyStatesOld[101];

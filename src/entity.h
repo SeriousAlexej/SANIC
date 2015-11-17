@@ -4,6 +4,7 @@
 #include <stack>
 #include <string>
 #include <map>
+#include <functional>
 #include <initializer_list>
 #include <AntTweakBar.h>
 #include "basic.h"
@@ -30,27 +31,27 @@ typedef LuaFunction<void(LuaUserdata<EntityEvent>, LuaUserdata<Entity>)> luaCall
 class LuaCallback : public stateCallback // TODO: you know this should be less lame
 {
 public:
-	LuaCallback(luaCallbackFunction _f) : func(_f) {}
-	void operator()(EntityEvent* ee, Entity* e) {
-		LuaUserdata<EntityEvent> eeud = egg::getInstance().g_lua.CreateUserdata(ee);
-		LuaUserdata<Entity> eud = egg::getInstance().g_lua.CreateUserdata(e);
-		func.Invoke(eeud, eud);
-	}
+    LuaCallback(luaCallbackFunction _f) : func(_f) {}
+    void operator()(EntityEvent* ee, Entity* e) {
+        LuaUserdata<EntityEvent> eeud = egg::getInstance().g_lua.CreateUserdata(ee);
+        LuaUserdata<Entity> eud = egg::getInstance().g_lua.CreateUserdata(e);
+        func.Invoke(eeud, eud);
+    }
 private:
-	luaCallbackFunction func;
+    luaCallbackFunction func;
 };
 
 #define IMPLEMENT_STATE(c, s) \
-    void c::s(EntityEvent* ee, Entity* cl) { c *caller = dynamic_cast<c *>(cl);
+void c::s(EntityEvent* ee, Entity* cl) { c *caller = dynamic_cast<c *>(cl);
 #define DECLARE_STATE(x) \
-    static void x(EntityEvent* ee, Entity* caller)
+static void x(EntityEvent* ee, Entity* caller)
 #define nextwait(t) \
-    caller->_autowait(t, __LINE__); return; } case __LINE__: {
+caller->_autowait(t, __LINE__); return; } case __LINE__: {
 #define autowait(t, i) \
-    caller->_autowait(t, i); return;
+caller->_autowait(t, i); return;
 #define switchEvent \
-    switch(ee->eventCode)
-#define switchAutowait \
+switch(ee->eventCode)
+    #define switchAutowait \
     EventAutowaitCallback *eac = dynamic_cast<EventAutowaitCallback*>(ee); switch(eac->index)
 #define END_STATE() \
     caller->popState(); }
@@ -85,60 +86,60 @@ struct DrawableElement
 /**
  * @brief Encapsulates routines of state machine
  */
-class EntityState
-{
-public:
-	EntityState(stateCallback eventCallback, Entity* _caller, float wait=0.0f, int returnIndex = 0)
-	{
-		assert(eventCallback != NULL && _caller != NULL && wait >= 0.0f);
-		callback = eventCallback;
-		caller = _caller;
-		waitTime = wait; //if wait == 0.0, EventTimer is disabled
-		retIndBackup = returnIndex; //retInd should acquire it's true value only after EventTimer!
-		retInd = 0;
-		obsolete = false;
-		holdEx = false;
-	}
-	~EntityState()
-	{
-	}
-	void	handleEvents(std::list<EntityEvent*> &events)
-	{
-        if(waitTime > 0.0f) { waitTime -= egg::getInstance().g_Delta; if(waitTime == 0.0f) waitTime = -1.0f; }
-		if(waitTime < 0.0f) { retInd = retIndBackup; events.push_back(new EventTimer()); }
-		while(!events.empty())
-		{
-			callback(events.front(), caller);
-			if(obsolete)
-			{ //happens when current state is popped
-				if(events.front()->eventCode == EventCode_Timer)
-				{
-					delete events.front();
-					events.pop_front();
-				}
-				return;
-			}
-			delete events.front();
-			events.pop_front();
-			if(holdEx) { holdEx = false; return; }
-		}
-	}
-
-	//when event pushes another state, the previous one should
-	//stop proccessing events and leave them for the new state
-	void	holdExecution() { holdEx = true; }
-	void	setObsolete() { obsolete = true; }
-
-	int		getReturnIndex() const { return retInd; }
-private:
-	Entity*						caller;
-	stateCallback				callback;
-	float						waitTime;
-	int							retInd;
-	int							retIndBackup;
-	bool						obsolete;
-	bool						holdEx;
-};
+    class EntityState
+    {
+    public:
+        EntityState(stateCallback eventCallback, Entity* _caller, float wait=0.0f, int returnIndex = 0)
+        {
+            assert(eventCallback != NULL && _caller != NULL && wait >= 0.0f);
+            callback = eventCallback;
+            caller = _caller;
+            waitTime = wait; //if wait == 0.0, EventTimer is disabled
+            retIndBackup = returnIndex; //retInd should acquire it's true value only after EventTimer!
+            retInd = 0;
+            obsolete = false;
+            holdEx = false;
+        }
+        ~EntityState()
+        {
+        }
+        void	handleEvents(std::list<EntityEvent*> &events)
+        {
+            if(waitTime > 0.0f) { waitTime -= egg::getInstance().g_Delta; if(waitTime == 0.0f) waitTime = -1.0f; }
+            if(waitTime < 0.0f) { retInd = retIndBackup; events.push_back(new EventTimer()); }
+            while(!events.empty())
+            {
+                callback(events.front(), caller);
+                if(obsolete)
+                { //happens when current state is popped
+                    if(events.front()->eventCode == EventCode_Timer)
+                    {
+                        delete events.front();
+                        events.pop_front();
+                    }
+                    return;
+                }
+                delete events.front();
+                events.pop_front();
+                if(holdEx) { holdEx = false; return; }
+            }
+        }
+        
+        //when event pushes another state, the previous one should
+        //stop proccessing events and leave them for the new state
+        void	holdExecution() { holdEx = true; }
+        void	setObsolete() { obsolete = true; }
+        
+        int		getReturnIndex() const { return retInd; }
+    private:
+        Entity*						caller;
+        stateCallback				callback;
+        float						waitTime;
+        int							retInd;
+        int							retIndBackup;
+        bool						obsolete;
+        bool						holdEx;
+    };
 
 /**
  * @brief Base class for all objects in World
@@ -359,7 +360,7 @@ protected:
     /** @brief Process incoming events and update the entity
      * @return void
      */
-	void					update();
+        void			update();
 
     /** @brief Inform attached entities about position change
      * @return void
@@ -369,45 +370,45 @@ protected:
     /** @brief React to the change of position of the entity I am attached to
      * @return void
      */
-	void                    parentMoved();
+        void                    parentMoved();
 
     /** @brief Recursively determine if specified entity is attached to this one
      * @param e Entity to check
      * @return void
      */
-	bool                    childrenContain(Entity* e) const;
+        bool                    childrenContain(Entity* e) const;
 
     /** @brief Register entity's pointers(@ref EntityPointer) as properties
      * @return void
      */
-    void                    registerPointers();
+        void                    registerPointers();
 
-    std::string             pointersString; /**< gui enum is made from this string */
+        std::string             pointersString; //gui enum is made from this string
 
     /** @brief Get pointer(@ref EntityPointer) object at current Entity::pointerIndex
      * @return EntityPointer*
      */
-    EntityPointer*          getTargetPointer();
+        EntityPointer*          getTargetPointer();
 
     /** @brief Get description of entity at which current pointer at Entity::pointerIndex is targeted
      * @return std::string
      */
-    std::string             getPointerDescr();
+        std::string             getPointerDescr();
 
     /** @brief Perform editor-specific updates (i.e. props gui etc)
      * @return void
      */
-	virtual void            editorUpdate();
+        virtual void            editorUpdate();
 
     /** @brief Draw props gui for editor
      * @return void
      */
-	virtual void            editorSelect();
+        virtual void            editorSelect();
 
     /** @brief Kill props gui for editor
      * @return void
      */
-	virtual void            editorDesselect();
+        virtual void            editorDesselect();
 
     /** @brief Render red arrow so above as below selected (this) entity
      * @return void
@@ -453,7 +454,7 @@ protected:
     /** @brief Display all prop gui elements(@ref DrawableElement)
      * @return void
      */
-    void    drawGuiElements();
+        void    drawGuiElements();
 
     /** @brief Register following gui elements
      * @param lle List of gui elements(@ref DrawableElement)

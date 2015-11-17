@@ -46,20 +46,23 @@ void InputHandler::registerKeyRelease(int keyCode)
 {
 		keyStatesOld[keyCode] = true;
 		keyStatesNew[keyCode] = false;
-		if(keyCode == sf::Keyboard::Escape)
-		{
-			lockMouse = !lockMouse;
-			mainWindow->setMouseCursorVisible(!lockMouse);
-			if(lockMouse)
-			{
-                mouseOldPosition = sf::Mouse::getPosition(*mainWindow);
-				sf::Mouse::setPosition(sf::Vector2i(mainWindow->getSize().x/2,mainWindow->getSize().y/2), *mainWindow);
-			} else {
-				mouseDelta.x = 0.0f;
-				mouseDelta.y = 0.0f;
-				sf::Mouse::setPosition(mouseOldPosition, *mainWindow);
-			}
-		}
+}
+
+void InputHandler::switchLockMouse(bool b)
+{
+    if(/*lockMouse*/ !b)
+    {
+        lockMouse = false;
+        mainWindow->setMouseCursorVisible(true);
+        mouseOldPosition = sf::Mouse::getPosition(*mainWindow);
+        sf::Mouse::setPosition(sf::Vector2i(mainWindow->getSize().x/2,mainWindow->getSize().y/2), *mainWindow);
+    } else {
+        lockMouse = true;
+        mainWindow->setMouseCursorVisible(false);
+        mouseDelta.x = 0.0f;
+        mouseDelta.y = 0.0f;
+        sf::Mouse::setPosition(mouseOldPosition, *mainWindow);
+    }
 }
 
 void InputHandler::registerWheelDelta(int delta)

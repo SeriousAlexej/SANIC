@@ -44,7 +44,7 @@ Shader::Shader(std::string shaderPath)
     {
         toUse = egg::getInstance().g_WorkingDir + toUse.substr(1);
     }
-	loadShaders(toUse);
+    loadShaders(toUse);
 }
 
 Shader::~Shader()
@@ -65,7 +65,7 @@ void Shader::loadShaders(std::string &shaderPath)
     std::string ShaderVersion = "#version 130\n";
     std::string VertexShaderCode = ShaderVersion + "#define VERTEX_SHADER\n";
     std::string FragmentShaderCode = ShaderVersion + "#define FRAGMENT_SHADER\n";
-	std::ifstream ShaderStream(shaderPath.c_str(), std::ios::in);
+    std::ifstream ShaderStream(shaderPath.c_str(), std::ios::in);
     if(ShaderStream.is_open())
     {
         std::string Line = "";
@@ -121,7 +121,7 @@ void Shader::loadShaders(std::string &shaderPath)
     // Check the program
     glGetProgramiv(shaderID, GL_LINK_STATUS, &Result);
     glGetProgramiv(shaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	std::vector<char> ProgramErrorMessage( glm::max(InfoLogLength, int(1)) );
+    std::vector<char> ProgramErrorMessage( glm::max(InfoLogLength, int(1)) );
     glGetProgramInfoLog(shaderID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
     if(strlen(&ProgramErrorMessage[0]))
         fprintf(stderr, "%s\n\n", &ProgramErrorMessage[0]);
@@ -152,7 +152,7 @@ void Shader::loadShaders(std::string &shaderPath)
 	UVTilingN = glGetUniformLocation(shaderID, "uvTilingN");
 	UVTilingH = glGetUniformLocation(shaderID, "uvTilingH");
 
-	for(int i=0; i<4; i++)
+    for(int i=0; i<4; i++)
     {
         LightPositionID[i] = glGetUniformLocation(shaderID, ("LightPosition_worldspace[" + std::to_string(i) + "]").c_str());
         LightDiffuseID[i] = glGetUniformLocation(shaderID, ("lightColorD[" + std::to_string(i) + "]").c_str());
