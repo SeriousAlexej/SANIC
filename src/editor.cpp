@@ -14,15 +14,18 @@
 #include <dirtools.h>
 #include <istream>
 
-class IncuButton : public sfg::Button {
+class IncuButton : public sfg::Button
+{
 public:
     typedef std::shared_ptr<IncuButton> Ptr;
-    static Ptr Create(const sf::String &lbl, World *w) {
+    static Ptr Create(const sf::String &lbl, World *w)
+    {
         std::shared_ptr<IncuButton> ib(new IncuButton(w));
         ib->SetLabel(lbl);
         return ib;
     }
-    void Spawn() {
+    void Spawn()
+    {
         assert(wld != nullptr);
         wld->createEntity(GetLabel().toAnsiString());
     }
@@ -32,11 +35,13 @@ private:
 };
 
 
-void TW_CALL CopyStdStringToClient(std::string &destinationClientString, const std::string &sourceLibraryString) {
+void TW_CALL CopyStdStringToClient(std::string &destinationClientString, const std::string &sourceLibraryString)
+{
     destinationClientString = sourceLibraryString;
 }
 
-static std::string relativePath(std::string absPath) {
+static std::string relativePath(std::string absPath)
+{
     std::replace(absPath.begin(), absPath.end(), '\\', '/');
     if (absPath.find(egg::getInstance().g_WorkingDir) == 0) {
         absPath = "." + absPath.substr(egg::getInstance().g_WorkingDir.length());
@@ -47,7 +52,8 @@ static std::string relativePath(std::string absPath) {
     return absPath;
 }
 
-void Editor::NewWorld() {
+void Editor::NewWorld()
+{
     if (selectedEntity != nullptr) {
         selectedEntity->editorDesselect();
         selectedEntity = nullptr;
@@ -55,7 +61,8 @@ void Editor::NewWorld() {
     p_world->Clear();
 }
 
-void Editor::Load() {
+void Editor::Load()
+{
     std::string path;
     const char *result = tinyfd_openFileDialog("Load world", "./", 0, NULL, 0);
     if (result) {
@@ -64,7 +71,8 @@ void Editor::Load() {
     }
 }
 
-void Editor::SaveAs() {
+void Editor::SaveAs()
+{
     std::string path;
     const char *result = tinyfd_saveFileDialog("Save world as", "./", 0, NULL);
     if (result) {
@@ -73,8 +81,9 @@ void Editor::SaveAs() {
     }
 }
 
-void Editor::resizeGUIComponents(unsigned width, unsigned height) {
-	TwWindowSize(width, height);
+void Editor::resizeGUIComponents(unsigned width, unsigned height)
+{
+    TwWindowSize(width, height);
 
     topWindow->SetAllocation(sf::FloatRect(0.0f, 0.0f,
                                            static_cast<float>(width), static_cast<float>(topWndHeight)));
@@ -91,11 +100,13 @@ void Editor::resizeGUIComponents(unsigned width, unsigned height) {
     }
 }
 
-void Editor::setup() {
+void Editor::setup()
+{
 
 }
 
-void Editor::eventsAlways(sf::Event &event) {
+void Editor::eventsAlways(sf::Event &event)
+{
     switch (event.type) {
     case sf::Event::LostFocus: {
         p_input->setFocus(false);
@@ -136,7 +147,8 @@ void Editor::eventsAlways(sf::Event &event) {
     }
 }
 
-void Editor::eventsLuaMenu(sf::Event &event) {
+void Editor::eventsLuaMenu(sf::Event &event)
+{
     switch (event.type) {
     case sf::Event::TextEntered:
         if (event.text.unicode < 128) {
@@ -155,11 +167,13 @@ void Editor::eventsLuaMenu(sf::Event &event) {
     }
 }
 
-void Editor::eventsMenu(sf::Event &event) {
+void Editor::eventsMenu(sf::Event &event)
+{
 
 }
 
-void Editor::eventsIdle(sf::Event &event) {
+void Editor::eventsIdle(sf::Event &event)
+{
     switch (event.type) {
     case sf::Event::KeyPressed: {
         if (event.key.code == sf::Keyboard::Escape) {
@@ -274,27 +288,30 @@ void Editor::eventsIdle(sf::Event &event) {
     }
 }
 
-void Editor::eventsMoving(sf::Event &event) {
+void Editor::eventsMoving(sf::Event &event)
+{
     switch (event.type) {
     case sf::Event::MouseButtonReleased:
-        if(event.mouseButton.button == sf::Mouse::Left) {
+        if (event.mouseButton.button == sf::Mouse::Left) {
             changeMode(Idle);
         }
         break;
     }
 }
 
-void Editor::eventsPulling(sf::Event &event) {
+void Editor::eventsPulling(sf::Event &event)
+{
     switch (event.type) {
     case sf::Event::MouseButtonReleased:
-        if(event.mouseButton.button == sf::Mouse::Right) {
+        if (event.mouseButton.button == sf::Mouse::Right) {
             changeMode(Idle);
         }
         break;
     }
 }
 
-void Editor::eventsFly(sf::Event &event) {
+void Editor::eventsFly(sf::Event &event)
+{
     switch (event.type) {
     case sf::Event::KeyPressed: {
         switch (event.key.code) {
@@ -329,6 +346,7 @@ void Editor::eventsFly(sf::Event &event) {
         case sf::Keyboard::Escape: {
             changeMode(Idle);
             p_input->switchLockMouse(false);
+            vCameraSpeed = { 0, 0, 0 };
             break;
         }
         }   // event.key.code
@@ -338,30 +356,30 @@ void Editor::eventsFly(sf::Event &event) {
         switch (event.key.code) {
         case sf::Keyboard::Up:
         case sf::Keyboard::W: {
-            vCameraSpeed.z -= 1;
+            if (vCameraSpeed.z != 0) vCameraSpeed.z -= 1;
             break;
         }
         case sf::Keyboard::Down:
         case sf::Keyboard::S: {
-            vCameraSpeed.z -= -1;
+            if (vCameraSpeed.z != 0) vCameraSpeed.z -= -1;
             break;
         }
         case sf::Keyboard::Right:
         case sf::Keyboard::D: {
-            vCameraSpeed.x -= 1;
+            if (vCameraSpeed.x != 0) vCameraSpeed.x -= 1;
             break;
         }
         case sf::Keyboard::Left:
         case sf::Keyboard::A: {
-            vCameraSpeed.x -= -1;
+            if (vCameraSpeed.x != 0) vCameraSpeed.x -= -1;
             break;
         }
         case sf::Keyboard::Space: {
-            vCameraSpeed.y -= 1;
+            if (vCameraSpeed.y != 0) vCameraSpeed.y -= 1;
             break;
         }
         case sf::Keyboard::C: {
-            vCameraSpeed.y -= -1;
+            if (vCameraSpeed.y != 0) vCameraSpeed.y -= -1;
             break;
         }
         }   // event.key.code
@@ -376,7 +394,8 @@ void Editor::eventsFly(sf::Event &event) {
     }           // event.type
 }
 
-void Editor::fillActionsMenu() {
+void Editor::fillActionsMenu()
+{
     auto box = sfg::Box::Create(sfg::Box::Orientation::VERTICAL);
     std::map<string, char> names;
     for (auto kv : actions) names[kv.second.name] = kv.first;
@@ -393,13 +412,14 @@ void Editor::fillActionsMenu() {
     popup->Add(box);
 }
 
-int Editor::run() {
+int Editor::run()
+{
     printf(egg::getInstance().logo.c_str());
 
-	sf::ContextSettings cs;
-	cs.antialiasingLevel = 4;
-	cs.depthBits = 24;
-	cs.majorVersion = 3;
+    sf::ContextSettings cs;
+    cs.antialiasingLevel = 4;
+    cs.depthBits = 24;
+    cs.majorVersion = 3;
     cs.minorVersion = 0;
 
     window = new sf::RenderWindow(sf::VideoMode(egg::getInstance().g_Resolution.x, egg::getInstance().g_Resolution.y), "Eggine Editor", sf::Style::Default, cs);
@@ -409,7 +429,7 @@ int Editor::run() {
     window->setKeyRepeatEnabled(false);
 
     glewExperimental = true;
-	glewInit();
+    glewInit();
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -417,13 +437,13 @@ int Editor::run() {
     glDepthFunc(GL_LESS);
     glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
 
-	TwInit(TW_OPENGL, NULL);
-	TwCopyStdStringToClientFunc(CopyStdStringToClient);
+    TwInit(TW_OPENGL, NULL);
+    TwCopyStdStringToClientFunc(CopyStdStringToClient);
 
     p_input = new InputHandler(window);
-	p_world = new World();
+    p_world = new World();
 
-	sfg::SFGUI sfgui;
+    sfg::SFGUI sfgui;
     window->setActive();
     desktop.SetProperty("*", "FontSize", 14.0f);
 
@@ -528,8 +548,8 @@ int Editor::run() {
             p_world->update();
             update();
             TwDraw();
-		}
-		glPopAttrib();
+        }
+        glPopAttrib();
 
         window->pushGLStates();
         window->resetGLStates();
@@ -538,32 +558,36 @@ int Editor::run() {
         window->popGLStates();
 
         window->display();
-	}
+    }
 
-	TwTerminate();
+    TwTerminate();
     delete window;
 
     return EXIT_SUCCESS;
 }
 
-Editor::Editor() {
-	editorFlySpeed = 3.0f;
+Editor::Editor()
+{
+    editorFlySpeed = 3.0f;
     edMode = Idle;
-	selectedEntity = nullptr;
+    selectedEntity = nullptr;
 }
 
-Editor::~Editor() {
+Editor::~Editor()
+{
     delete p_world;
     delete p_input;
 }
 
-Editor::Ptr Editor::Create() {
+Editor::Ptr Editor::Create()
+{
     egg::getInstance().g_Editor = true;
     Editor::Ptr ed(new Editor());
     return ed;
 }
 
-void Editor::registerLua() {
+void Editor::registerLua()
+{
     auto selectEntity = egg::getInstance().g_lua.CreateFunction<void(LuaUserdata<Entity>)>([&](LuaUserdata<Entity> eud) {
         Entity *pen = eud.GetPointer();
         if (selectedEntity != nullptr)
@@ -662,7 +686,8 @@ void Editor::registerLua() {
     egg::getInstance().g_lua.GetGlobalEnvironment().Set("Editor", table);
 }
 
-void Editor::loadAddons() {
+void Editor::loadAddons()
+{
     registerLua();
     string scriptsdir = egg::getInstance().g_WorkingDir + "/plugins/";
     std::cout << scriptsdir << std::endl;
@@ -679,7 +704,8 @@ void Editor::loadAddons() {
     }
 }
 
-void Editor::changeMode(EditorMode newMode) {
+void Editor::changeMode(EditorMode newMode)
+{
     switch (newMode) {
     case Fly:
         edMode = Fly;
@@ -707,25 +733,26 @@ void Editor::changeMode(EditorMode newMode) {
     }
 }
 
-RayCastInfo Editor::castRayScreen(bool fromCenter) {
+RayCastInfo Editor::castRayScreen(bool fromCenter)
+{
     sf::Vector2u sz = p_input->mainWindow->getSize();
     int screenWidth = sz.x, screenHeight = sz.y - topWndHeight;
     sf::Vector2i mp(screenWidth / 2, screenHeight / 2);
     if (!fromCenter) {
-		mp = sf::Mouse::getPosition(*p_input->mainWindow);
+        mp = sf::Mouse::getPosition(*p_input->mainWindow);
         mp.y -= topWndHeight;
-		mp.y = screenHeight - mp.y;
+        mp.y = screenHeight - mp.y;
     }
 
-	int mouseX = mp.x, mouseY = mp.y;
+    int mouseX = mp.x, mouseY = mp.y;
 
-	glm::vec4 lRayStart_NDC(
+    glm::vec4 lRayStart_NDC(
         (float(mouseX) / float(screenWidth)  - 0.5f) * 2.0f,
         (float(mouseY) / float(screenHeight) - 0.5f) * 2.0f,
         -1.0,
         1.0f
     );
-	glm::vec4 lRayEnd_NDC(
+    glm::vec4 lRayEnd_NDC(
         (float(mouseX) / float(screenWidth)  - 0.5f) * 2.0f,
         (float(mouseY) / float(screenHeight) - 0.5f) * 2.0f,
         1.0,
@@ -741,18 +768,20 @@ RayCastInfo Editor::castRayScreen(bool fromCenter) {
     lRayEnd_world  /= lRayEnd_world.w;
 
     glm::vec4 lrd4(lRayEnd_world - lRayStart_world);
-	glm::vec3 lRayDir_world = glm::vec3(lrd4.x, lrd4.y, lrd4.z);
-	glm::vec3 lRayOrigin_world = glm::vec3(lRayStart_world.x, lRayStart_world.y, lRayStart_world.z);
+    glm::vec3 lRayDir_world = glm::vec3(lrd4.x, lrd4.y, lrd4.z);
+    glm::vec3 lRayOrigin_world = glm::vec3(lRayStart_world.x, lRayStart_world.y, lRayStart_world.z);
 
-	return p_world->castRay(lRayOrigin_world, lRayDir_world);
+    return p_world->castRay(lRayOrigin_world, lRayDir_world);
 }
 
-void Editor::updateEntity(Entity *pen) {
+void Editor::updateEntity(Entity *pen)
+{
     // TODO: move from Entity class
 }
 
-void Editor::update() {
-	p_input->update();
+void Editor::update()
+{
+    p_input->update();
     auto &physics = p_world->physics;
     auto &graphics = *p_world->pGraphics;
     Camera *cam = graphics.getCamera();
@@ -761,13 +790,13 @@ void Editor::update() {
     cam->moveFree(vCameraSpeed * editorFlySpeed * egg::getInstance().g_Delta);
 
     if (selectedEntity != nullptr) {
-		selectedEntity->editorUpdate();
-	}
+        selectedEntity->editorUpdate();
+    }
 
-    if (p_input->lockMouse) { // TODO: deprecated, to remove!
+    if (p_input->lockMouse) {
         cam->rotate(0.1f * egg::getInstance().g_Delta * p_input->mouseDelta.x,
                     0.1f * egg::getInstance().g_Delta * p_input->mouseDelta.y);
-	} else {
+    } else {
         if (p_input->cursorIsInsideWindow()) {
             if (edMode == Pulling) {
                 if (selectedEntity == NULL) {
@@ -799,6 +828,6 @@ void Editor::update() {
                 endPosWLD /= endPosWLD.w;
                 selectedEntity->position = glm::vec3(endPosWLD.x, endPosWLD.y, endPosWLD.z);
             }
-		}
-	}
+        }
+    }
 }

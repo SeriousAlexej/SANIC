@@ -71,8 +71,7 @@ public:
 
     template<class T>
     /**
-	 * @brief Sets value
-	 * TODO: emitting a special signal in SignalListener
+     * @brief Sets value and emits a signal in SignalListener
 	 * 
 	 * @param value Value
 	 * @return void

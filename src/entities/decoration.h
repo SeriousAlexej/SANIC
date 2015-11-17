@@ -5,7 +5,7 @@
 class Decoration : public Entity
 {
 public:
-    FROM_INCUBATOR(Decoration);
+    FROM_INCUBATOR(Decoration)
 
 	Decoration();
 	virtual ~Decoration();

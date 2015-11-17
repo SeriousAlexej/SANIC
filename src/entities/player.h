@@ -5,7 +5,7 @@
 class Player : public Entity
 {
 public:
-    FROM_INCUBATOR(Player);
+    FROM_INCUBATOR(Player)
 
 	Player();
 	virtual ~Player();
