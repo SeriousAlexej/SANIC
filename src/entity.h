@@ -428,7 +428,7 @@ protected:
     bool                        touchable;
 
     template<class T>
-    T&                          getProperty(std::string)
+    T&                          getProperty(std::string name)
     {
         return properties[name]->GetValue<T>();
     }
