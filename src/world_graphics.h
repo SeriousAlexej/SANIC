@@ -8,6 +8,9 @@
 #include "light.h"
 #include "modelset.h"
 
+class Sector;
+class Portal;
+
 class WorldGraphics
 {
 public:
@@ -27,24 +30,40 @@ public:
 	void            deleteDirLight();
 
 private:
-	ModelInstance*	createModel(std::string shaderPath,
-		std::string modelPath, std::string diffTexture, std::string normTexture, std::string heightTexture);
+	ModelInstance*	createModel(const std::string& shaderPath,
+		                        const std::string& modelPath,
+		                        const std::string& diffTexture,
+		                        const std::string& normTexture,
+		                        const std::string& heightTexture);
+    void            deleteModel(ModelInstance*& mi);
 
-	void			deleteModel(ModelInstance*& mi);
+    Shader*         createShader(const std::string& shaderPath);
+    void            deleteShader(Shader*& s);
 
-	std::vector<Light*>		    pickBestLights(glm::vec4 modelRenSphere);
+	void                        renderBackground() const;
+	std::vector<ModelInstance*> getVisibleModels() const;
+
+	std::vector<Light*>		    pickBestLights(const std::vector<Light*>& pool, const glm::vec4& modelRenSphere);
 	void                        sortForBackground();
+
+	void                        findVisibleStuff(std::vector<ModelInstance*>& visibleModels, std::vector<Light*>& visibleLights);
+	void                        findVisibleStuffForShadow(std::vector<ModelInstance*>& visibleModels);
+
+
 
 	Camera						camera;
 	std::shared_ptr<Shader>     shadowShader;
 
     unsigned int                backgroundModels;
+
 	std::vector<std::shared_ptr<ModelInstance>>	models;
 	std::vector<std::shared_ptr<Mesh>>			meshes;
 	std::vector<std::shared_ptr<Shader>>		shaders;
 	std::vector<std::shared_ptr<Texture>>		textures;
 	std::vector<std::shared_ptr<Light>>			lights;
 	std::vector<std::shared_ptr<ModelSet>>      modelSets;
+	std::vector<std::unique_ptr<Sector>>        sectors;
+	std::vector<std::unique_ptr<Portal>>        portals;
 
 	Light*                      directionalLight;
 	unsigned int                dirLightUsers;

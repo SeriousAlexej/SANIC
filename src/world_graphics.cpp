@@ -1,13 +1,16 @@
-#include "world_graphics.h"
-#include "global.h"
 #include <algorithm>
 #include <functional>
+#include <glm/gtx/norm.hpp>
+#include "world_graphics.h"
+#include "render/sector.h"
+#include "global.h"
 
 WorldGraphics::WorldGraphics()
 {
     backgroundModels = 0u;
     dirLightUsers = 0u;
     directionalLight = nullptr;
+    camera.pGfx = static_cast<void*>(this);
     shadowShader = std::make_shared<Shader>("./shaders/shadow");
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
@@ -40,10 +43,33 @@ WorldGraphics::~WorldGraphics()
 
 void WorldGraphics::sortForBackground()
 {
-    std::sort(modelSets.begin(), modelSets.end(), [](std::shared_ptr<ModelSet> &i, std::shared_ptr<ModelSet> &j) { return !j->background && i->background; });
-    for(unsigned i=0; i<modelSets.size(); ++i)
+    std::sort(models.begin(), models.end(), [this](std::shared_ptr<ModelInstance> &m1, std::shared_ptr<ModelInstance> &m2)
+            {
+                if(!m2->background && m1->background) {
+                    return true;
+                }
+                if(!m1->background && m2->background) {
+                    return false;
+                }
+                if(m1->background && m2->background) {
+                    if(!m1->isTranslucent() && m2->isTranslucent()) {
+                        return true;
+                    }
+                    if(!m2->isTranslucent() && m1->isTranslucent()) {
+                        return false;
+                    }
+                    if(m1->isTranslucent() && m2->isTranslucent()) {
+                        return glm::distance2(m1->getPosition(), camera.getPosition())
+                               >
+                               glm::distance2(m2->getPosition(), camera.getPosition());
+                    }
+                    return m1->pShader->getHash() > m2->pShader->getHash();
+                }
+                return false;
+            });
+    for(unsigned i=0; i<models.size(); ++i)
     {
-        if(!modelSets[i]->background)
+        if(!models[i]->background)
         {
             break;
         } else {
@@ -52,19 +78,95 @@ void WorldGraphics::sortForBackground()
     }
 }
 
+void WorldGraphics::findVisibleStuff(std::vector<ModelInstance*>& visibleModels, std::vector<Light*>& visibleLights)
+{
+    Sector* s = camera.getSector();
+
+    if(s == nullptr) {
+        for(auto &mi : models) {
+            visibleModels.push_back(mi.get());
+        }
+        for(auto &li : lights) {
+            visibleLights.push_back(li.get());
+        }
+        return;
+    }
+
+    std::vector<const Sector*> visibleSectors = { s };
+    std::vector<const Sector*> firstSectors = { s };
+    std::vector<const Sector*> nextSectors = {};
+
+    while(!firstSectors.empty()) {
+        for(auto& sector : firstSectors) {
+            for(auto& portal : sector->getPortals()) {
+                if(camera.aabboxIsVisible(portal.getBBox())
+                   && std::find(visibleSectors.begin(), visibleSectors.end(), portal.otherSector(sector)) == visibleSectors.end()) {
+                    nextSectors.push_back(portal.otherSector(sector));
+                }
+            }
+        }
+        visibleSectors.insert(visibleSectors.end(), nextSectors.begin(), nextSectors.end());
+        firstSectors = std::move(nextSectors);
+        nextSectors.clear();
+    }
+
+    for(auto& sector : visibleSectors) {
+        visibleModels.insert(visibleModels.end(), sector->getModels().begin(), sector->getModels().end());
+        visibleLights.insert(visibleLights.end(), sector->getLights().begin(), sector->getLights().end());
+    }
+}
+
+void WorldGraphics::findVisibleStuffForShadow(std::vector<ModelInstance*>& visibleModels)
+{
+    Sector* s = camera.getSector();
+
+    if(s == nullptr) {
+        for(auto &mi : models) {
+            visibleModels.push_back(mi.get());
+        }
+        return;
+    }
+
+    std::vector<const Sector*> visibleSectors = { s };
+    std::vector<const Sector*> firstSectors = { s };
+    std::vector<const Sector*> nextSectors = {};
+
+    while(!firstSectors.empty()) {
+        for(auto& sector : firstSectors) {
+            for(auto& portal : sector->getPortals()) {
+                if(camera.aabboxIsVisibleForShadow(portal.getBBox())
+                   && std::find(visibleSectors.begin(), visibleSectors.end(), portal.otherSector(sector)) == visibleSectors.end()) {
+                    nextSectors.push_back(portal.otherSector(sector));
+                }
+            }
+        }
+        visibleSectors.insert(visibleSectors.end(), nextSectors.begin(), nextSectors.end());
+        firstSectors = std::move(nextSectors);
+        nextSectors.clear();
+    }
+
+    for(auto& sector : visibleSectors) {
+        visibleModels.insert(visibleModels.end(), sector->getModels().begin(), sector->getModels().end());
+    }
+}
+
 void WorldGraphics::render()
 {
-	//render visible model instances
-	int sz = modelSets.size();
+    for(auto& ms : modelSets) {
+        ms->findVisibleLOD();
+    }
 
     Light* dirLight = (egg::getInstance().g_UseDirectionalLight?directionalLight:nullptr);
 
-    //render shadows
-    if(dirLight != nullptr)
-    {
-        shadowShader->bind();
-        glm::mat4 dlMatrix = dirLight->getMatrix();
+    /************************ RENDER SHADOW ***************************/
+    if(dirLight) {
+        std::vector<ModelInstance*> modelsForShadow = {};
+        findVisibleStuffForShadow(modelsForShadow);
 
+        shadowShader->bind();
+        const glm::mat4& dlMatrix = dirLight->getMatrix();
+
+        bool shaderChanged = false;
         //first pass - low quality shadow
         //second pass - high quality shadow
         for(int p=0; p<2; p++)
@@ -74,50 +176,71 @@ void WorldGraphics::render()
             camera.setShadowViewMatrix(dlMatrix);
             camera.preShadowRender();
             glClear(GL_DEPTH_BUFFER_BIT);
-            for(int i=0; i<sz; i++)
-            {
-                modelSets[i]->findVisibleLOD();
-                modelSets[i]->renderForShadow();
+
+            for(auto& mi : modelsForShadow) {
+                if(!mi->background
+                 && mi->visible
+                 && mi->castShadow//!mi->isTranslucent()
+                 && camera.sphereIsVisibleForShadow(mi->getRenSphere()) )
+                {
+                    if (shaderChanged && !mi->overridesShadowShader()) {
+                        shadowShader->bind();
+                    }
+                    mi->renderForShadow(camera, shadowShader.get());
+                    shaderChanged = mi->overridesShadowShader();
+                }
             }
         }
 
-        //cleanup
         camera.postShadowRender();
     }
+
     if(egg::getInstance().g_Editor)
     {
         glViewport(egg::getInstance().g_DrawOrigin.x, egg::getInstance().g_DrawOrigin.y, egg::getInstance().g_Resolution.x, egg::getInstance().g_Resolution.y);
     }
-
     glClear( (egg::getInstance().g_Editor?GL_COLOR_BUFFER_BIT:0) | GL_DEPTH_BUFFER_BIT);
 
-    int shaSz = shaders.size();
-    for(int shad=0; shad<shaSz; shad++)
+    /************************ RENDER BACKGROUND ***************************/
+    static const std::vector<Light*> dummy(4, nullptr);
+    for(int i=0; i<backgroundModels; i++)
     {
-        for(int i=0; i<backgroundModels; i++)
-        {
-            if(shad == 0)
-            {
-                modelSets[i]->findVisibleLOD();
-            }
-            modelSets[i]->render(shaders[shad]->getHash());
+        if(!egg::getInstance().g_Editor) {
+            models[i]->render(camera, dummy, dirLight);
         }
-	}
+    }
 	if(!egg::getInstance().g_Editor)
     {
         glClear(GL_DEPTH_BUFFER_BIT);
     }
-    for(int shad=0; shad<shaSz; shad++)
-    {
-        for(int i=backgroundModels; i<sz; i++)
+
+    /************************ RENDER VISIBLE MODELS ***************************/
+    std::vector<ModelInstance*> visibleModels = {};
+    std::vector<Light*> visibleLights = {};
+    findVisibleStuff(visibleModels, visibleLights);
+
+    std::sort(visibleModels.begin(), visibleModels.end(), [this](const ModelInstance* m1, const ModelInstance* m2)
         {
-            if(shad == 0)
-            {
-                modelSets[i]->findVisibleLOD();
+            if(!m1->isTranslucent() && m2->isTranslucent()) {
+                return true;
             }
-            modelSets[i]->render(shaders[shad]->getHash());
+            if(!m2->isTranslucent() && m1->isTranslucent()) {
+                return false;
+            }
+            if(m1->isTranslucent() && m2->isTranslucent()) {
+                return glm::distance2(m1->getPosition(), camera.getPosition())
+                       >
+                       glm::distance2(m2->getPosition(), camera.getPosition());
+            }
+            return m1->pShader->getHash() > m2->pShader->getHash();
+        });
+
+    for(auto& mi : visibleModels) {
+        const glm::vec4 renSphere = mi->getRenSphere();
+        if((!mi->background || egg::getInstance().g_Editor) && mi->visible && camera.sphereIsVisible(renSphere)) {
+            mi->render(camera, pickBestLights(visibleLights, renSphere), dirLight);
         }
-	}
+    }
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -148,10 +271,53 @@ void WorldGraphics::deleteModelSet(ModelSet*& ms)
     }
 }
 
+Shader* WorldGraphics::createShader(const std::string& shaderPath)
+{
+	int shaderIndex = -1;
+	std::size_t sHash(std::hash<std::string>()(shaderPath));
+
+	//find shader id
+	int sz = shaders.size();
+	for(int i=0; i<sz; i++)
+	{
+		if(shaders[i]->getHash() == sHash)
+		{
+			shaderIndex = i; //if shader was found - use it
+			break;
+		}
+	}
+	if(shaderIndex == -1) //shader not found - create it
+	{
+		shaderIndex = shaders.size(); //index of new shader will be the last one
+		shaders.push_back(std::make_shared<Shader>(shaderPath));
+	}
+
+	return shaders[shaderIndex].get();
+}
+
+void WorldGraphics::deleteShader(Shader*& s)
+{
+	if(s == nullptr) return;
+
+	int sID = s->getMultipass();
+	int sz = shaders.size();
+    for(int i=0; i<sz; i++)
+    {
+        if(shaders[i]->getMultipass() == sID && !shaders[i]->hasSubscribers())
+        {
+            shaders.erase(shaders.begin() + i);
+            break;
+        }
+    }
+	s = nullptr;
+}
+
 ModelInstance* WorldGraphics::createModel(
-	std::string shaderPath,
-	std::string modelPath,
-	std::string diffTexture, std::string normTexture, std::string heightTexture)
+	const std::string& shaderPath,
+	const std::string& modelPath,
+	const std::string& diffTexture,
+	const std::string& normTexture,
+	const std::string& heightTexture)
 {
 	int meshIndex = -1;
 	int shaderIndex = -1;
@@ -263,6 +429,7 @@ void WorldGraphics::deleteModel(ModelInstance*& mi)
 {
 	if(mi == nullptr) return;
 
+	Shader* pShaderOverr = mi->pOverridenShadowShader;
 	int m(-1), s(-1), td(-1), tn(-1), th(-1);
 	int sz = models.size();
 	for(int i=0; i<sz; i++)
@@ -278,6 +445,8 @@ void WorldGraphics::deleteModel(ModelInstance*& mi)
 			break;
 		}
 	}
+
+	deleteShader(pShaderOverr);
 
     if(m != -1)
     {
@@ -386,10 +555,10 @@ void WorldGraphics::deleteDirLight()
     }
 }
 
-std::vector<Light*> WorldGraphics::pickBestLights(glm::vec4 modelRenSphere)
+std::vector<Light*> WorldGraphics::pickBestLights(const std::vector<Light*>& pool, const glm::vec4& modelRenSphere)
 {
     std::vector<Light*> light_chart(4, nullptr);
-	int sz = lights.size();
+	int sz = pool.size();
 	if(sz < 1) return light_chart;
 
 	std::map<float, Light*> arr;
@@ -402,9 +571,9 @@ std::vector<Light*> WorldGraphics::pickBestLights(glm::vec4 modelRenSphere)
 	for(int i=0; i<sz; i++)
 	{
 	    values[i] = -1.0f;
-        glm::vec3 lpos = lights[i]->getPosition();
-        float lfalloff = lights[i]->getFallOff();
-		float distToLight = glm::distance(bestPosition, lpos);
+        glm::vec3 lpos = pool[i]->getPosition();
+        float lfalloff = pool[i]->getFallOff();
+		float distToLight = glm::distance2(bestPosition, lpos);
 		if(distToLight > lfalloff + modelRenSphere.w)
         {// this light can't even reach model's bounding sphere, discard it
             continue;
@@ -416,7 +585,7 @@ std::vector<Light*> WorldGraphics::pickBestLights(glm::vec4 modelRenSphere)
 		if(distToLight == 0.0f) distToLight = 0.001f;
 		float v = lfalloff/distToLight;
 		values[i] = v;
-		arr[v] = lights[i].get();
+		arr[v] = pool[i];
 	}
 	std::sort(values.begin(), values.end());
 	for(int i=std::min(3, sz-1); i>=0; i--)

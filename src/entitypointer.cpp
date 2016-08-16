@@ -2,27 +2,24 @@
 #include "entitypointer.h"
 #include <rapidjson/document.h>
 
-extern std::map<EntityPointer*, Entity*> pensOwner;
-extern std::vector<EntityPointer*> pensToRetarget;
-extern Entity* beingDeserialized;
-
 EntityPointer::EntityPointer()
 {
     penTarget = nullptr;
     enID = -1;
-    name = "nonamepointer";
 }
 
-EntityPointer::EntityPointer(std::string _name)
+EntityPointer::EntityPointer(Entity* en)
 {
-    penTarget = nullptr;
+    penTarget = en;
     enID = -1;
-    name = _name;
+    if (penTarget) {
+        enID = penTarget->getMultipass();
+        penTarget->pointerAdded(this);
+    }
 }
 
 EntityPointer::EntityPointer(const EntityPointer& other)
 {
-    name = other.name;
     penTarget = other.penTarget;
     enID = other.enID;
     if(penTarget != nullptr)
@@ -37,11 +34,6 @@ EntityPointer::~EntityPointer()
     {
         penTarget->pointerLeft(this);
     }
-}
-
-std::string EntityPointer::Name() const
-{
-    return name;
 }
 
 bool EntityPointer::operator==(const EntityPointer& other) const
@@ -95,35 +87,6 @@ Entity* EntityPointer::operator->() const
         throw null_entitypointer();
     }
     return penTarget;
-}
-
-rapidjson::Value EntityPointer::Serialize(rapidjson::Document& d)
-{
-	using JsonValue = rapidjson::Value;
-	JsonValue val;
-	val.SetObject();
-
-	JsonValue name, enid;
-	name.SetString(Name().c_str(), Name().length());
-	enid.SetInt(enID);
-
-	val.AddMember("name", name, d.GetAllocator());
-	val.AddMember("enID", enid, d.GetAllocator());
-
-	return val;
-}
-
-void EntityPointer::Deserialize(rapidjson::Value& d)
-{
-	using JsonValue = rapidjson::Value;
-	JsonValue& val = d;
-	name = val["name"].GetString();
-	enID = val["enID"].GetInt();
-	if(enID != -1)
-    {
-        pensToRetarget.push_back(this);
-        pensOwner[this] = beingDeserialized;
-    }
 }
 
 void EntityPointer::registerLua(LuaUserdata<EntityPointer>& l)

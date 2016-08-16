@@ -20,7 +20,8 @@ out float fade;
 uniform vec3 cameraPosition;
 out vec3 cameraPos;
 
-uniform mat4 MVP;
+uniform mat4 P;
+uniform mat4 V;
 uniform mat4 M;
 uniform float frameProgress;
 uniform vec2 uvTilingD;
@@ -32,7 +33,7 @@ uniform float directionalShadows;
 
 void main(){
 	vec4 posint = vec4(mix(vertexPosition_modelspace,vertexPosition_interpolation,(0.5-cos(frameProgress * 3.1415926535897932384626433832795)*0.5) ), 1);
-	gl_Position =  MVP * posint;
+	gl_Position =  P * V * M * posint;
 	Position_worldspace = (M * posint).xyz;
 	UV = vec2(vertexUV.x * uvTilingD.x, vertexUV.y * uvTilingD.y);
 	UVnorm = vec2(vertexUV.x * uvTilingN.x, vertexUV.y * uvTilingN.y);
@@ -87,6 +88,9 @@ uniform lowp float shadowBorder;
 uniform lowp vec3 dirLightAmbient;
 uniform lowp vec3 dirLightDiffuse;
 uniform lowp vec3 DLightDir;
+uniform lowp float translucencyAlpha;
+uniform lowp float useImageAlpha;
+uniform bool overlayBool;
 
  vec2 poissonDisk[4] =  vec2[]( 
    vec2( -0.94201624, -0.39906216 ), 
@@ -106,10 +110,13 @@ lowp float clamp(lowp float f, int mn, int mx)
 
 void main(){
 	lowp vec4 MaterialDiffuseColora = texture(DiffuseTextureSampler, UV).rgba;
+	lowp float desiredAlpha = translucencyAlpha * max(useImageAlpha, MaterialDiffuseColora.a);
+/*
 	if(MaterialDiffuseColora.a < 0.5)
 	{
 		discard;
 	}
+*/
 	lowp vec3 MaterialDiffuseColor = MaterialDiffuseColora.rgb;
 	lowp vec3 n = TBN * (1.9921875 * texture(NormalTextureSampler, UVnorm).xyz - 1.0);
 	n = normalize((1.0 + normalStrength) * Normal_worldspace - n * normalStrength);
@@ -173,7 +180,11 @@ void main(){
 	{
 		alpha = 0.5+0.5*cos(0.1570795*fade - 12.56636); // 0.5*(1.0+cos(3.14159*(1.0-(100.0 - fade)/20.0)));
 	}
-	color = vec4(diffuseColor, alpha);
+	if(overlayBool)
+	{
+		diffuseColor = diffuseColor*0.5 + vec3(0.0625, 0.2115, 0.5);
+	}
+	color = vec4(diffuseColor, min(desiredAlpha, alpha));
 }
 
 #endif

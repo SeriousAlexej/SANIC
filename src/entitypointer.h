@@ -1,10 +1,8 @@
 #ifndef ENTITYPOINTER_H
 #define ENTITYPOINTER_H
 
-#include <string>
 #include <luacppinterface.h>
-#include "properties.h"
-//#include "entity.h"
+#include "basic.h"
 
 class null_entitypointer : public std::exception
 {
@@ -17,14 +15,14 @@ class null_entitypointer : public std::exception
 class Entity;
 class FromLua;
 
-class EntityPointer : public Serial, public FromLua
+class EntityPointer : public FromLua
 {
 public:
     EntityPointer();
-    EntityPointer(std::string _name);
+    EntityPointer(Entity* en);
     EntityPointer(const EntityPointer& other);
-    ~EntityPointer();
-    std::string Name() const;
+    virtual ~EntityPointer();
+    inline const Entity* Get() const { return penTarget; }
     inline int GetCurrentID() const { return enID; }
     bool operator==(const EntityPointer& other) const;
     bool operator==(const Entity* other) const;
@@ -33,14 +31,10 @@ public:
     operator bool() const { return penTarget != nullptr; }
     Entity* operator->() const;
 
-    virtual void Deserialize(rapidjson::Value& d);
-    virtual rapidjson::Value Serialize(rapidjson::Document& d);
-
     virtual void registerLua(LuaUserdata<EntityPointer>& l);
 private:
     Entity*       penTarget;
     int           enID;
-    std::string   name;
 };
 
 #endif // ENTITYPOINTER_H

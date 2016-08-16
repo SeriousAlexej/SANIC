@@ -35,6 +35,7 @@ public:
     void Save(const std::string& filename);
     void Love(const std::string& filename); // Lyubov porojdaet mir
     Entity* Paste(std::string& src);
+    Entity* GetEntityWithID(int id);
 
     std::vector<std::shared_ptr<Entity>>& getEntities() { return entities; }
 

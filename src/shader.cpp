@@ -4,13 +4,14 @@
 
 GLuint Shader::currentShader = 0u;
 
-Shader::Shader(std::string shaderPath)
+Shader::Shader(const std::string& shaderPath)
 {
 	srcShaFnmHash = std::hash<std::string>()(shaderPath);
 
 	shaderID = 0;
-	MatrixID = 0;
-	mID = 0;
+	projMatrixID = 0;
+	viewMatrixID = 0;
+	modlMatrixID = 0;
 	NormalTextureID = 0;
 	DiffuseTextureID = 0;
 	HeightTextureID = 0;
@@ -31,6 +32,10 @@ Shader::Shader(std::string shaderPath)
 	UVTilingD = 0;
 	UVTilingN = 0;
 	UVTilingH = 0;
+	overlayBool = 0;
+	translucencyAlpha = 0;
+	timeID = 0;
+	useImageAlphaID = 0;
 	for(int i=0; i<4; i++)
     {
         LightPositionID[i] = 0;
@@ -129,35 +134,40 @@ void Shader::loadShaders(std::string &shaderPath)
     glDeleteShader(VertexShaderID);
     glDeleteShader(FragmentShaderID);
 
-	MatrixID = glGetUniformLocation(shaderID, "MVP");
-	mID = glGetUniformLocation(shaderID, "M");
-	HeightTextureID = glGetUniformLocation(shaderID, "HeightTextureSampler");
-	NormalTextureID  = glGetUniformLocation(shaderID, "NormalTextureSampler");
-	DiffuseTextureID  = glGetUniformLocation(shaderID, "DiffuseTextureSampler");
-	FrameProgressID = glGetUniformLocation(shaderID, "frameProgress");
-	CamPosID = glGetUniformLocation(shaderID, "cameraPosition");
-	normStrengthID = glGetUniformLocation(shaderID, "normalStrength");
-	parallaxScaleID = glGetUniformLocation(shaderID, "parallaxScale");
-	parallaxOffsetID = glGetUniformLocation(shaderID, "parallaxOffset");
-	BiasMVP = glGetUniformLocation(shaderID, "ShadowBiasMVP");
-	DLightAmbient = glGetUniformLocation(shaderID, "dirLightAmbient");
-	DLightDiffuse = glGetUniformLocation(shaderID, "dirLightDiffuse");
-	DirShadowBool = glGetUniformLocation(shaderID, "directionalShadows");
-	ShadowMap = glGetUniformLocation(shaderID, "shadowMap");
-	DLightDir = glGetUniformLocation(shaderID, "DLightDir");
-	BiasMVP_LQ = glGetUniformLocation(shaderID, "ShadowBiasMVP_LQ");
-	ShadowMap_LQ = glGetUniformLocation(shaderID, "shadowMap_LQ");
-	ShadowBorder = glGetUniformLocation(shaderID, "shadowBorder");
-	UVTilingD = glGetUniformLocation(shaderID, "uvTilingD");
-	UVTilingN = glGetUniformLocation(shaderID, "uvTilingN");
-	UVTilingH = glGetUniformLocation(shaderID, "uvTilingH");
+	projMatrixID        = glGetUniformLocation(shaderID, "P");
+	viewMatrixID        = glGetUniformLocation(shaderID, "V");
+	modlMatrixID        = glGetUniformLocation(shaderID, "M");
+	HeightTextureID     = glGetUniformLocation(shaderID, "HeightTextureSampler");
+	NormalTextureID     = glGetUniformLocation(shaderID, "NormalTextureSampler");
+	DiffuseTextureID    = glGetUniformLocation(shaderID, "DiffuseTextureSampler");
+	FrameProgressID     = glGetUniformLocation(shaderID, "frameProgress");
+	CamPosID            = glGetUniformLocation(shaderID, "cameraPosition");
+	normStrengthID      = glGetUniformLocation(shaderID, "normalStrength");
+	parallaxScaleID     = glGetUniformLocation(shaderID, "parallaxScale");
+	parallaxOffsetID    = glGetUniformLocation(shaderID, "parallaxOffset");
+	BiasMVP             = glGetUniformLocation(shaderID, "ShadowBiasMVP");
+	DLightAmbient       = glGetUniformLocation(shaderID, "dirLightAmbient");
+	DLightDiffuse       = glGetUniformLocation(shaderID, "dirLightDiffuse");
+	DirShadowBool       = glGetUniformLocation(shaderID, "directionalShadows");
+	ShadowMap           = glGetUniformLocation(shaderID, "shadowMap");
+	DLightDir           = glGetUniformLocation(shaderID, "DLightDir");
+	BiasMVP_LQ          = glGetUniformLocation(shaderID, "ShadowBiasMVP_LQ");
+	ShadowMap_LQ        = glGetUniformLocation(shaderID, "shadowMap_LQ");
+	ShadowBorder        = glGetUniformLocation(shaderID, "shadowBorder");
+	UVTilingD           = glGetUniformLocation(shaderID, "uvTilingD");
+	UVTilingN           = glGetUniformLocation(shaderID, "uvTilingN");
+	UVTilingH           = glGetUniformLocation(shaderID, "uvTilingH");
+	overlayBool         = glGetUniformLocation(shaderID, "overlayBool");
+	translucencyAlpha   = glGetUniformLocation(shaderID, "translucencyAlpha");
+	timeID              = glGetUniformLocation(shaderID, "currentTime");
+	useImageAlphaID     = glGetUniformLocation(shaderID, "useImageAlpha");
 
     for(int i=0; i<4; i++)
     {
-        LightPositionID[i] = glGetUniformLocation(shaderID, ("LightPosition_worldspace[" + std::to_string(i) + "]").c_str());
-        LightDiffuseID[i] = glGetUniformLocation(shaderID, ("lightColorD[" + std::to_string(i) + "]").c_str());
-        LightFallOffID[i] = glGetUniformLocation(shaderID, ("lightFallOff[" + std::to_string(i) + "]").c_str());
-        LightHotSpotID[i] = glGetUniformLocation(shaderID, ("lightHotSpot[" + std::to_string(i) + "]").c_str());
+        LightPositionID[i]  = glGetUniformLocation(shaderID, ("LightPosition_worldspace[" + std::to_string(i) + "]").c_str());
+        LightDiffuseID[i]   = glGetUniformLocation(shaderID, ("lightColorD[" + std::to_string(i) + "]").c_str());
+        LightFallOffID[i]   = glGetUniformLocation(shaderID, ("lightFallOff[" + std::to_string(i) + "]").c_str());
+        LightHotSpotID[i]   = glGetUniformLocation(shaderID, ("lightHotSpot[" + std::to_string(i) + "]").c_str());
         LightIntensityID[i] = glGetUniformLocation(shaderID, ("lightIntensity[" + std::to_string(i) + "]").c_str());
     }
 }

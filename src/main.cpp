@@ -8,7 +8,7 @@ unsigned char flagEditor = 1 << 0,
 
 int main(int argc, char **argv)
 {
-    std::string helpString = std::string("Eggine arguments:\n") +
+    const std::string helpString = std::string("Eggine arguments:\n") +
                                             "\tLoad world: -w <path> or --world <path>\n" +
                                             "\tLaunch editor: -e or --editor\n" +
                                             "\tDisplay version: -v or --version\n" +

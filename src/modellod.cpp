@@ -2,9 +2,10 @@
 #include "modellod.h"
 #include "world_graphics.h"
 #include "modelinstance.h"
+#include "modelset.h"
 #include "global.h"
 
-ModelLOD::ModelLOD(rapidjson::Value &lod, WorldGraphics *wGfx) : pGfx(wGfx)
+ModelLOD::ModelLOD(rapidjson::Value &lod, WorldGraphics *wGfx, ModelSet* ms) : pGfx(wGfx)
 {
     assert(pGfx != nullptr);
     dist = static_cast<float>(lod["Distance"].GetDouble());
@@ -13,8 +14,9 @@ ModelLOD::ModelLOD(rapidjson::Value &lod, WorldGraphics *wGfx) : pGfx(wGfx)
     for(auto it=marr.Begin(); it!=marr.End(); ++it)
     {
         rapidjson::Value &model = *it;
-        std::string sMdl(""), sSha(""), sDif(""), sNor(""), sHei("");
-        float normStr(1.0f), parrSca(0.03f), parrOff(0.0f);
+        std::string sMdl(""), sSha(""), sDif(""), sNor(""), sHei(""), sShaOverr("");
+        float normStr(1.0f), parrSca(0.03f), parrOff(0.0f), alpha(1.0f);
+        bool translucent(false), castShadow(true), useImageAlpha(false);
         sMdl = model["Model"].GetString();
         sSha = model["Shader"].GetString();
         sDif = model["Diffuse"].GetString();
@@ -23,6 +25,14 @@ ModelLOD::ModelLOD(rapidjson::Value &lod, WorldGraphics *wGfx) : pGfx(wGfx)
         normStr = static_cast<float>(model["NormalStrength"].GetDouble());
         parrSca = static_cast<float>(model["ParallaxScale"].GetDouble());
         parrOff = static_cast<float>(model["ParallaxOffset"].GetDouble());
+        alpha   = static_cast<float>(model["Alpha"].GetDouble());
+        castShadow = model["CastShadow"].GetBool();
+        translucent = model["Translucent"].GetBool();
+        useImageAlpha = model["UseImageAlpha"].GetBool();
+
+        if (model.HasMember("OverridenShadowShader")) {
+            sShaOverr = model["OverridenShadowShader"].GetString();
+        }
 
         rapidjson::Value &offset = model["Offset"];
         rapidjson::Value &rotation = model["Rotation"];
@@ -41,24 +51,32 @@ ModelLOD::ModelLOD(rapidjson::Value &lod, WorldGraphics *wGfx) : pGfx(wGfx)
         relMx = glm::translate(offs) * tmpMx3 * tmpMx2 * tmpMx1;
 
         auto md = pGfx->createModel(sSha, sMdl, sDif, sNor, sHei);
+        if (!sShaOverr.empty()) {
+            md->setOverridenShadowShader(pGfx->createShader(sShaOverr));
+        }
+        md->translucent = translucent;
+        md->useImageAlpha = useImageAlpha;
+        md->castShadow = castShadow;
         md->offsetMatrix = relMx;
         md->setScale(scal);
         md->normalStrength = normStr;
         md->parallaxScale = parrSca;
         md->parallaxOffset = parrOff;
+        md->setAlpha(alpha);
         md->UVTilingD = glm::vec2(uvTilingD[0].GetDouble(), uvTilingD[1].GetDouble());
         md->UVTilingN = glm::vec2(uvTilingN[0].GetDouble(), uvTilingN[1].GetDouble());
         md->UVTilingH = glm::vec2(uvTilingH[0].GetDouble(), uvTilingH[1].GetDouble());
+        md->myModelSet = ms;
         models.push_back(md);
     }
 }
-
+/*
 void ModelLOD::renderForShadow(glm::mat4 &modelMatrix)
 {
     assert(pGfx!=nullptr);
     for(ModelInstance* &mi : models)
     {
-        if( !mi->background && pGfx->camera.sphereIsVisibleForShadow(mi->getRenSphereAt(modelMatrix)))
+        if(!mi->background && pGfx->camera.sphereIsVisibleForShadow(mi->getRenSphereAt(modelMatrix)))
         {
             mi->renderForShadow(modelMatrix, pGfx->camera, pGfx->shadowShader.get());
         }
@@ -80,7 +98,7 @@ void ModelLOD::render(glm::mat4 &modelMatrix, std::size_t &shaderHash)
         }
     }
 }
-
+*/
 ModelLOD::~ModelLOD()
 {
     if(pGfx != nullptr)

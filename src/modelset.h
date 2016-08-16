@@ -20,10 +20,12 @@ class ModelSet : public Movable
         void playAnimation(std::string anim);
         void stopAnimations();
         void setBackground(bool bcg);
+        bool isBackground() const { return background; }
+        void setUseEditorShader(bool use);
 
     private:
-        void render(std::size_t shaderHash);
-        void renderForShadow();
+//        void render(std::size_t shaderHash);
+//        void renderForShadow();
         void findVisibleLOD();
 
         std::vector<std::unique_ptr<ModelLOD>> lods;

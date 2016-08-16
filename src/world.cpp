@@ -3,16 +3,11 @@
 #include <rapidjson/document.h>
 #include <rapidjson/filewritestream.h>
 #include <rapidjson/filereadstream.h>
-#include <rapidjson/writer.h>
+#include <rapidjson/prettywriter.h>
 #include <SFML/Window/Keyboard.hpp>
 #include "global.h"
+#include "solidbody.h"
 #include "entity.h"
-
-//these vars assist EntityPointer deserialization
-std::map<int, Entity*> enByOldId; //get entity by ID it was saved with
-std::map<EntityPointer*, Entity*> pensOwner; //get Entity that owns given EntityPointer
-std::vector<EntityPointer*> pensToRetarget; //all EntityPointers that need retargeting
-Entity* beingDeserialized = nullptr; //current entity being deserialized, used to fill pensOwner
 
 World::World()
 {
@@ -31,7 +26,7 @@ void World::registerLua()
     }
     auto getEntitiesList = egg::getInstance().g_lua.CreateFunction<LuaTable()>([&]() {
         LuaTable result = egg::getInstance().g_lua.CreateTable();
-        for(std::shared_ptr<Entity> pen : entities) {
+        for(std::shared_ptr<Entity> &pen : entities) {
             LuaUserdata<Entity> eud = egg::getInstance().g_lua.CreateUserdata(pen.get());
             pen->registerLua(eud);
             result.Set<LuaUserdata<Entity>>(eud->getMultipass(), eud);
@@ -42,7 +37,6 @@ void World::registerLua()
     table.Set("getEntities", getEntitiesList);
     egg::getInstance().g_lua.GetGlobalEnvironment().Set("World", table);
 }
-
 
 void World::deleteAllEntities()
 {
@@ -86,23 +80,21 @@ void World::registerEntity(const std::string& name)
 void World::update()
 {
     obsoleteEntitties.clear();
-    if(!egg::getInstance().g_Editor)
-	{
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::P))
-		physics.update();
-		for(int i=entities.size()-1; i>=0; i--)
-		{
-			entities[i]->update();
-		}
-        if(sf::Keyboard::isKeyPressed(sf::Keyboard::P))
-		physics.update();
+
+    for(int i=entities.size()-1; i>=0; i--)
+    {
+        entities[i]->update();
+        if(!egg::getInstance().g_Editor)
+        {
+            entities[i]->updateAI();
+            physics.update();
+        }
     }
-    if(pGraphics != nullptr)
+    if(pGraphics)
     {
         pGraphics->render();
     }
 }
-
 
 Entity* World::createEntity(const std::string& entityName)
 {
@@ -121,12 +113,23 @@ Entity* World::createEntity(std::shared_ptr<Entity> e)
 	e->wldPHY = &physics;
 	e->wld = this;
 	e->initialize();
+	e->setupAI();
 	entities.push_back(e);
-	if(pGraphics != nullptr)
+	if(pGraphics && egg::getInstance().g_Editor)
     {//useful in editor. If called from Load, then position will be reset anyway, so no harm done.
         e->setPosition(pGraphics->camera.getPosition() + pGraphics->camera.getFront()*10.0f);
     }
 	return e.get();
+}
+
+Entity* World::GetEntityWithID(int id)
+{
+    for(int i=entities.size()-1; i>=0; i--)
+    {
+        if(entities[i]->getMultipass() == id)
+            return entities[i].get();
+    }
+    return nullptr;
 }
 
 void World::removeEntity(Entity *e)
@@ -180,13 +183,13 @@ RayCastInfo World::castRay(glm::vec3 origin, glm::vec3 direction)
 	return rci;
 }
 
-void World::Save(const string &filename)
+void World::Save(const std::string &filename)
 {
     FILE* fp = fopen(filename.c_str(), "w");
     rapidjson::Document doc;
     rapidjson::Value out;
     out.SetArray();
-    for(auto en : entities)
+    for(auto &en : entities)
     {
         Entity& penEntity = *(en.get());
         rapidjson::Value val = penEntity.Serialize(doc);
@@ -204,19 +207,14 @@ void World::Save(const string &filename)
     }
     char writeBuffer[65536];
     rapidjson::FileWriteStream os(fp, writeBuffer, sizeof(writeBuffer));
-    rapidjson::Writer<rapidjson::FileWriteStream> writer(os);
+    rapidjson::PrettyWriter<rapidjson::FileWriteStream, rapidjson::Document::EncodingType, rapidjson::UTF8<> > writer(os);
     out.Accept(writer);
     fclose(fp);
 }
 
-void World::Love(const string &filename)
+void World::Love(const std::string &filename)
 {
     Clear();
-
-    beingDeserialized = nullptr;
-    pensOwner.clear();
-    enByOldId.clear();
-    pensToRetarget.clear();
 
     FILE* fp = fopen(filename.c_str(), "r");
     char readBuffer[65536];
@@ -228,26 +226,19 @@ void World::Love(const string &filename)
     {
         std::string classname = (*it)["class"].GetString();
         Entity* pen = createEntity(classname);
-        beingDeserialized = pen;
-        pen->Deserialize(*it);
+        pen->setMultipass((*it)["id"].GetInt());
+        pen->properties["Position"].Deserialize((*it)["Position"]);
+        pen->properties["Rotation"].Deserialize((*it)["Rotation"]);
     }
-
-    for(EntityPointer* p : pensToRetarget)
+    int i=0;
+    for(auto it = doc.Begin(); it != doc.End(); ++it)
     {
-        if(p->Name() == "Parent")
-        {
-            pensOwner[p]->setParent(enByOldId[p->GetCurrentID()]);
-        } else {
-            *p = enByOldId[p->GetCurrentID()];
-        }
+        assert(entities[i]->getMultipass() == (*it)["id"].GetInt());
+        entities[i++]->Deserialize(*it);
     }
-
-    beingDeserialized = nullptr;
-    pensOwner.clear();
-    enByOldId.clear();
-    pensToRetarget.clear();
 
     fclose(fp);
+
     if(pGraphics != nullptr)
     {
         pGraphics->sortForBackground();

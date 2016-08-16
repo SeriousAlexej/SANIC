@@ -1,66 +1,129 @@
+#include <rapidjson/writer.h>
+#include "entities/events.h"
 #include "entity.h"
+#include "solidbody.h"
+#include "modelset.h"
 #include "quaternion_utils.h"
 #include "editorGUI.h"
 #include "global.h"
 #include "world.h"
 #include "world_graphics.h"
 #include "world_physics.h"
-#include <rapidjson/writer.h>
-
-extern std::map<int, Entity *> enByOldId;
-
-IMPLEMENT_STATE(Entity, autowaitState)
-    switchEvent {
-        case EventCode_Begin : return; break;
-        default : {}
-    }
-END_STATE();
-
-void TW_CALL clearPointer(void *boolPtr)
-{
-    (*static_cast<bool *>(boolPtr)) = true;
-}
-
-void Entity::registerPointers()
-{
-    unsigned i;
-    for (i = 0; i < pointers.size() - 1; i++) {
-        pointersString += pointers[i].Name() + ",";
-        registerProperties(pointers[i].Name(), &pointers[i]);
-    }
-    pointersString += pointers[i].Name();
-    registerProperties(pointers[i].Name(), &pointers[i]);
-}
-
-void Entity::fillPointers()
-{
-    pointers.push_back(EntityPointer("Parent"));
-}
 
 Entity::Entity()
 {
-    pointersString = "";
+	_setClass("Entity");
+	selected = false;
 	wld = nullptr;
 	wldGFX = nullptr;
 	wldPHY = nullptr;
-	editor = false;
-	entityBar = nullptr;
+	hasCollision = false;
+	background = false;
+	editorOnly = true;
 	body = nullptr;
 	modelset = nullptr;
 	touchable = false;
-	_setClass("Entity");
-	rotationQuat = glm::quat();
 	rotationEuler = glm::vec3(0,0,0);
-	rotationQuatO = glm::quat();
-	rotationEulerO = glm::vec3(0,0,0);
 	position = glm::vec3(0,0,0);
-	parent = nullptr;
 	relativeTransform = glm::mat4(1);
 	oldMatrix = glm::mat4(1);
-	pointerIndex = 0;
-	pointerIndexPrevious = 0;
-	shouldClearPointer = false;
-    fillPointers();
+	mass = 0.0f;
+    modelPath = "./models/default.mconf";
+
+    registerProperties(
+        "Name",         &name,          nullptr,
+        "Rotation",     &rotationEuler, [this]() { setRotation(rotationEuler); },
+        "Position",     &position,      [this]() { setPosition(position); },
+        "Parent",       &parent,        [this]() { setupParent(); }
+    );
+}
+
+void Entity::initialize()
+{
+    //setProperty("Model", FileName("./models/default.mconf"));
+    setupModel();
+    switchToEditorModel();
+}
+
+void Entity::setupAI()
+{
+    stateStack.push_back(&states["Main"]);
+    eventsNextTick.push_back(std::move(std::make_unique<EBegin>()));
+}
+
+Entity::~Entity()
+{
+	if(body)
+	{
+		assert(wldPHY);
+		wldPHY->remBody(body);
+	}
+	if(modelset)
+	{
+		assert(wldGFX);
+		wldGFX->deleteModelSet(modelset);
+	}
+
+	for(int i=children.size()-1; i>=0; i--)
+	{
+        children[i]->setProperty("Parent", EntityPointer(nullptr));
+	}
+
+    if (parent)
+        for (int i = parent->children.size() - 1; i >= 0; i--) {
+            if (parent->children[i] == this) {
+                parent->children.erase(parent->children.begin() + i);
+                break;
+            }
+        }
+
+    for (auto &p : pointAtMe) {
+        (*p) = nullptr;
+    }
+}
+
+void Entity::setSelected(bool s)
+{
+    selected = s;
+    if(modelset)
+        modelset->setUseEditorShader(selected);
+}
+
+void Entity::setupModel()
+{
+    assert(wldGFX);
+    glm::vec3 lastPos = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::quat lastRot = glm::quat();
+    glm::vec3 lastSca = glm::vec3(1.0f, 1.0f, 1.0f);
+    glm::vec3 lastOff = glm::vec3(0.0f, 0.0f, 0.0f);
+
+    if(modelset) {
+        lastPos = modelset->getPosition();
+        lastRot = modelset->getRotationQuat();
+        lastSca = modelset->getScale();
+        lastOff = modelset->getOffset();
+        background = modelset->isBackground();
+
+        wldGFX->deleteModelSet(modelset);
+    }
+
+    modelset = wldGFX->createModelSet(modelPath.path);
+
+    modelset->setUseEditorShader(selected);
+    modelset->setScale(lastSca);
+    modelset->setOffset(lastOff);
+    modelset->setBackground(background);
+    if(hasCollision || egg::getInstance().g_Editor)
+    {
+        setupCollision(mass);
+    }
+    setRotation(lastRot);
+    setPosition(lastPos);
+
+    if(editorOnly)
+    {
+        switchToEditorModel();
+    }
 }
 
 void Entity::pointerLeft(EntityPointer *pen)
@@ -83,163 +146,23 @@ void Entity::registerLua(LuaUserdata<Entity> &lua) // TODO: Make it more "generi
 {
     addToLua(lua,
             "Name",    name,
-            //"Quat",    rotationQuat,
             "RotH",    rotationEuler[1],
             "RotP",    rotationEuler[0],
             "RotB",    rotationEuler[2],
             "PosX",    position[0],
             "PosY",    position[1],
-            "PosZ",    position[2],
-            "Parent",  pointers[0]
+            "PosZ",    position[2]//,
+            //"Parent",  pointers[0]
     );
 	auto statefunction = egg::getInstance().g_lua.CreateFunction<void(luaCallbackFunction)>([&](luaCallbackFunction lcb) {
-		this->pushState(LuaCallback(lcb));
+		//this->pushState(LuaCallback(lcb));
 	});
 	lua.Set("Add state", statefunction);
 }
 
-void Entity::addProperties()
-{
-    registerPointers();
-
-    registerProperties(
-        "Name",     &name,
-        "Quat",     &rotationQuat,
-        "RotH",     &rotationEuler[1],
-        "RotP",     &rotationEuler[0],
-        "RotB",     &rotationEuler[2],
-        "PosX",     &position[0],
-        "PosY",     &position[1],
-        "PosZ",     &position[2],
-        "Editor",   &editor
-    );
-
-    addDrawableElements( {
-        {
-            DrawableElement{DrawableElement::PT_STRING, "Name", "label='Name' "},
-            DrawableElement{DrawableElement::PT_BOOL, "Editor", "label='Editor Only'"}
-        },
-        {
-            DrawableElement{DrawableElement::PT_QUAT, "Quat", "label='Quaternion' opened=true "},
-            DrawableElement{DrawableElement::PT_FLOAT, "RotH", "label='H (Y axis)' precision=2 step=0.25 "},
-            DrawableElement{DrawableElement::PT_FLOAT, "RotP", "label='P (X axis)' precision=2 step=0.25 "},
-            DrawableElement{DrawableElement::PT_FLOAT, "RotB", "label='B (Z axis)' precision=2 step=0.25 "}
-        },
-        {
-            DrawableElement{DrawableElement::PT_FLOAT, "PosX", "label='X' precision=2 step=0.01 "},
-            DrawableElement{DrawableElement::PT_FLOAT, "PosY", "label='Y' precision=2 step=0.01 "},
-            DrawableElement{DrawableElement::PT_FLOAT, "PosZ", "label='Z' precision=2 step=0.01 "}
-        },
-        {
-            DrawableElement{DrawableElement::PT_ENUM, "Pointer", "", &pointerIndex, NULL, pointersString},
-            DrawableElement{DrawableElement::PT_BUTTON, "PointerValue", "label='" + getPointerDescr() + "'", NULL, NULL},
-            DrawableElement{DrawableElement::PT_BUTTON, "Clear", "", &shouldClearPointer, clearPointer}
-        }
-    }
-                       );
-}
-
-Entity::~Entity()
-{
-	if(body)
-	{
-		assert(wldPHY);
-		wldPHY->remBody(body);
-	}
-	if(modelset)
-	{
-		assert(wldGFX);
-		wldGFX->deleteModelSet(modelset);
-	}
-
-	for(int i=children.size()-1; i>=0; i--)
-	{
-        children[i]->setParent(nullptr);//parent = nullptr;
-	}
-	children.clear();
-
-	if(parent)
-
-    if (parent)
-        for (int i = parent->children.size() - 1; i >= 0; i--) {
-            if (parent->children[i] == this) {
-                parent->children.erase(parent->children.begin() + i);
-                break;
-            }
-        }
-
-    for (auto &p : properties) {
-        delete p.second;
-    }
-
-    for (auto &p : pointAtMe) {
-        (*p) = nullptr;
-    }
-
-    pointers.clear();
-
-    while (!statesObsolete.empty()) {
-        delete statesObsolete.top();
-        statesObsolete.pop();
-    }
-    while (!states.empty()) {
-        delete states.top();
-        states.pop();
-    }
-    while (!events.empty()) {
-        delete events.front();
-        events.pop_front();
-    }
-}
-
-std::string Entity::getName()
-{
-    return properties["Name"]->GetValue<std::string>();
-}
-
-void Entity::setName(string newName)
-{
-    properties["Name"]->SetValue<std::string>(newName);
-}
-/*
-template<class T>
-T &Entity::getProperty(std::string name)
-{
-    return properties[name]->GetValue<T>();
-}
-
-template<class T>
-void Entity::setProperty(string s, T &val)
-{
-    properties[s]->SetValue<T>(val);
-}
-*/
-void Entity::sendEvent(EntityEvent *ee)
-{
-    if (ee) {
-        //they say Bullet sends multiple CollisionCallbacks...
-        //let's fix this by deleting duplicate touch events!
-        if (ee->eventCode == EventCode_Touch) {
-            EventTouch *et = dynamic_cast<EventTouch *>(ee);
-            //for(int i=events.size()-1; i>=0; i--)
-            for (std::list<EntityEvent *>::iterator it = events.begin(); it != events.end(); ++it) {
-                if ((*it)->eventCode == EventCode_Touch) {
-                    EventTouch *ettest = dynamic_cast<EventTouch *>(*it);
-                    if (et->toucher == ettest->toucher) {
-                        //there is already that toucher event present!
-                        delete et;
-                        return;
-                    }
-                }
-            }
-        }
-        events.push_back(ee);
-    }
-}
-
 void Entity::switchToEditorModel()
 {
-    editor = true;
+    editorOnly = true;
     if(!egg::getInstance().g_Editor)
 	{
 		if(modelset)
@@ -251,52 +174,11 @@ void Entity::switchToEditorModel()
 
 void Entity::switchToModel()
 {
-	editor = false;
+	editorOnly = false;
 	if(modelset)
 		modelset->activate();
 	if(body)
 		body->activate();
-}
-
-void Entity::pushState(stateCallback callback, float waitTime)
-{
-    if (!states.empty()) {
-        states.top()->holdExecution();
-    }
-    states.push(new EntityState(callback, this, waitTime, 0));
-    if (events.empty() || events.front()->eventCode != EventCode_Begin)
-        sendEvent(new EventBegin());
-}
-
-void Entity::replaceState(stateCallback callback, float waitTime)
-{
-    assert(!states.empty());
-    states.top()->setObsolete();
-    statesObsolete.push(states.top());
-    states.pop();
-    pushState(callback, waitTime);
-}
-
-void Entity::popState(EntityEvent *ee)
-{
-    if (!states.empty()) {
-        int retIndex = states.top()->getReturnIndex();
-        states.top()->setObsolete();
-        statesObsolete.push(states.top());
-        states.pop();
-
-        if (states.empty()) {
-            destroy();
-            return;
-        }
-
-        if (retIndex != 0) {
-            if (ee != nullptr) delete ee;
-            sendEvent(new EventAutowaitCallback(retIndex));
-        } else if (ee != nullptr) {
-            sendEvent(ee);
-        }
-    }
 }
 
 void Entity::destroy()
@@ -305,140 +187,160 @@ void Entity::destroy()
 	wld->removeEntity(this);
 }
 
-void Entity::_autowait(float time, int returnIndex)
-{
-    assert(returnIndex != 0);
-    if (!states.empty()) {
-        states.top()->holdExecution();
-    }
-    states.push(new EntityState(autowaitState, this, time, returnIndex));
-}
-
-void Entity::syncEntityRotation()
-{
-    if(body && modelset)
-    {
-        modelset->setRotation(body->getRotationQuat());
-    }
-    /*
-    //sync moving and rotation speeds here!
-    if(body)
-    {
-    	//if(translatedByBody)
-    	//	body->setVelocity(desiredLinearDirection);
-    	//body->setAngularVelocity(desiredAngularDirection);
-    }
-    if(model && orientationType != NONE)
-    {
-    	glm::quat q;
-    	if(body && orientationType == BY_BODY)
-    	{
-    		q = body->getRotationQuat();
-    	} else {
-    		q = rotateTowards(model->getRotationQuat(), glm::quat(desiredRotation), rotationSpeed*g_Delta);
-    	}
-    	model->setRotation(glm::angle(q), glm::axis(q));
-    }
-    */
-}
-
 void Entity::update()
 {
-	if(states.empty())
-	{
-		destroy();
-	}
-	while(!statesObsolete.empty()) { delete statesObsolete.top(); statesObsolete.pop(); }
-
-	//transfer pending Touch events from
-	//collision callback to actual event handler
-	while(!lonely())
-	{
-		sendEvent(new EventTouch(popToucher()));
-	}
-
-	states.top()->handleEvents(events);
-
-	if(!editor)
+	if(!editorOnly)
 	{
 		if(modelset && body)
 		{ //sync physical and graphical worlds :3
 			modelset->setPosition(body->getPosition());
 		}
 	}
-	//sync rotation
-	syncEntityRotation();
 	updatePosition();
-	adjustMoving();
 }
 
-void Entity::renderSelectionIndicator()
+void Entity::updateAI()
 {
-    if(!modelset) return;
-    float renSphere = 0.0f;
-    switch(modelset->collision)
+    if (!stateStack.empty()) {
+
+        while (!events.empty()) {
+            int numPops = 0;
+            int sz = stateStack.size();
+
+            for (int i = sz-1; i >= 0; --i) {
+                if (!stateStack[i]->CanHandle(events.back()->code)) {
+                    numPops++;
+                } else {
+                    break;
+                }
+            }
+
+            if (numPops == sz)  {
+                events.pop_back();
+                continue;
+            }
+
+            for (; numPops > 0; --numPops) {
+                stateStack.pop_back();
+            }
+            break;
+        }
+
+        stateStack.back()->Process(this, egg::getInstance().g_Delta, events);
+    } else {
+        events.clear();
+        destroy();
+    }
+
+    switch (stateChange) {
+        case SC_SWAP:
+            stateStack.pop_back();
+
+        case SC_PUSH:
+            timerSeconds  =  0.0f;
+            if (nextState) {
+                stateStack.push_back(nextState);
+            }
+            break;
+
+        case SC_POP:
+            timerSeconds  =  0.0f;
+            if (!stateStack.empty()) {
+                stateStack.pop_back();
+            }
+            break;
+
+        case SC_NOCHANGE:
+            if (timerSeconds > 0.0f) {
+                timerSeconds -= egg::getInstance().g_Delta;
+
+                if (timerSeconds <= 0.0f) {
+                    eventsNextTick.push_back(std::move(std::make_unique<ETimer>()));
+                }
+            }
+            break;
+
+        default:
+            assert(false);
+    }
+    stateChange = SC_NOCHANGE;
+    nextState = nullptr;
+
+    while(!lonely())
     {
-        case ModelSet::CT_BOX : {
-            renSphere = std::max(std::max(modelset->collisionHalfBox.x,
-                                          modelset->collisionHalfBox.y),
-                                 modelset->collisionHalfBox.z);
-            break;
-        }
-        case ModelSet::CT_SPHERE : {
-            renSphere = modelset->collisionRadius;
-            break;
-        }
-        //case CT_MESH : {
-        default : {
-            renSphere = modelset->collisionMesh->getBoundingSphereRadius();
-            break;
+        auto touchEvent = MAKEEVENT(ETouch);
+        touchEvent->who = static_cast<Entity*>(popToucher());
+        eventsNextTick.push_back(std::move(touchEvent));
+    }
+
+    for (int j=0, sz=eventsNextTick.size(); j<sz; ++j) {
+        for (int i=stateStack.size()-1; i>=0; --i) {
+            if (stateStack[i]->CanHandle(eventsNextTick[j]->code)) {
+                if (_phase != 0) {
+                    _phase = 0;
+                    _waitTime = 0.0f;
+                    if (!events.empty()) {
+                        events.pop_back();
+                    }
+                }
+                events.push_back(std::move(eventsNextTick[j]));
+                break;
+            }
         }
     }
-	glUseProgram(0);
-	glm::mat4 proj = wldGFX->getCamera()->getProjectionMatrix();
-	glm::mat4 view = wldGFX->getCamera()->getViewMatrix();
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glMultMatrixf(&proj[0][0]);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glMultMatrixf(&view[0][0]);
-	glPushMatrix();
-	glm::vec3 spherePos = modelset->collisionOffset + position;
-	spherePos.y += renSphere*1.125f;
-	glTranslatef(spherePos.x, spherePos.y, spherePos.z);
-	glRotatef(-90.0f, 1,0,0);
-	glColor3f(1.0f, 0.0f, 0.0f);
-	glDisable(GL_CULL_FACE);
-	GLUquadricObj* quadric = gluNewQuadric();
-	gluCylinder(quadric, 0, renSphere*0.125f, renSphere*0.25f, 8, 1);
-	glTranslatef(0,0,renSphere*0.25f);
-	gluCylinder(quadric, renSphere*0.04f, renSphere*0.04f, renSphere*0.25f, 8, 1);
-	gluDeleteQuadric(quadric);
-	glEnable(GL_CULL_FACE);
-	glPopMatrix();
+    eventsNextTick.clear();
+}
+
+void Entity::setTimer(float wTime)
+{
+    if (wTime > 0.0f && stateStack.back()->CanHandle(ETimer::_code)) {
+        timerSeconds = wTime;
+    }
+}
+
+void Entity::sendEvent(EventPtr e)
+{
+    eventsNextTick.push_back(std::move(e));
+}
+
+bool Entity::pushState(EntityState* es)
+{
+    stateChange = SC_PUSH;
+    nextState = es;
+    return true;
+}
+
+bool Entity::popState()
+{
+    stateChange = SC_POP;
+    return true;
+}
+
+bool Entity::swapState(EntityState* es)
+{
+    stateChange = SC_SWAP;
+    nextState = es;
+    return true;
 }
 
 void Entity::parentMoved()
 {
     glm::mat4 newPos = parent->modelset->getMatrix() * relativeTransform;
     position = glm::vec3(newPos[3][0],newPos[3][1],newPos[3][2]);
-    rotationQuat = glm::quat(newPos);
-    setRotation(rotationQuat);
+    setRotation(glm::quat(newPos));
     setPosition(position);
     oldMatrix = modelset->getMatrix();
     for(int i=children.size()-1; i>=0; i--)
     {
         children[i]->parentMoved();
     }
-    adjustMoving();
 }
 
 void Entity::updatePosition()
 {
 	if(modelset)
 	{
-        glm::mat4 newMatrix = modelset->getMatrix();
+        const glm::mat4& newMatrix = modelset->getMatrix();
         if(newMatrix != oldMatrix)
         {
             if(parent)
@@ -453,7 +355,7 @@ void Entity::updatePosition()
     }
 }
 
-bool Entity::childrenContain(Entity *e) const
+bool Entity::childrenContain(const Entity *e) const
 {
     for (int i = children.size() - 1; i >= 0; i--) {
         if (children[i] == e || children[i]->childrenContain(e))
@@ -462,209 +364,40 @@ bool Entity::childrenContain(Entity *e) const
     return false;
 }
 
-void Entity::setParent(Entity *p)
+void Entity::setupParent()
 {
-    if(modelset == nullptr) { return; }
-    if(p && p->modelset == nullptr) { return; }
-    if(p == this || p == parent || childrenContain(p)) { return; }
-    for(auto &pt : pointers)
-    {
-        if(pt.Name() == "Parent")
-        {
-            pt = p;
-            break;
-        }
+    if(parentOld == parent) {
+        return;
     }
-    if (parent)
-        for (int i = parent->children.size() - 1; i >= 0; i--) {
-            if (parent->children[i] == this) {
-                parent->children.erase(parent->children.begin() + i);
+    if(modelset == nullptr) {
+        parent = parentOld = nullptr;
+        return;
+    }
+    if(parent && parent->modelset == nullptr) {
+        parent = parentOld;
+        return;
+    }
+    if(parent == this || childrenContain(parent.Get())) {
+        parent = parentOld;
+        return;
+    }
+    if (parentOld)
+        for (int i = parentOld->children.size() - 1; i >= 0; i--) {
+            if (parentOld->children[i] == this) {
+                parentOld->children.erase(parentOld->children.begin() + i);
                 break;
             }
         }
-    parent = p;
+    parentOld = parent;
     if (parent) {
         parent->children.push_back(this);
         relativeTransform = glm::inverse(parent->modelset->getMatrix()) * modelset->getMatrix();
     }
 }
 
-Entity *Entity::getParent() const
+const EntityPointer& Entity::getParent() const
 {
     return parent;
-}
-
-void Entity::editorUpdate()
-{
-    if (rotationEuler != rotationEulerO) {
-        //update quaternion
-        for (int i = 0; i < 3; i++) {
-            while (rotationEuler[i] > 180.0f) rotationEuler[i] -= 360.0f;
-            while (rotationEuler[i] < -180.0f) rotationEuler[i] += 360.0f;
-        }
-        rotationQuat = glm::quat(glm::vec3(glm::radians(rotationEuler.x),
-                                           glm::radians(rotationEuler.y),
-                                           glm::radians(rotationEuler.z)));
-    } else if (rotationQuat != rotationQuatO) {
-        //update euler
-        rotationEuler = glm::eulerAngles(rotationQuat) * glm::one_over_pi<float>() * 180.0f;
-    }
-    rotationEulerO = rotationEuler;
-    rotationQuatO = rotationQuat;
-
-    setRotation(rotationQuat);
-    setPosition(position);
-
-    char idStr[15];
-    sprintf(idStr, "(ID=%d)", getMultipass());
-    std::string barLabel = (getClass() + "::" + getName() + idStr);
-    TwDefine((" EntityBar label='" + barLabel + "' ").c_str());
-
-    if (shouldClearPointer) {
-        shouldClearPointer = false;
-        EntityPointer *tp = getTargetPointer();
-        if (tp != nullptr) {
-            if (tp->Name() == "Parent") {
-                setParent(nullptr);
-            }
-            (*tp) = nullptr;
-            pointerIndexPrevious = -1;
-        }
-    }
-
-    if (pointerIndex != pointerIndexPrevious) {
-        TwDefine(("EntityBar/PointerValue label='" + getPointerDescr() + "'").c_str());
-        pointerIndexPrevious = pointerIndex;
-    }
-
-    updatePosition();
-    adjustMoving();
-    renderSelectionIndicator();
-}
-
-void Entity::addDrawableElements(initializer_list<initializer_list<DrawableElement>> lle)
-{
-    for (auto le : lle) {
-        int sz = guiElements.size();
-        guiElements.push_back(vector<DrawableElement>());
-        for (auto e : le) {
-            guiElements[sz].push_back(e);
-        }
-    }
-}
-
-void Entity::drawSingleElement(DrawableElement &elem)
-{
-    switch (elem.tp) {
-    case TW_TYPE_BOOLCPP : {
-        TwAddVarRW(entityBar, elem.name.c_str(), TW_TYPE_BOOLCPP, properties[elem.name]->m_data, elem.drawingHint.c_str());
-        break;
-    }
-    case TW_TYPE_COLOR3F : {
-        TwAddVarRW(entityBar, elem.name.c_str(), TW_TYPE_COLOR3F, properties[elem.name]->m_data, elem.drawingHint.c_str());
-        break;
-    }
-    case TW_TYPE_QUAT4F : {
-        TwAddVarRW(entityBar, elem.name.c_str(), TW_TYPE_QUAT4F, properties[elem.name]->m_data, elem.drawingHint.c_str());
-        break;
-    }
-    case TW_TYPE_STDSTRING : {
-        TwAddVarRW(entityBar, elem.name.c_str(), TW_TYPE_STDSTRING, properties[elem.name]->m_data, elem.drawingHint.c_str());
-        break;
-    }
-    case TW_TYPE_FLOAT : {
-        TwAddVarRW(entityBar, elem.name.c_str(), TW_TYPE_FLOAT, properties[elem.name]->m_data, elem.drawingHint.c_str());
-        break;
-    }
-    case DrawableElement::PT_ENUM : {
-        TwType pointersType = TwDefineEnumFromString((elem.name + "Types").c_str(), elem.enumTypes.c_str());
-        TwAddVarRW(entityBar, elem.name.c_str(), pointersType, elem.clientVar, elem.drawingHint.c_str());
-        break;
-    }
-    case DrawableElement::PT_BUTTON : {
-        TwAddButton(entityBar, elem.name.c_str(), (elem.buttonCallback != NULL ? *elem.buttonCallback.target<void(*)(void *)>() : NULL), elem.clientVar, elem.drawingHint.c_str());
-        break;
-    }
-    default : {
-        printf("ERROR: Unknown gui element type\n");
-    }
-    }
-}
-
-void Entity::drawGuiElements()
-{
-    TwRemoveAllVars(entityBar);
-    static unsigned int sepID = 0;
-    std::string sepname = "s";
-    for (std::vector<DrawableElement> &v : guiElements) {
-        for (DrawableElement &d : v) {
-            drawSingleElement(d);
-        }
-        TwAddSeparator(entityBar, sepname.c_str(), "");
-        sepname += std::to_string(++sepID);
-    }
-}
-
-void Entity::editorSelect()
-{
-    assert(entityBar == NULL);
-    entityBar = TwNewBar("EntityBar");
-
-    char idStr[15]; //example "Model::Mountain(ID=42)"
-    sprintf(idStr, "(ID=%d)", getMultipass());
-    std::string barLabel = (getClass() + "::" + getName() + idStr);
-    std::string barPosition = "position='" + std::to_string(0) + " " + std::to_string(topWndHeight) + "' ";
-    std::string barSize = "size='" + std::to_string(barWidth) + " " + std::to_string(egg::getInstance().g_Resolution.y) + "' ";
-    TwDefine((" EntityBar label='" + barLabel + "' color='70 70 70' alpha=200 valueswidth=" + std::to_string(barWidth / 2) + " fontSize=2 resizable=false movable=false iconifiable=false " + barPosition + barSize).c_str());
-
-    drawGuiElements();
-
-    pointerIndexPrevious = -1;
-}
-
-EntityPointer *Entity::getTargetPointer()
-{
-    if (pointerIndex >= 0 && static_cast<unsigned>(pointerIndex) < pointers.size()) {
-        return &pointers[pointerIndex];
-    }
-    return nullptr;
-}
-
-std::string Entity::getPointerDescr()
-{
-    EntityPointer *ptr = getTargetPointer();
-    if (ptr != nullptr) {
-        EntityPointer &p = *ptr;
-        if (p) {
-            char idStr[15];
-            sprintf(idStr, "(ID=%d)", p->getMultipass());
-            return p->getName() + idStr;
-        }
-    }
-    return "(none)";
-}
-
-void Entity::editorDesselect()
-{
-    assert(TwDeleteBar(entityBar) == 1);
-    entityBar = NULL;
-}
-
-void Entity::adjustMoving()
-{
-}
-
-void Entity::initialize()
-{
-    addProperties();
-}
-
-void Entity::setupModel(std::string modelConfigPath)
-{
-	assert(wldGFX);
-	if(modelset)
-		wldGFX->deleteModelSet(modelset);
-	modelset = wldGFX->createModelSet(modelConfigPath);
 }
 
 void Entity::setupCollision(float mass)
@@ -712,13 +445,48 @@ rapidjson::Value Entity::Serialize(rapidjson::Document &d)
     using namespace rapidjson;
     Value entity_value;
     entity_value.SetObject();
-    for (auto kv : properties) {
-        Property *p = kv.second;
+    for (auto& kv : properties) {
+        Property& p = kv.second;
         std::string s = kv.first;
         Value name;
-        name.SetString(s.c_str(), s.length());
-        entity_value.AddMember(name,  p->Serialize(d), d.GetAllocator());
+        name.SetString(s.c_str(), s.length(), d.GetAllocator());
+        entity_value.AddMember(name,  p.Serialize(d), d.GetAllocator());
     }
+
+    Value aiStates, aiName, aiSize, aiPhase, aiWaitTime, aiTimer;
+    aiStates.SetArray();
+    aiName.SetString("AI", 2, d.GetAllocator());
+    std::vector<std::string> stateStackString(stateStack.size(), "");
+
+    aiSize.SetInt(stateStack.size() + 4);
+    aiPhase.SetInt((int)_phase);
+    aiWaitTime.SetFloat(_waitTime);
+    aiTimer.SetFloat(timerSeconds);
+
+    aiStates.PushBack(aiSize, d.GetAllocator());
+    aiStates.PushBack(aiPhase, d.GetAllocator());
+    aiStates.PushBack(aiWaitTime, d.GetAllocator());
+    aiStates.PushBack(aiTimer, d.GetAllocator());
+
+    for(auto it=states.begin(); it!=states.end(); it++) {
+        const std::string& stateName = it->first;
+        const EntityState* stateAddr = &(it->second);
+
+        for(int i=stateStack.size()-1; i>=0; --i) {
+            if(stateStack[i] == stateAddr) {
+                stateStackString[i] = stateName;
+            }
+        }
+    }
+
+    for(int i=0,sz=stateStackString.size(); i<sz; ++i) {
+        Value stName;
+        stName.SetString(stateStackString[i].c_str(), stateStackString[i].length(), d.GetAllocator());
+        aiStates.PushBack(stName, d.GetAllocator());
+    }
+
+    entity_value.AddMember(aiName, aiStates, d.GetAllocator());
+
     return entity_value;
 }
 
@@ -727,56 +495,47 @@ rapidjson::Value Entity::SerializeForCopying(rapidjson::Document& d)
     using namespace rapidjson;
     Value entity_value;
     entity_value.SetObject();
-    for (auto kv : properties) {
-        Property* p = kv.second;
+    for (auto& kv : properties) {
+        Property& p = kv.second;
         std::string s = kv.first;
         //do not copy pointers and position
-        if(s == "PosX" || s == "PosY" || s == "PosZ" || p->m_tid == typeid(EntityPointer).hash_code())
+        if(s == "Position" || p.m_tid == typeid(EntityPointer).hash_code())
         {
             continue;
         }
         Value name;
-        name.SetString(s.c_str(), s.length());
-        entity_value.AddMember(name,  p->Serialize(d), d.GetAllocator());
+        name.SetString(s.c_str(), s.length(), d.GetAllocator());
+        entity_value.AddMember(name,  p.Serialize(d), d.GetAllocator());
     }
     return entity_value;
 }
 
 void Entity::Deserialize(rapidjson::Value& d)
 {
+    using namespace rapidjson;
     for (auto it = d.MemberBegin(); it != d.MemberEnd(); ++it) {
-        string name = it->name.GetString();
-        if (name == "class") {
+        std::string name = it->name.GetString();
+
+        if (name == "class" || name == "id" ||
+            name == "Position" || name == "Rotation") { //those are set in World
             continue;
         }
-        if (name == "id") {
-            int _id = it->value.GetInt();
-            enByOldId[_id] = this;
+
+        if (name == "AI") {
+            stateStack.clear();
+            Value &aiArray = it->value;
+
+            _phase = (unsigned)aiArray[1].GetInt();
+            _waitTime = aiArray[2].GetFloat();
+            timerSeconds = aiArray[3].GetFloat();
+
+            for(int i=4,sz=aiArray[0].GetInt(); i<sz; ++i) {
+                stateStack.push_back(&states[ std::string(aiArray[i].GetString()) ]);
+            }
             continue;
         }
-        properties[name]->Deserialize(it->value);
+        properties[name].Deserialize(it->value);
     }
-
-
-    for (int i = 0; i < 3; i++) {
-        while (rotationEuler[i] > 180.0f) rotationEuler[i] -= 360.0f;
-        while (rotationEuler[i] < -180.0f) rotationEuler[i] += 360.0f;
-    }
-    rotationQuat = glm::quat(glm::vec3(glm::radians(rotationEuler.x),
-                                       glm::radians(rotationEuler.y),
-                                       glm::radians(rotationEuler.z)));
-
-    rotationEulerO = rotationEuler;
-    rotationQuatO = rotationQuat;
-
-    setPosition(position);
-    setRotation(rotationQuat);
-
-    if (editor) {
-        switchToEditorModel();
-    }
-
-    adjustMoving();
 }
 
 void Entity::setPosition(glm::vec3 pos)
@@ -788,11 +547,26 @@ void Entity::setPosition(glm::vec3 pos)
         body->setPosition(pos);
 }
 
+void Entity::setRotation(glm::vec3 rot)
+{
+    rotationEuler = rot;
+    rotationEuler[0] -= 360.0f*(int(rotationEuler[0])/360);
+    rotationEuler[1] -= 360.0f*(int(rotationEuler[1])/360);
+    rotationEuler[2] -= 360.0f*(int(rotationEuler[2])/360);
+    glm::quat rotationQuat = glm::quat(glm::vec3(glm::radians(rotationEuler.x),
+                                                 glm::radians(rotationEuler.y),
+                                                 glm::radians(rotationEuler.z)));
+    if (body)
+        body->setRotation(rotationQuat);
+    if (modelset)
+        modelset->setRotation(rotationQuat);
+}
+
 void Entity::setRotation(glm::quat rot)
 {
-    rotationQuat = rot;
+    rotationEuler = glm::eulerAngles(rot) * glm::one_over_pi<float>() * 180.0f;
     if (body)
         body->setRotation(rot);
-    if(modelset)
+    if (modelset)
         modelset->setRotation(rot);
 }

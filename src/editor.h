@@ -1,8 +1,9 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 #include "eggineinstance.h"
-#include <glm/glm.hpp>
-#include <map>
+#include <glm/vec3.hpp>
+#include <glm/vec2.hpp>
+#include <unordered_map>
 #include <functional>
 #include <luacppinterface.h>
 #include <SFML/Window.hpp>
@@ -11,42 +12,30 @@
 #include <SFGUI/Widgets.hpp>
 #include "global.h"
 
-using std::map;
-using std::string;
-
 class World;
 class InputHandler;
 class Entity;
 struct RayCastInfo;
-namespace sfg
-{
-    class Window;
-    class Label;
-    class Desktop;
-}
 
 class Editor : public EggineInstance, public std::enable_shared_from_this<Editor>
 {
 public:
     typedef std::shared_ptr<Editor> Ptr;
+
     static Ptr Create();
     virtual ~Editor();
 
-    int run();
-    void setup();
-    void NewWorld();
-    void Load();
-    void SaveAs();
+    int         run();
+    void        setup();
+    void        NewWorld();
+    void        Load();
+    void        SaveAs();
+    void        Save();
 
 private:
-    Editor();
-	void update();
-    void loadAddons();
-    void registerLua();
-
     class BasicAction {
     public:
-        string name;
+        std::string name;
         virtual void run() = 0;
     };
 
@@ -59,50 +48,69 @@ private:
             func.Invoke();
         }
         LuaAction() : func(egg::getInstance().g_lua.CreateFunction<void()>([&] {return;})) {}
-        LuaAction(string n, LuaFunction<void()> f) : func(f){
+        LuaAction(std::string n, LuaFunction<void()> f) : func(f){
             name = n;
         }
     };
 
-    map<char, LuaAction> actions;
-    map<char, LuaAction> ctrl_actions;
+    enum EditorMode { PickEntity, Fly, Moving, Pulling, Idle, LuaMenu, Menu };
 
-	void resizeGUIComponents(unsigned width, unsigned height);
+    Editor();
 
-    void eventsAlways(sf::Event &event);
-    void eventsLuaMenu(sf::Event &event);
-    void eventsIdle(sf::Event &event);
-    void eventsMenu(sf::Event &event);
-    void eventsFly(sf::Event &event);
-    void eventsMoving(sf::Event &event);
-    void eventsPulling(sf::Event &event);
+    void        setupGUI();
 
-    void fillActionsMenu();
+    void        copyEntity();
+    void        pasteEntity();
 
-    World* p_world;
-	InputHandler* p_input;
-    sf::RenderWindow* window;
-    sfg::Desktop desktop;
+    void        update();
+
+    void        drawGrid() const;
+
+    void        loadAddons();
+    void        registerLua();
+
+    void        resizeGUIComponents(unsigned width, unsigned height);
+
+    void        eventsAlways(sf::Event &event);
+    void        eventsLuaMenu(sf::Event &event);
+    void        eventsIdle(sf::Event &event);
+    void        eventsMenu(sf::Event &event);
+    void        eventsFly(sf::Event &event);
+    void        eventsMoving(sf::Event &event);
+    void        eventsPulling(sf::Event &event);
+    void        eventsPick(sf::Event &event);
+
+    void        fillActionsMenu();
+    void        changeMode(EditorMode newMode);
+
+    void        selectEntity(Entity* en);
 
     RayCastInfo castRayScreen(bool fromCenter = false);
-    void updateEntity(Entity* pen);
 
-    enum EditorMode { Fly, Moving, Pulling, Idle, LuaMenu, Menu };
-    void changeMode(EditorMode newMode);
-    std::shared_ptr<sfg::Label> modeStatus;
+    glm::vec3                       vCameraSpeed;
+    std::string                     currentWorld;
+    float                           doubleClickTime;
+    float                           moveModeTime;
+    float                           moveModePeriod;
+    World*                          p_world;
+    InputHandler*                   p_input;
+    sf::RenderWindow*               window;
+    sfg::Desktop                    desktop;
+    Entity*                         selectedEntity;
+    std::string                     pointerProp;
+    std::string                     copyEntitySerialized;
+    float                           editorFlySpeed;
+    glm::vec2                       mposOffsetMoving;
+    EditorMode                      edMode;
+    std::shared_ptr<sfg::Table>     tableEntityProperties;
+    std::shared_ptr<sfg::Window>    leftWindow;
+    std::shared_ptr<sfg::Window>    topWindow;
+    std::shared_ptr<sfg::Window>    popup;
+    std::shared_ptr<sfg::Label>     modeStatus;
 
-    glm::vec3                   vCameraSpeed;
-    float                       fLastClick;
-
-    std::shared_ptr<sfg::Window> popup;
-    std::vector<std::shared_ptr<sfg::Window>> custom;
-
-	Entity*					selectedEntity;
-	float					editorFlySpeed;
-	glm::vec2               mposOffsetMoving;
-	EditorMode 				edMode;
-	std::shared_ptr<sfg::Window> leftWindow;
-	std::shared_ptr<sfg::Window> topWindow;
+    std::vector<std::shared_ptr<sfg::Window>>   custom;
+    std::unordered_map<char, LuaAction>         actions;
+    std::unordered_map<char, LuaAction>         ctrl_actions;
 };
 
 #endif // EDITOR_H

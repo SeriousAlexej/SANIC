@@ -39,7 +39,7 @@ void Game::setup()
 
     window = new sf::RenderWindow(sf::VideoMode(egg::getInstance().g_Resolution.x, egg::getInstance().g_Resolution.y), "Sanic", sf::Style::Titlebar | sf::Style::Close, cs);
     window->setVerticalSyncEnabled(true);
-    window->setFramerateLimit(60);
+    //window->setFramerateLimit(60);
     window->setActive();
 
     glewExperimental=true;
@@ -55,17 +55,21 @@ void Game::setup()
 
     p_input = new InputHandler(window);
     p_world = new World();
+    egg::getInstance().g_World = p_world;
 }
 
 int Game::run()
 {
-    printf(egg::getInstance().logo.c_str());
+    printf("%s", egg::getInstance().logo.c_str());
 
     if(!startupWorld.empty())
     {
         p_world->Love(startupWorld);
     }
     //p_world->createEntity("Player");
+
+    float sec = 0.0f;
+    unsigned fps = 0u;
 
     egg::getInstance().g_Clock.restart();
     while (window->isOpen())
@@ -152,6 +156,14 @@ int Game::run()
 		}
 
         window->display();
+
+        ++fps;
+        sec += egg::getInstance().g_Delta;
+        if(sec >= 1.0f) {
+            sec = 0.0f;
+            printf("%u\n", fps);
+            fps = 0u;
+        }
 	}
 
     return EXIT_SUCCESS;

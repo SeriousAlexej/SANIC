@@ -2,7 +2,7 @@
 #define REGISTEREVENTS_H
 
 #include "entity.h"
-#include "entityevent.h"
+//#include "entityevent.h"
 #include <sstream>
 
 #define LUA_GETTER(x, y, z) \

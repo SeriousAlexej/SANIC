@@ -1,10 +1,11 @@
 #ifndef EDITORGUI_H_INCLUDED
 #define EDITORGUI_H_INCLUDED
 
-const unsigned int leftWndWidth = 150u,
+const unsigned int leftWndWidth = 300u,
                    topWndHeight = 50u,
-                   barWidth = 250u,
-                   wndMinWidth = 640u,
-                   wndMinHeight = 480u;
+                   dwnWndHeight = 0u,
+                   rghtWndWidth = 0u;
+const unsigned int wndMinWidth = 640u + leftWndWidth + rghtWndWidth,
+                   wndMinHeight = 480u + topWndHeight + dwnWndHeight;
 
 #endif // EDITORGUI_H_INCLUDED

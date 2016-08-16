@@ -45,12 +45,23 @@ ModelSet::ModelSet(std::string path, WorldGraphics *wGfx) : pGfx(wGfx)
     assert(lds.IsArray());
     for(auto it=lds.Begin(); it!=lds.End(); ++it)
     {
-        lods.push_back(std::make_unique<ModelLOD>(*it, pGfx));
+        lods.push_back(std::make_unique<ModelLOD>(*it, pGfx, this));
     }
     std::sort(lods.begin(), lods.end(),
               [](std::unique_ptr<ModelLOD> &i, std::unique_ptr<ModelLOD> &j)
               { return j->distance() > i->distance(); }
               );
+}
+
+void ModelSet::setUseEditorShader(bool use)
+{
+    for(auto &lod : lods)
+    {
+        for(auto &mi : lod->models)
+        {
+            mi->useEditorShader = use;
+        }
+    }
 }
 
 void ModelSet::setBackground(bool bcg)
@@ -64,7 +75,7 @@ void ModelSet::setBackground(bool bcg)
         }
     }
 }
-
+/*
 void ModelSet::renderForShadow()
 {
     lods[currLOD]->renderForShadow(mdlMx);
@@ -74,7 +85,7 @@ void ModelSet::render(std::size_t shaderHash)
 {
     lods[currLOD]->render(mdlMx, shaderHash);
 }
-
+*/
 void ModelSet::findVisibleLOD()
 {
     assert(pGfx!=nullptr);
@@ -94,6 +105,10 @@ void ModelSet::findVisibleLOD()
         {
             currLOD = 0u;
         }
+    }
+    for(auto &mi : lods[currLOD]->models)
+    {
+        mi->visible = true;
     }
 }
 

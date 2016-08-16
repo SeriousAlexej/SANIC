@@ -1,7 +1,8 @@
 #ifndef POINT_LIGHT_H_INCLUDED
 #define POINT_LIGHT_H_INCLUDED
-#include "../entity.h"
-#include "../light.h"
+#include "entity.h"
+
+class Light;
 
 class PointLight : public Entity
 {
@@ -10,19 +11,14 @@ public:
 
     PointLight();
     virtual ~PointLight();
-	virtual void	initialize();
-	virtual void	adjustMoving();
+
+    virtual void    initialize() override;
+
+protected:
+    virtual void    updatePosition() override;
 
 private:
-    //states
-    DECLARE_STATE(main);
-    //~states
-	virtual void            editorSelect();
-	virtual void            editorUpdate();
-	virtual void            renderSelectionIndicator();
-	virtual void            addProperties();
-
-    Light*                  lightSource;
+    Light*          lightSource;
 };
 
 
