@@ -5,21 +5,29 @@ extern std::map<EntityPointer*, Entity*> pensOwner;
 extern std::vector<EntityPointer*> pensToRetarget;
 extern Entity* beingDeserialized;
 
-EntityPointer::EntityPointer()
+EntityPointer::EntityPointer() :
+    private_lud(egg::getInstance().g_lua.CreateUserdata<EntityPointer>(this)),
+    null_lud(egg::getInstance().g_lua.CreateUserdata<Entity>(nullptr))
 {
     penTarget = nullptr;
     enID = -1;
     name = "nonamepointer";
+    registerLua();
 }
 
-EntityPointer::EntityPointer(std::string _name)
+EntityPointer::EntityPointer(std::string _name) :
+    private_lud(egg::getInstance().g_lua.CreateUserdata<EntityPointer>(this)),
+    null_lud(egg::getInstance().g_lua.CreateUserdata<Entity>(nullptr))
 {
     penTarget = nullptr;
     enID = -1;
     name = _name;
+    registerLua();
 }
 
-EntityPointer::EntityPointer(const EntityPointer& other)
+EntityPointer::EntityPointer(const EntityPointer& other) :
+    private_lud(egg::getInstance().g_lua.CreateUserdata<EntityPointer>(this)),
+    null_lud(egg::getInstance().g_lua.CreateUserdata<Entity>(nullptr))
 {
     name = other.name;
     penTarget = other.penTarget;
@@ -28,6 +36,7 @@ EntityPointer::EntityPointer(const EntityPointer& other)
     {
         penTarget->pointerAdded(this);
     }
+    registerLua();
 }
 
 EntityPointer::~EntityPointer()
@@ -36,9 +45,11 @@ EntityPointer::~EntityPointer()
     {
         penTarget->pointerLeft(this);
     }
+
+    // TODO: LUA
 }
 
-std::string EntityPointer::Name() const
+const string &EntityPointer::Name()
 {
     return name;
 }
@@ -125,22 +136,14 @@ void EntityPointer::Deserialize(rapidjson::Value& d)
     }
 }
 
-void EntityPointer::registerLua(LuaUserdata<EntityPointer>& l)
+void EntityPointer::registerLua()
 {
     Lua& lua = egg::getInstance().g_lua;
-    auto constructor = lua.CreateFunction<LuaUserdata<EntityPointer>()>([&]() {
-        auto lud = lua.CreateUserdata<EntityPointer>(new EntityPointer);
-        lud.Set("GetEntity", lua.CreateFunction<LuaUserdata<Entity>()>([&]() {
-            auto eud = lua.CreateUserdata<Entity>(penTarget);
-            if(penTarget != nullptr) penTarget->registerLua(eud);
-            return eud;
-        }));
-        lud.Set("SetEntity", lua.CreateFunction<void(LuaUserdata<Entity>)>([&](LuaUserdata<Entity> arg) {
-            penTarget = arg.GetPointer();
-        }));
-        return lud;
-    });
-    auto table = lua.CreateTable();
-    table.Set("new", constructor);
-    lua.GetGlobalEnvironment().Set("EntityPointer", table);
+    private_lud.Set("GetEntity", lua.CreateFunction<LuaUserdata<Entity>()>([&]() {
+        if(penTarget != nullptr) return penTarget->private_lud;
+        else return lua.CreateUserdata<Entity>(nullptr);
+    }));
+    private_lud.Set("SetEntity", lua.CreateFunction<void(LuaUserdata<Entity>)>([&](LuaUserdata<Entity> arg) {
+        penTarget = arg.GetPointer();
+    }));
 }

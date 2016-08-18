@@ -32,9 +32,7 @@ void World::registerLua()
     auto getEntitiesList = egg::getInstance().g_lua.CreateFunction<LuaTable()>([&]() {
         LuaTable result = egg::getInstance().g_lua.CreateTable();
         for(Entity* pen : entities) {
-            LuaUserdata<Entity> eud = egg::getInstance().g_lua.CreateUserdata(pen);
-            pen->registerLua(eud);
-            result.Set<LuaUserdata<Entity>>(eud->getMultipass(), eud);
+            result.Set<LuaUserdata<Entity>>(pen->getMultipass(), pen->private_lud);
         }
         return result;
     });
@@ -86,9 +84,7 @@ void World::registerEntity(const std::string& name)
     [&, name]() -> LuaUserdata<Entity>
     {
         Entity* pen = createEntity(name);
-        auto entity = egg::getInstance().g_lua.CreateUserdata<Entity>(pen);
-        pen->registerLua(entity);
-        return entity;
+        return pen->private_lud;
     });
 
     auto entityType = egg::getInstance().g_lua.CreateTable();

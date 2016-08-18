@@ -54,6 +54,11 @@ private:
 #define switchAutowait \
     EventAutowaitCallback *eac = dynamic_cast<EventAutowaitCallback*>(ee); switch(eac->index)
 
+#define TYPED(c, t) (std::is_same<t, c>::value)
+#define NTYPED(c, t) (!std::is_same<t, c>::value)
+#define BASED(c, t) (std::is_base_of<t, c>::value)
+#define NBASED(c, t) (!std::is_base_of<t, c>::value)
+
 struct DrawableElement
 {
     enum ElemType
@@ -75,7 +80,7 @@ struct DrawableElement
     std::string drawingHint;
     void *clientVar;
     std::function<void TW_CALL (void *)> buttonCallback;
-    std::string enumTypes;
+    std::string* enumTypes;
 };
 
 class EntityState
@@ -171,42 +176,79 @@ public:
 
 	void                    setPosition(glm::vec3 pos);
 	void                    setRotation(glm::quat rot);
+    
+    glm::vec3               getPosition();
+	glm::quat               getRotation();
 
 	void                    pointerAdded(EntityPointer* pen);
 	void                    pointerLeft(EntityPointer* pen);
 
-    virtual void            registerLua(LuaUserdata<Entity>& lua);
+    virtual void            registerLua();
+    LuaUserdata<Entity>     private_lud; // FIXME
 
-    template<class C>
-    typename std::enable_if<std::is_base_of<FromLua, C>::value>::type addToLua(LuaUserdata<Entity>& l, string s, C c)
+    template<class T>
+    T& getProperty(const std::string& name)
     {
-        Lua *pLua = &egg::getInstance().g_lua;
-        l.Set("get"+s, pLua->CreateFunction<LuaUserdata<C>()>([&, s]() {
-            auto lud = pLua->CreateUserdata<C>(&(getProperty<C>(s)));
-            if(lud.GetPointer() != nullptr) lud->registerLua(lud);
+        return properties[name]->GetValue<T>();
+    }
+
+    template<class T>
+    void setProperty(const string& s, T& val)
+    {
+        properties[s]->SetValue<T>(val);
+    }
+    
+    template<class C>
+    typename std::enable_if<std::is_base_of<FromLua, C>::value>::type 
+    addToLua(const string& s, C& c)
+    {
+        private_lud.Set("get"+s, egg::getInstance().g_lua.CreateFunction<LuaUserdata<C>()>([&, s]() {
+            auto lud = getProperty<C>(s).private_lud;
             return lud;
         }));
-        l.Set("set"+s, pLua->CreateFunction<void(LuaUserdata<C>)>([&, s](LuaUserdata<C> arg) {
+        private_lud.Set("set"+s, egg::getInstance().g_lua.CreateFunction<void(LuaUserdata<C>)>([&, s](LuaUserdata<C> arg) {
             setProperty<C>(s, *(arg.GetPointer()));
         }));
     }
-    template<class C>
-    typename std::enable_if<!std::is_base_of<FromLua, C>::value>::type addToLua(LuaUserdata<Entity>& l, string s, C c)
-    {
-        Lua *pLua = &egg::getInstance().g_lua;
-        l.Set("get"+s, pLua->CreateFunction<C()>([&, s]() {
+
+	template<class C>
+	typename std::enable_if<
+		TYPED(C, int) ||
+		TYPED(C, float) ||
+		TYPED(C, char) ||
+		TYPED(C, double) ||
+		TYPED(C, wchar_t) ||
+		TYPED(C, std::string) ||
+		TYPED(C, std::wstring) ||
+		TYPED(C, bool)
+	>::type
+
+    addToLua(const string& s, C& c) {
+        private_lud.Set("get"+s, egg::getInstance().g_lua.CreateFunction<C()>([&, s]() {
             return getProperty<C>(s);
         }));
-        l.Set("set"+s, pLua->CreateFunction<void(C)>([&, s](C arg) {
+        private_lud.Set("set"+s, egg::getInstance().g_lua.CreateFunction<void(C)>([&, s](C arg) {
             setProperty<C>(s, arg);
         }));
-    }
+	}
 
-    template<class C, class... T>
-    void addToLua(LuaUserdata<Entity> &l, string s, C c, T... args)
+    template<class C>
+    typename std::enable_if<
+        NTYPED(C, int) &&
+        NTYPED(C, float) &&
+        NTYPED(C, char) &&
+        NTYPED(C, double) &&
+        NTYPED(C, wchar_t) &&
+        NTYPED(C, std::string) &&
+        NTYPED(C, std::wstring) &&
+        NTYPED(C, bool) &&
+        NBASED(C, FromLua)
+    >::type
+
+    addToLua(const string& s, C& c)
     {
-        addToLua(l, s, c);
-        addToLua(l, args...);
+        private_lud.Set("get"+s, "Not available");
+        private_lud.Set("set"+s, "Not available");
     }
 
 protected:
@@ -244,11 +286,6 @@ protected:
     std::string					name;
     bool                        touchable;
 
-    template<class T>
-    T&                          getProperty(std::string);
-
-    template<class T>
-    void                        setProperty(string s, T& val);
 
     virtual void    addProperties();
     vector<vector<DrawableElement>> guiElements;
@@ -259,14 +296,17 @@ protected:
 
     // SOME BLACK MAGIC
     template<class C>
-    void registerProperties(string s, C* c)
+    void registerProperties(const string& s, C* c)
     {
         Property* pname = Property::create<C>(c);
+        if(properties.find(s) != properties.end())
+            delete properties[s];
         properties[s] = pname;
+        addToLua(s, *c);
     }
 
     template<class C, class... T>
-    void registerProperties(string s, C* c, T... Args)
+    void registerProperties(const string& s, C* c, T... Args)
     {
         registerProperties(s, c);
         registerProperties(Args...);
@@ -299,6 +339,7 @@ protected:
 
 	friend class World;
 	friend class Editor;
+	friend class EntityPointer;
 };
 
 #endif

@@ -4,6 +4,7 @@
 #include <SFML/System/Vector2.hpp>
 #include <string>
 #include <luacppinterface.h>
+#include <lua_utils.h>
 
 class egg {
 public:

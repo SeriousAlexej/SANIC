@@ -129,7 +129,7 @@ void Decoration::addProperties()
             },
             {
                 DrawableElement{DrawableElement::PT_BOOL, "Collide", ""},
-                DrawableElement{DrawableElement::PT_ENUM, "BdType", "label='Collision'", &bodyType, NULL, "Box,Sphere,Model"},
+                DrawableElement{DrawableElement::PT_ENUM, "BdType", "label='Collision'", &bodyType, NULL, new string("Box,Sphere,Model")},
                 DrawableElement{DrawableElement::PT_BUTTON, "CollParams", "label='Collision params'", NULL, NULL},
                 DrawableElement{DrawableElement::PT_FLOAT, "Mass", "step=0.2 min=0"},
                 DrawableElement{DrawableElement::PT_FLOAT, "Radius", "min=0 step=0.2"},

@@ -39,7 +39,7 @@ set_target_properties(lLuaCpp PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/.
 
 
 add_executable(EGGINE ${SANIC_sources} ${TEST_sources})
-set_property(TARGET EGGINE PROPERTY CXX_STANDARD 11)
+set_property(TARGET EGGINE PROPERTY CXX_STANDARD 14)
 
 target_link_libraries(EGGINE lBulletDynamics lBulletCollision lLinearMath lAntTweakBar lLuaCpp ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${Boost_LIBRARIES} ${SFML_LIBRARIES} ${SFGUI_LIBRARY} ${LUA_LIBRARIES})
 

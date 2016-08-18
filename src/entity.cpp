@@ -20,22 +20,23 @@ void TW_CALL clearPointer(void *boolPtr)
 
 void Entity::registerPointers()
 {
+    pointersString = "";
     unsigned i;
     for(i=0; i<pointers.size()-1; i++)
     {
         pointersString += pointers[i].Name() + ",";
-        registerProperties(pointers[i].Name(), &pointers[i]);
+        registerProperties<EntityPointer>(pointers[i].Name(), &pointers[i]);
     }
     pointersString += pointers[i].Name();
-    registerProperties(pointers[i].Name(), &pointers[i]);
+    registerProperties<EntityPointer>(pointers[i].Name(), &pointers[i]);
 }
 
-void Entity::fillPointers()
+void Entity::fillPointers() // rewrite in template style
 {
-    pointers.push_back(EntityPointer("Parent"));
+    pointers.emplace_back("Parent");
 }
 
-Entity::Entity()
+Entity::Entity() : private_lud(egg::getInstance().g_lua.CreateUserdata<Entity>(this))
 {
     pointersString = "";
 	wld = nullptr;
@@ -59,6 +60,7 @@ Entity::Entity()
 	pointerIndexPrevious = 0;
 	shouldClearPointer = false;
     fillPointers();
+	registerLua();
 }
 
 void Entity::pointerLeft(EntityPointer* pen)
@@ -79,28 +81,9 @@ void Entity::pointerAdded(EntityPointer* pen)
     pointAtMe.push_back(pen);
 }
 
-void Entity::registerLua(LuaUserdata<Entity>& lua) // TODO: Make it more "generic"
+void Entity::registerLua() // TODO: Make it more "generic"
 {
-    addToLua(lua,
-            "Name",    name,
-            //"Quat",    rotationQuat,
-            "RotH",    rotationEuler[1],
-            "RotP",    rotationEuler[0],
-            "RotB",    rotationEuler[2],
-            "PosX",    position[0],
-            "PosY",    position[1],
-            "PosZ",    position[2],
-            "Parent",  pointers[0]
-    );
-	auto statefunction = egg::getInstance().g_lua.CreateFunction<void(luaCallbackFunction)>([&](luaCallbackFunction lcb) {
-		this->pushState(LuaCallback(lcb));
-	});
-    lua.Set("pushState", statefunction);
-    //auto getStateStack = egg::getInstance().g_lua.CreateFunction<LuaTable()>([&]() { // TODO
-        //LuaTable stack = egg::getInstance().g_lua.CreateTable();
-        //for(auto state : states) {
-        //}
-    //});
+
 }
 
 void Entity::addProperties()
@@ -137,7 +120,7 @@ void Entity::addProperties()
                 DrawableElement{DrawableElement::PT_FLOAT, "PosZ", "label='Z' precision=2 step=0.01 "}
             },
             {
-                DrawableElement{DrawableElement::PT_ENUM, "Pointer", "", &pointerIndex, NULL, pointersString},
+                DrawableElement{DrawableElement::PT_ENUM, "Pointer", "", &pointerIndex, NULL, &pointersString},
                 DrawableElement{DrawableElement::PT_BUTTON, "PointerValue", "label='"+getPointerDescr()+"'", NULL, NULL},
                 DrawableElement{DrawableElement::PT_BUTTON, "Clear", "", &shouldClearPointer, clearPointer}
             }
@@ -189,6 +172,8 @@ Entity::~Entity()
 	while(!statesObsolete.empty()) { delete statesObsolete.top(); statesObsolete.pop(); }
 	while(!states.empty()) { delete states.top(); states.pop(); }
 	while(!events.empty()) { delete events.front(); events.pop_front(); }
+
+    // TODO: LUA
 }
 
 std::string Entity::getName()  {
@@ -197,18 +182,6 @@ std::string Entity::getName()  {
 
 void Entity::setName(string newName) {
     properties["Name"]->SetValue<std::string>(newName);
-}
-
-template<class T>
-T& Entity::getProperty(std::string name)
-{
-    return properties[name]->GetValue<T>();
-}
-
-template<class T>
-void Entity::setProperty(string s, T& val)
-{
-    properties[s]->SetValue<T>(val);
 }
 
 void Entity::sendEvent(EntityEvent *ee)
@@ -585,7 +558,7 @@ void Entity::drawSingleElement(DrawableElement &elem)
         }
         case DrawableElement::PT_ENUM :
         {
-            TwType pointersType = TwDefineEnumFromString((elem.name+"Types").c_str(), elem.enumTypes.c_str());
+            TwType pointersType = TwDefineEnumFromString((elem.name+"Types").c_str(), elem.enumTypes->c_str());
             TwAddVarRW(entityBar, elem.name.c_str(), pointersType, elem.clientVar, elem.drawingHint.c_str());
             break;
         }
@@ -781,4 +754,20 @@ void Entity::setRotation(glm::quat rot)
         body->setRotation(rot);
     if(model)
         model->setRotation(rot);
+}
+
+glm::vec3 Entity::getPosition()
+{
+    if(model)
+        return model->getPosition();
+    if(body)
+        return body->getPosition();
+}
+
+glm::quat Entity::getRotation()
+{
+    if(body)
+        return body->getRotationQuat();
+    if(model)
+        return model->getRotationQuat();
 }

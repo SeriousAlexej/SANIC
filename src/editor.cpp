@@ -606,6 +606,14 @@ void Editor::registerLua() {
         auto newpopup = sfg::Window::Create(sfg::Window::TOPLEVEL | sfg::Window::CLOSE);
         desktop.Add(newpopup);
         newpopup->SetTitle(name);
+        newpopup->GetSignal(newpopup->OnCloseButton).Connect([newpopup, this] { 
+            newpopup->RemoveAll();
+            newpopup->Show(false);
+            desktop.Remove(newpopup);
+            //desktop.Refresh();
+            changeMode(Idle);
+        });
+        
         auto box = sfg::Box::Create(sfg::Box::Orientation::VERTICAL);
         content.ForAllIntegerKeys([&](int num, LuaType::Value valueType) {
             LuaTable item = content.Get<LuaTable>(num);
@@ -617,6 +625,7 @@ void Editor::registerLua() {
                 button->GetSignal(sfg::Button::OnLeftClick).Connect([act, newpopup, this]() {
                     act->run();
                     newpopup->Show(false);
+                    //desktop.Remove(newpopup);
                     changeMode(Idle);
                 });
                 box->Pack(button);
