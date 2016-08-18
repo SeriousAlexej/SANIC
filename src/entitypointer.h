@@ -32,9 +32,8 @@ public:
     Entity* operator*() const { return penTarget; }
     Entity* operator->() const;
 
-    virtual void registerLua(LuaUserdata<EntityPointer>& l);
-
     virtual void registerLua();
+
     LuaUserdata<EntityPointer> private_lud;
     LuaUserdata<Entity> null_lud;
 private:

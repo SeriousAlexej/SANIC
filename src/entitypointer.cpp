@@ -2,13 +2,17 @@
 #include "entitypointer.h"
 #include <rapidjson/document.h>
 
-EntityPointer::EntityPointer()
+EntityPointer::EntityPointer() :
+    private_lud(egg::getInstance().g_lua.CreateUserdata<EntityPointer>(this)),
+    null_lud(egg::getInstance().g_lua.CreateUserdata<Entity>(nullptr))
 {
     penTarget = nullptr;
     enID = -1;
 }
 
-EntityPointer::EntityPointer(Entity* en)
+EntityPointer::EntityPointer(Entity* en) :
+    private_lud(egg::getInstance().g_lua.CreateUserdata<EntityPointer>(this)),
+    null_lud(egg::getInstance().g_lua.CreateUserdata<Entity>(nullptr))
 {
     penTarget = en;
     enID = -1;
@@ -18,7 +22,7 @@ EntityPointer::EntityPointer(Entity* en)
     }
 }
 
-EntityPointer::EntityPointer(const EntityPointer& other)
+EntityPointer::EntityPointer(const EntityPointer& other) :
     private_lud(egg::getInstance().g_lua.CreateUserdata<EntityPointer>(this)),
     null_lud(egg::getInstance().g_lua.CreateUserdata<Entity>(nullptr))
 {
@@ -94,7 +98,7 @@ Entity* EntityPointer::operator->() const
     return penTarget;
 }
 
-void EntityPointer::registerLua(LuaUserdata<EntityPointer>& l)
+void EntityPointer::registerLua()
 {
     Lua& lua = egg::getInstance().g_lua;
     private_lud.Set("GetEntity", lua.CreateFunction<LuaUserdata<Entity>()>([&]() {

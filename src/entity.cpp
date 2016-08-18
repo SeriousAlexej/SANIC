@@ -10,7 +10,7 @@
 #include "world_graphics.h"
 #include "world_physics.h"
 
-Entity::Entity()
+Entity::Entity() : private_lud(egg::getInstance().g_lua.CreateUserdata<Entity>(this))
 {
 	_setClass("Entity");
 	selected = false;
@@ -144,16 +144,6 @@ void Entity::pointerAdded(EntityPointer *pen)
 
 void Entity::registerLua(LuaUserdata<Entity> &lua) // TODO: Make it more "generic"
 {
-    addToLua(lua,
-            "Name",    name,
-            "RotH",    rotationEuler[1],
-            "RotP",    rotationEuler[0],
-            "RotB",    rotationEuler[2],
-            "PosX",    position[0],
-            "PosY",    position[1],
-            "PosZ",    position[2]//,
-            //"Parent",  pointers[0]
-    );
 	auto statefunction = egg::getInstance().g_lua.CreateFunction<void(luaCallbackFunction)>([&](luaCallbackFunction lcb) {
 		//this->pushState(LuaCallback(lcb));
 	});
@@ -569,20 +559,4 @@ void Entity::setRotation(glm::quat rot)
         body->setRotation(rot);
     if (modelset)
         modelset->setRotation(rot);
-}
-
-glm::vec3 Entity::getPosition()
-{
-    if(model)
-        return model->getPosition();
-    if(body)
-        return body->getPosition();
-}
-
-glm::quat Entity::getRotation()
-{
-    if(body)
-        return body->getRotationQuat();
-    if(model)
-        return model->getRotationQuat();
 }

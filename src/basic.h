@@ -8,6 +8,11 @@
 #include <string>
 #include <algorithm>
 
+#define TYPED(c, t) (std::is_same<t, c>::value)
+#define NTYPED(c, t) (!std::is_same<t, c>::value)
+#define BASED(c, t) (std::is_base_of<t, c>::value)
+#define NBASED(c, t) (!std::is_base_of<t, c>::value)
+
 class Movable
 {
 public:

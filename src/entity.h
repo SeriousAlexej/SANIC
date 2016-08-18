@@ -86,7 +86,7 @@ public:
     void                        pointerLeft(EntityPointer* pen);
 
     virtual void                registerLua(LuaUserdata<Entity>& lua);
-    LuaUserdata<Entity>     private_lud; // FIXME
+    LuaUserdata<Entity>         private_lud; // FIXME
 
     Props&                      getProperties() { return properties; }
 
@@ -160,14 +160,37 @@ protected:
 public:
     template<class C>
     typename std::enable_if<std::is_base_of<FromLua, C>::value>::type
-         addToLua(LuaUserdata<Entity>& l, const std::string& s, C c);
+
+    addToLua(const std::string& s, C& c);
 
     template<class C>
-    typename std::enable_if<!std::is_base_of<FromLua, C>::value>::type
-         addToLua(LuaUserdata<Entity>& l, const std::string& s, C c);
+    typename std::enable_if<
+        TYPED(C, int) ||
+        TYPED(C, float) ||
+        TYPED(C, char) ||
+        TYPED(C, double) ||
+        TYPED(C, wchar_t) ||
+        TYPED(C, std::string) ||
+        TYPED(C, std::wstring) ||
+        TYPED(C, bool)
+    >::type
 
-    template<class C, class... T>
-    void addToLua(LuaUserdata<Entity> &l, const std::string& s, C c, T... args);
+    addToLua(const std::string& s, C& c);
+
+    template<class C>
+    typename std::enable_if<
+        NTYPED(C, int) &&
+        NTYPED(C, float) &&
+        NTYPED(C, char) &&
+        NTYPED(C, double) &&
+        NTYPED(C, wchar_t) &&
+        NTYPED(C, std::string) &&
+        NTYPED(C, std::wstring) &&
+        NTYPED(C, bool) &&
+        NBASED(C, FromLua)
+    >::type
+
+    addToLua(const std::string& s, C& c);
 };
 
 #include "entityTemplates.inc"

@@ -27,6 +27,7 @@ public:
 	void	update();
 	void	updateEditor();
     Entity* createEntity(const std::string &entityName);
+    Entity* createEntity(std::shared_ptr<Entity> e);
 	void	removeEntity(Entity* e);
 
 	RayCastInfo	castRay(glm::vec3 origin, glm::vec3 direction);
@@ -48,7 +49,6 @@ private:
 	WorldPhysics			physics;
     void registerEntity(const std::string& name);
     void registerLua();
-	Entity*	createEntity(std::shared_ptr<Entity> e);
 };
 
 #endif

@@ -36,7 +36,7 @@ void registerEvents(Lua& lua)
 		else
 		{
 			EntityEvent* pev = new EntityEvent();
-			stringstream(type) >> pev->eventCode;
+                        std::stringstream(type) >> pev->eventCode;
 			LuaUserdata<EntityEvent> lud = lua.CreateUserdata<EntityEvent>(pev);
             
             return lud;
