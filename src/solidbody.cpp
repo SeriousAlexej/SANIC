@@ -1,11 +1,52 @@
+#include <BulletCollision/CollisionDispatch/btCollisionWorld.h>
 #include "solidbody.h"
+#include "mesh.h"
 #include "default_model.h"
+
+struct BodyContactResultCallback : public btCollisionWorld::ContactResultCallback
+{
+    BodyContactResultCallback(bool* ptr) : context(ptr) { *ptr = false; }
+
+    btScalar addSingleResult(btManifoldPoint& cp,
+                             const btCollisionObjectWrapper* colObj0Wrap,
+                             int partId0,int index0,
+                             const btCollisionObjectWrapper* colObj1Wrap,
+                             int partId1,
+                             int index1)
+    {
+        *context = true;
+    }
+
+    bool* context;
+};
+
+bool SolidBody::collidesWith(const SolidBody *b)
+{
+    if(rigidBody && b && b->rigidBody)
+    {
+        bool result;
+        BodyContactResultCallback callback(&result);
+        world->contactPairTest(rigidBody, b->rigidBody, callback);
+        return result;
+    }
+    return false;
+}
+
+void SolidBody::setPassable(bool p)
+{
+    if(rigidBody)
+    {
+        if(p)
+            rigidBody->setCollisionFlags(rigidBody->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE );
+        else
+            rigidBody->setCollisionFlags(rigidBody->getCollisionFlags() & ~btCollisionObject::CF_NO_CONTACT_RESPONSE );
+    }
+}
 
 SolidBody::SolidBody(float _mass, float radius)
 {
     offset = btVector3(0,0,0);
 	world = NULL;
-	//removeMe = false;
 	indexVertexArrays = NULL;
 	trimeshShape = NULL;
 	if(radius < 0.01f)
@@ -22,7 +63,6 @@ SolidBody::SolidBody(float _mass, glm::vec3 boxHalfExtents)
 {
     offset = btVector3(0,0,0);
 	world = NULL;
-	//removeMe = false;
 	indexVertexArrays = NULL;
 	trimeshShape = NULL;
 	for(int i=0; i<3; i++)
@@ -38,16 +78,14 @@ SolidBody::SolidBody(float _mass, glm::vec3 boxHalfExtents)
 	createBodyFromShape(_mass);
 }
 
-SolidBody::SolidBody(float _mass, ModelInstance *mi)
+SolidBody::SolidBody(float _mass, Mesh *mesh)
 {
     offset = btVector3(0,0,0);
 	world = NULL;
-	//removeMe = false;
-	assert(mi != NULL);
-	Mesh* mesh = mi->pMesh;
-	assert(mesh != NULL);
+	indexVertexArrays = NULL;
+	trimeshShape = NULL;
 
-	if(!mesh->isOk)
+	if(!mesh || !mesh->isOk)
 	{
 		collShape = new btBoxShape(btVector3(0.5, 0.5, 0.5));
 		collisionType = CollBox;
@@ -156,7 +194,6 @@ void SolidBody::removeFromWorld()
 			delete rigidBody->getMotionState();
 		}
 	}
-	delete this;
 }
 
 void SolidBody::setPosition(glm::vec3 pos)

@@ -10,16 +10,18 @@ public:
 	Texture(std::string path);
 	virtual ~Texture();
 
-	std::string	getSrcFnm() { return srcFnm; }
+	inline std::size_t  getHash() const { return srcFnmHash; }
 
 	void	bind();
+	static void unbind();
 
 private:
 
 	GLuint		textureID;
-	std::string	srcFnm;
+	std::size_t	srcFnmHash;
+	static GLuint currentTexture;
 
-	void	loadTexture();
+	void	loadTexture(std::string &srcFnm);
 };
 
 #endif

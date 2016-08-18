@@ -2,9 +2,10 @@
 #define _WORLD_PHYSICS_H_
 #include <glm/vec3.hpp>
 #include <vector>
+#include <memory>
 #include "GLDebugDrawer.h"
 class SolidBody;
-class ModelInstance;
+class Mesh;
 class Camera;
 class btBroadphaseInterface;
 class btDefaultCollisionConfiguration;
@@ -22,7 +23,7 @@ public:
 
 	SolidBody*	addBody(float mass, float radius);
 	SolidBody*	addBody(float mass, glm::vec3 boxHalfExtents);
-	SolidBody*	addBody(float mass, ModelInstance* mi);
+	SolidBody*	addBody(float mass, Mesh* mesh);
 	void		remBody(SolidBody*& body);
 
 	void		render(Camera* cam);
@@ -40,7 +41,7 @@ private:
 	btSequentialImpulseConstraintSolver*		solver;
 	btDiscreteDynamicsWorld*					dynamicsWorld;
 
-	std::vector<SolidBody*>			bodies;
+	std::vector<std::shared_ptr<SolidBody>>     bodies;
 
 	friend class World;
 };

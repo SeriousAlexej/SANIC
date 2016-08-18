@@ -2,7 +2,6 @@
 #define _WORLD_H_
 #include "world_physics.h"
 #include "world_graphics.h"
-#include <luacppinterface.h>
 
 class Entity;
 
@@ -35,22 +34,21 @@ public:
     void Clear(); //complementation of entities
     void Save(const std::string& filename);
     void Love(const std::string& filename); // Lyubov porojdaet mir
+    Entity* Paste(std::string& src);
+    Entity* GetEntityWithID(int id);
 
-    std::vector<Entity*>& getEntities() { return entities; }
+    std::vector<std::shared_ptr<Entity>>& getEntities() { return entities; }
 
 private:
     void deleteAllEntities(); //red button
 
-	std::vector<Entity*>	entities;
-	std::vector<Entity*>    obsoleteEntitties; // entities to be deleted upon next update, populated on Entity::destroy()
+	std::vector<std::shared_ptr<Entity>>	entities;
+	std::vector<std::shared_ptr<Entity>>    obsoleteEntitties; // entities to be deleted upon next update, populated on Entity::destroy()
 	WorldGraphics*			pGraphics;   // there are thigs possible to render with nothing but heart
 	WorldPhysics			physics;
     void registerEntity(const std::string& name);
     void registerLua();
-
-private:
-
-	Entity*	createEntity(Entity* e);
+	Entity*	createEntity(std::shared_ptr<Entity> e);
 };
 
 #endif

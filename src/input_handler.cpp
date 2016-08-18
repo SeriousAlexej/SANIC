@@ -53,15 +53,16 @@ void InputHandler::switchLockMouse(bool b)
     if(/*lockMouse*/ !b)
     {
         lockMouse = false;
+        sf::Mouse::setPosition(mouseOldPosition, *mainWindow);
         mainWindow->setMouseCursorVisible(true);
-        mouseOldPosition = sf::Mouse::getPosition(*mainWindow);
-        sf::Mouse::setPosition(sf::Vector2i(mainWindow->getSize().x/2,mainWindow->getSize().y/2), *mainWindow);
     } else {
         lockMouse = true;
         mainWindow->setMouseCursorVisible(false);
         mouseDelta.x = 0.0f;
         mouseDelta.y = 0.0f;
-        sf::Mouse::setPosition(mouseOldPosition, *mainWindow);
+        mouseOldPosition = sf::Mouse::getPosition(*mainWindow);
+		sf::Vector2i mp = (egg::getInstance().g_Editor?sf::Vector2i(mainWindow->getSize().x/2,mainWindow->getSize().y/2):sf::Vector2i(windowSize.x/2,windowSize.y/2));
+		sf::Mouse::setPosition(mp, *mainWindow);
     }
 }
 
@@ -110,7 +111,10 @@ bool InputHandler::cursorIsInsideWindow() const
 {
     sf::Vector2i mpos = sf::Mouse::getPosition(*mainWindow);
     sf::Vector2u wsz = mainWindow->getSize();
-    return mpos.x > (egg::getInstance().g_Editor?leftWndWidth:0) && mpos.y > (egg::getInstance().g_Editor?topWndHeight:0) && mpos.x < static_cast<int>(wsz.x) && mpos.y < static_cast<int>(wsz.y);
+    return mpos.x > (egg::getInstance().g_Editor ? (int)leftWndWidth:0)
+        && mpos.y > (egg::getInstance().g_Editor ? (int)topWndHeight:0)
+        && mpos.x < (egg::getInstance().g_Editor ? (int)wsz.x - (int)rghtWndWidth : (int)wsz.x)
+        && mpos.y < (egg::getInstance().g_Editor ? (int)wsz.y - (int)dwnWndHeight : (int)wsz.y);
 }
 
 void InputHandler::setFocus(bool _f)

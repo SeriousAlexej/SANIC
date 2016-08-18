@@ -38,6 +38,7 @@ public:
 	//every mesh must have it's model
 	Mesh(std::string path);
 	virtual ~Mesh();
+	inline std::size_t  getHash() const { return srcFileHash; }
 	//cf - current frame, nf - next frame. For interpolation, received from ModelInstance
 	void		render(unsigned cf, unsigned nf);
 	float		getBoundingSphereRadius() const { return boundingSphereRadius; }
@@ -46,14 +47,13 @@ public:
 	glm::vec3	getBoundingBoxHalfSizes() const { return boundingBoxHalfSizes; }
 	AnimInfo	getAnimInfo(std::string animName) { return animations[animName]; }
 	bool		hasAnim(std::string animName) { return animations.find(animName) != animations.end(); }
-	std::string	getSrcFnm() { return srcFile; }
 
 private:
 
 	std::map<std::string, AnimInfo>	animations;
 	//dat shit stores buffer indices for frames
 	std::vector<Frame>	frames;
-	std::string			srcFile;
+	std::size_t		srcFileHash;
 	//for culling purposes
 	float				boundingSphereRadius;
 	glm::vec3			boundingSphereCenter;

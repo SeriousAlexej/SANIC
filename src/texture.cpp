@@ -1,27 +1,42 @@
 #include <SFML/Graphics.hpp>
+#include <functional>
 #include "texture.h"
 #include "global.h"
+
+GLuint Texture::currentTexture = 0u;
 
 Texture::Texture(std::string path)
 {
 	textureID = 0;
-	srcFnm = path;
-	loadTexture();
+	srcFnmHash = std::hash<std::string>()(path);
+	loadTexture(path);
 }
 
 Texture::~Texture()
 {
 	if(textureID)
 	{
+		unbind();
+        glBindTexture(GL_TEXTURE_2D, 0u);
 		glDeleteTextures(1, &textureID);
 	}
 }
 
 void Texture::bind()
 {
-	glBindTexture(GL_TEXTURE_2D, textureID);
+    if(textureID != currentTexture)
+	{
+	    currentTexture = textureID;
+	    glBindTexture(GL_TEXTURE_2D, textureID);
+	}
 }
-void Texture::loadTexture()
+
+void Texture::unbind()
+{
+    currentTexture = 0u;
+}
+
+void Texture::loadTexture(std::string &srcFnm)
 {
     std::string toUse = srcFnm;
     if(toUse!="")

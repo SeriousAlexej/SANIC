@@ -1,6 +1,7 @@
 #include "world_physics.h"
 #include "entity.h"
 #include "solidbody.h"
+#include "camera.h"
 
 extern ContactProcessedCallback		gContactProcessedCallback;
 
@@ -86,47 +87,47 @@ void WorldPhysics::update()
 
 SolidBody* WorldPhysics::addBody(float mass, float radius)
 {
-	SolidBody* newBody = new SolidBody(mass, radius);
-	if(!newBody || !dynamicsWorld) return NULL;
+	std::shared_ptr<SolidBody> newBody = std::make_shared<SolidBody>(mass, radius);
+	if(!newBody || !dynamicsWorld) return nullptr;
 
 	newBody->setWorld(dynamicsWorld);
 	newBody->addToWorld();
 	bodies.push_back(newBody);
-	return newBody;
+	return newBody.get();
 }
 
 SolidBody* WorldPhysics::addBody(float mass, glm::vec3 boxHalfExtents)
 {
-	SolidBody* newBody = new SolidBody(mass, boxHalfExtents);
-	if(!newBody || !dynamicsWorld) return NULL;
+	std::shared_ptr<SolidBody> newBody = std::make_shared<SolidBody>(mass, boxHalfExtents);
+	if(!newBody || !dynamicsWorld) return nullptr;
 
 	newBody->setWorld(dynamicsWorld);
 	newBody->addToWorld();
 	bodies.push_back(newBody);
-	return newBody;
+	return newBody.get();
 }
 
-SolidBody* WorldPhysics::addBody(float mass, ModelInstance* mi)
+SolidBody* WorldPhysics::addBody(float mass, Mesh* mesh)
 {
-	SolidBody* newBody = new SolidBody(mass, mi);
-	if(!newBody || !dynamicsWorld) return NULL;
+	std::shared_ptr<SolidBody> newBody = std::make_shared<SolidBody>(mass, mesh);
+	if(!newBody || !dynamicsWorld) return nullptr;
 
 	newBody->setWorld(dynamicsWorld);
 	newBody->addToWorld();
 	bodies.push_back(newBody);
-	return newBody;
+	return newBody.get();
 }
 
 void WorldPhysics::remBody(SolidBody*& body)
 {
-	if(!body) return;
+	if(body == nullptr) return;
 	for(int i = bodies.size()-1; i>=0; i--)
 	{
-		if(bodies[i] == body)
+		if(bodies[i].get() == body)
 		{
 			body->removeFromWorld();
 			bodies.erase(bodies.begin() + i);
-			body = NULL;
+			body = nullptr;
 			return;
 		}
 	}

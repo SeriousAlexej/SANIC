@@ -1,35 +1,27 @@
+#include "entity.h"
 #include "entitypointer.h"
 #include <rapidjson/document.h>
 
-extern std::map<EntityPointer*, Entity*> pensOwner;
-extern std::vector<EntityPointer*> pensToRetarget;
-extern Entity* beingDeserialized;
-
-EntityPointer::EntityPointer() :
-    private_lud(egg::getInstance().g_lua.CreateUserdata<EntityPointer>(this)),
-    null_lud(egg::getInstance().g_lua.CreateUserdata<Entity>(nullptr))
+EntityPointer::EntityPointer()
 {
     penTarget = nullptr;
     enID = -1;
-    name = "nonamepointer";
-    registerLua();
 }
 
-EntityPointer::EntityPointer(std::string _name) :
-    private_lud(egg::getInstance().g_lua.CreateUserdata<EntityPointer>(this)),
-    null_lud(egg::getInstance().g_lua.CreateUserdata<Entity>(nullptr))
+EntityPointer::EntityPointer(Entity* en)
 {
-    penTarget = nullptr;
+    penTarget = en;
     enID = -1;
-    name = _name;
-    registerLua();
+    if (penTarget) {
+        enID = penTarget->getMultipass();
+        penTarget->pointerAdded(this);
+    }
 }
 
-EntityPointer::EntityPointer(const EntityPointer& other) :
+EntityPointer::EntityPointer(const EntityPointer& other)
     private_lud(egg::getInstance().g_lua.CreateUserdata<EntityPointer>(this)),
     null_lud(egg::getInstance().g_lua.CreateUserdata<Entity>(nullptr))
 {
-    name = other.name;
     penTarget = other.penTarget;
     enID = other.enID;
     if(penTarget != nullptr)
@@ -47,11 +39,6 @@ EntityPointer::~EntityPointer()
     }
 
     // TODO: LUA
-}
-
-const string &EntityPointer::Name()
-{
-    return name;
 }
 
 bool EntityPointer::operator==(const EntityPointer& other) const
@@ -107,36 +94,7 @@ Entity* EntityPointer::operator->() const
     return penTarget;
 }
 
-rapidjson::Value EntityPointer::Serialize(rapidjson::Document& d)
-{
-	using JsonValue = rapidjson::Value;
-	JsonValue val;
-	val.SetObject();
-
-	JsonValue name, enid;
-	name.SetString(Name().c_str(), Name().length());
-	enid.SetInt(enID);
-
-	val.AddMember("name", name, d.GetAllocator());
-	val.AddMember("enID", enid, d.GetAllocator());
-
-	return val;
-}
-
-void EntityPointer::Deserialize(rapidjson::Value& d)
-{
-	using JsonValue = rapidjson::Value;
-	JsonValue& val = d;
-	name = val["name"].GetString();
-	enID = val["enID"].GetInt();
-	if(enID != -1)
-    {
-        pensToRetarget.push_back(this);
-        pensOwner[this] = beingDeserialized;
-    }
-}
-
-void EntityPointer::registerLua()
+void EntityPointer::registerLua(LuaUserdata<EntityPointer>& l)
 {
     Lua& lua = egg::getInstance().g_lua;
     private_lud.Set("GetEntity", lua.CreateFunction<LuaUserdata<Entity>()>([&]() {

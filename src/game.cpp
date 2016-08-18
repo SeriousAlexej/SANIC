@@ -31,6 +31,7 @@ void Game::setup()
     cs.depthBits = 24;
     cs.majorVersion = 3;
     cs.minorVersion = 0;
+    cs.stencilBits = 8;
     cs.attributeFlags = sf::ContextSettings::Core;
 
     egg::getInstance().g_Resolution = sf::Vector2u(1024u, 768u);
@@ -38,7 +39,7 @@ void Game::setup()
 
     window = new sf::RenderWindow(sf::VideoMode(egg::getInstance().g_Resolution.x, egg::getInstance().g_Resolution.y), "Sanic", sf::Style::Titlebar | sf::Style::Close, cs);
     window->setVerticalSyncEnabled(true);
-    window->setFramerateLimit(60);
+    //window->setFramerateLimit(60);
     window->setActive();
 
     glewExperimental=true;
@@ -49,20 +50,26 @@ void Game::setup()
     glCullFace(GL_BACK);
     glDepthFunc(GL_LESS);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     p_input = new InputHandler(window);
     p_world = new World();
+    egg::getInstance().g_World = p_world;
 }
 
 int Game::run()
 {
-    printf(egg::getInstance().logo.c_str());
+    printf("%s", egg::getInstance().logo.c_str());
 
     if(!startupWorld.empty())
     {
         p_world->Love(startupWorld);
     }
     //p_world->createEntity("Player");
+
+    float sec = 0.0f;
+    unsigned fps = 0u;
 
     egg::getInstance().g_Clock.restart();
     while (window->isOpen())
@@ -143,12 +150,20 @@ int Game::run()
 		{
             cam->moveUp(-editorFlySpeed*egg::getInstance().g_Delta);
 		}
-
+            //glClear(GL_COLOR_BUFFER_BIT);
             p_world->update();
             //p_world->physics.render(cam);
 		}
 
         window->display();
+
+        ++fps;
+        sec += egg::getInstance().g_Delta;
+        if(sec >= 1.0f) {
+            sec = 0.0f;
+            printf("%u\n", fps);
+            fps = 0u;
+        }
 	}
 
     return EXIT_SUCCESS;
