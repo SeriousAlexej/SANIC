@@ -31,9 +31,6 @@ set_target_properties(lBulletCollision PROPERTIES IMPORTED_LOCATION ${CMAKE_SOUR
 add_library(lLinearMath SHARED IMPORTED)
 set_target_properties(lLinearMath PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/../bullet/src/LinearMath/libLinearMath.a)
 
-add_library(lAntTweakBar SHARED IMPORTED)
-set_target_properties(lAntTweakBar PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/../deps/lib/libAntTweakBar.so)
-
 add_library(lLuaCpp STATIC IMPORTED)
 set_target_properties(lLuaCpp PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/../deps/lib/libluacppinterface.a)
 
@@ -41,5 +38,5 @@ set_target_properties(lLuaCpp PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/.
 add_executable(EGGINE ${SANIC_sources} ${TEST_sources})
 set_property(TARGET EGGINE PROPERTY CXX_STANDARD 14)
 
-target_link_libraries(EGGINE lBulletDynamics lBulletCollision lLinearMath lAntTweakBar lLuaCpp ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${Boost_LIBRARIES} ${SFML_LIBRARIES} ${SFGUI_LIBRARY} ${LUA_LIBRARIES})
+target_link_libraries(EGGINE lBulletDynamics lBulletCollision lLinearMath lLuaCpp ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${Boost_LIBRARIES} ${SFML_LIBRARIES} ${SFGUI_LIBRARY} ${LUA_LIBRARIES})
 
