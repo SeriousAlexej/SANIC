@@ -1147,14 +1147,13 @@ void Editor::registerLua()
         std::weak_ptr<sfg::Window> weakNewpopup = newpopup;
         desktop.Add(newpopup);
         newpopup->SetTitle(name);
-        newpopup->GetSignal(newpopup->OnCloseButton).Connect([newpopup, this] { 
-            newpopup->RemoveAll();
-            newpopup->Show(false);
-            desktop.Remove(newpopup);
-            //desktop.Refresh();
+        newpopup->GetSignal(sfg::Window::OnCloseButton).Connect([this, weakNewpopup]()
+        {
+            if(auto npp = weakNewpopup.lock())
+                desktop.Remove(npp);
             changeMode(Idle);
         });
-        
+
         auto box = sfg::Box::Create(sfg::Box::Orientation::VERTICAL);
         content.ForAllIntegerKeys([&](int num, LuaType::Value valueType) {
             LuaTable item = content.Get<LuaTable>(num);
@@ -1190,20 +1189,6 @@ void Editor::registerLua()
                 });
                 result.Set("get" + key, getText);
             }
-        });
-        /*
-        newpopup->GetSignal(sfg::Window::OnMouseEnter).Connect([this]() {
-            changeMode(Menu);
-        });
-        newpopup->GetSignal(sfg::Window::OnMouseLeave).Connect([this]() {
-            changeMode(Idle);
-        });
-        */
-        newpopup->GetSignal(sfg::Window::OnCloseButton).Connect([this, weakNewpopup]()
-        {
-            if(auto npp = weakNewpopup.lock())
-                desktop.Remove(npp);
-            changeMode(Idle);
         });
         newpopup->Add(box);
         newpopup->Show(true);

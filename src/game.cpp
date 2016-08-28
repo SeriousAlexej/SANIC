@@ -32,7 +32,6 @@ void Game::setup()
     cs.majorVersion = 3;
     cs.minorVersion = 0;
     cs.stencilBits = 8;
-    cs.attributeFlags = sf::ContextSettings::Core;
 
     egg::getInstance().g_Resolution = sf::Vector2u(1024u, 768u);
     egg::getInstance().g_DrawOrigin = sf::Vector2u(0u, 0u);
