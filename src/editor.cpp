@@ -73,7 +73,7 @@ void Editor::NewWorld()
 void Editor::Load()
 {
     std::string path;
-    const char *result = tinyfd_openFileDialog("Load world", "./", 0, NULL, 0);
+    const char *result = tinyfd_openFileDialog("Load world", "./", 0, NULL, NULL, 0);
     if (result) {
         path = relativePath(result);
         p_world->Love(path);
@@ -84,7 +84,7 @@ void Editor::Load()
 void Editor::SaveAs()
 {
     std::string path;
-    const char *result = tinyfd_saveFileDialog("Save world as", "./", 0, NULL);
+    const char *result = tinyfd_saveFileDialog("Save world as", "./", 0, NULL, NULL);
     if (result) {
         path = relativePath(result);
         p_world->Save(path);
@@ -746,12 +746,29 @@ void Editor::selectEntity(Entity* en)
         if(prop.m_tid == typeid(Color).hash_code())
         {
             const Color& col = *static_cast<Color*>(prop.m_data);
+            auto colBox = sfg::Box::Create();
+            auto v1 = sfg::SpinButton::Create(0.0f, 1.0f, 0.01f);
+            auto v2 = sfg::SpinButton::Create(0.0f, 1.0f, 0.01f);
+            auto v3 = sfg::SpinButton::Create(0.0f, 1.0f, 0.01f);
+            v1->SetDigits(2);
+            v2->SetDigits(2);
+            v3->SetDigits(2);
+            v1->SetRequisition(sf::Vector2f(27.0f, 20.0f));
+            v2->SetRequisition(sf::Vector2f(27.0f, 20.0f));
+            v3->SetRequisition(sf::Vector2f(27.0f, 20.0f));
+            v1->SetValue(col.value.x);
+            v2->SetValue(col.value.y);
+            v3->SetValue(col.value.z);
+            sfg::SpinButton* v1PTR = v1.get();
+            sfg::SpinButton* v2PTR = v2.get();
+            sfg::SpinButton* v3PTR = v3.get();
+
             auto colButton = ColorButton::Create(col.value);
-            colButton->SetRequisition( sf::Vector2f( 100.0f, 20.0f ) );
+            colButton->SetRequisition( sf::Vector2f( 19.0f, 20.0f ) );
             ColorButton* colButtonPTR = colButton.get();
 
             colButton->GetSignal(sfg::Widget::OnLeftClick).Connect(
-                            [en, propName, colButtonPTR]()
+                            [en, propName, colButtonPTR, v1PTR, v2PTR, v3PTR]()
                             {
                                 glm::vec3 col = (en->getProperty<Color>(propName)).value;
                                 unsigned char startColor[3];
@@ -764,9 +781,32 @@ void Editor::selectEntity(Entity* en)
                                 col.z = startColor[2]/255.0f;
                                 en->setProperty<Color>(propName, Color(col));
                                 colButtonPTR->SetFillColor(col);
+                                v1PTR->SetValue(col.x);
+                                v2PTR->SetValue(col.y);
+                                v3PTR->SetValue(col.z);
                             });
 
-            tableEntityProperties->Attach(colButton,
+            auto callb2 = [en, propName, colButtonPTR, v1PTR, v2PTR, v3PTR]()
+                            {
+                                glm::vec3 col(v1PTR->GetValue(), v2PTR->GetValue(), v3PTR->GetValue());
+                                en->setProperty<Color>(propName, Color(col));
+                                colButtonPTR->SetFillColor(col);
+                            };
+
+            v1->GetSignal(sfg::SpinButton::OnValueChanged).Connect(callb2);
+            v2->GetSignal(sfg::SpinButton::OnValueChanged).Connect(callb2);
+            v3->GetSignal(sfg::SpinButton::OnValueChanged).Connect(callb2);
+
+            colBox->Pack(colButton, true, true);
+            colBox->Pack(v1, true, true);
+            colBox->Pack(v2, true, true);
+            colBox->Pack(v3, true, true);
+
+            auto align = sfg::Alignment::Create();
+            align->Add(colBox);
+            align->SetAlignment(sf::Vector2f(1.0f, 0.0f));
+            align->SetScale(sf::Vector2f(1.0f, 0.0f));
+            tableEntityProperties->Attach(align,
                                           sf::Rect<sf::Uint32>(2,freeRow,1,1),
                                           sfg::Table::FILL | sfg::Table::EXPAND,
                                           0);
@@ -908,7 +948,7 @@ void Editor::selectEntity(Entity* en)
                       [en, propName, fnEntryPTR]()
                       {
                           const char* filter[] = { (propName.find("Model") != std::string::npos ? "*.mconf" : "*.*") };
-                          const char* result = tinyfd_openFileDialog("Select Resource","./",1,filter,0);
+                          const char* result = tinyfd_openFileDialog("Select Resource","./",1,filter,NULL,0);
                           if(result)
                           {
                               std::string path = relativePath(result);
