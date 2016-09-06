@@ -6,8 +6,7 @@
 #include <luacppinterface.h>
 #include <lua_utils.h>
 
-class World;
-class Shader;
+class EggineInstance;
 
 class egg {
 public:
@@ -21,7 +20,7 @@ public:
     bool                g_UseDirectionalLight = true;
     std::string         g_WorkingDir;
     Lua                 g_lua;
-    World*              g_World;
+    EggineInstance*     g_Eggine;
 
     static egg& getInstance();
 private:

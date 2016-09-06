@@ -616,7 +616,6 @@ int Editor::run()
 
     p_input = new InputHandler(window);
     p_world = new World();
-    egg::getInstance().g_World = p_world;
 
     sfg::SFGUI sfgui;
     window->setActive();
@@ -1162,8 +1161,9 @@ void Editor::registerLua()
                 std::string but_text = item.Get<std::string>("text");
                 auto button = sfg::Button::Create(but_text);
                 std::shared_ptr<LuaAction> act(new LuaAction(but_text, item.Get<LuaFunction<void()>>("action")));
-                button->GetSignal(sfg::Button::OnLeftClick).Connect([act, weakNewpopup, this]() {
-                    act->run();
+                std::weak_ptr<LuaAction> weakact = act;
+                button->GetSignal(sfg::Button::OnLeftClick).Connect([weakact, weakNewpopup, this]() {
+                    weakact.lock()->run();
                     if(auto npp = weakNewpopup.lock())
                         desktop.Remove(npp);
                     changeMode(Idle);

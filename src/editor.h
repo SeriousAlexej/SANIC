@@ -92,7 +92,6 @@ private:
     float                           doubleClickTime;
     float                           moveModeTime;
     float                           moveModePeriod;
-    World*                          p_world;
     InputHandler*                   p_input;
     sf::RenderWindow*               window;
     sfg::Desktop                    desktop;

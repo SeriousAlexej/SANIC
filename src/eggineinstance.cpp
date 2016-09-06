@@ -8,6 +8,7 @@ EggineInstance::EggineInstance()
     InitFs();
     startupWorld = "";
     registerEvents(egg::getInstance().g_lua);
+    egg::getInstance().g_Eggine = this;
 }
 
 EggineInstance::~EggineInstance()

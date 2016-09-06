@@ -62,5 +62,6 @@ int main(int argc, char **argv)
         app->setStartupWorld(wld);
     }
     app->setup();
-    return app->run();
+    int i = app->run();
+    return i;
 }

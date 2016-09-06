@@ -10,7 +10,7 @@
 #include "world_graphics.h"
 #include "world_physics.h"
 
-Entity::Entity() : private_lud(egg::getInstance().g_lua.CreateUserdata<Entity>(this))
+Entity::Entity() : private_lud(egg::getInstance().g_lua.CreateUserdata<Entity>(this, [](Entity*){}))
 {
 	_setClass("Entity");
 	selected = false;

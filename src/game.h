@@ -19,7 +19,6 @@ public:
 private:
     Game();
 
-    World* p_world;
 	InputHandler* p_input;
     sf::RenderWindow* window;
 };

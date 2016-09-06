@@ -4,8 +4,12 @@
 #include <memory>
 #include <string>
 
+class World;
+class Property;
+
 class EggineInstance
 {
+    friend class Property;
 public:
     typedef std::shared_ptr<EggineInstance> Ptr;
 
@@ -19,6 +23,7 @@ protected:
     EggineInstance();
     void InitFs() const;
     std::string startupWorld;
+    World* p_world;
 };
 
 #endif // EGGINEINSTANCE_H

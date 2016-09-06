@@ -2,6 +2,7 @@
 #include <glm/vec3.hpp>
 #include "basic.h"
 #include "world.h"
+#include "eggineinstance.h"
 #include "properties.h"
 #include "entitypointer.h"
 #include "global.h"
@@ -32,7 +33,7 @@ void Property::Deserialize ( rapidjson::Value& d )
     }
     else if_type(EntityPointer) {
         int id = val.GetInt();
-        this->SetValue(EntityPointer(egg::getInstance().g_World->GetEntityWithID(id)));
+        this->SetValue(EntityPointer(egg::getInstance().g_Eggine->p_world->GetEntityWithID(id)));
     }
     else if_type(bool) {
         bool tmp = val.GetBool();

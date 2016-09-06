@@ -54,7 +54,6 @@ void Game::setup()
 
     p_input = new InputHandler(window);
     p_world = new World();
-    egg::getInstance().g_World = p_world;
 }
 
 int Game::run()

@@ -14,7 +14,7 @@ void registerEvents(Lua& lua)
         if(type == "Damage")
         {
             EventDamage* ped = new EventDamage(nullptr, 0);
-            LuaUserdata<EntityEvent> lud = lua.CreateUserdata<EntityEvent>(ped);
+            LuaUserdata<EntityEvent> lud = lua.CreateUserdata<EntityEvent>(ped, nullptr);
                             
             lud.Set("getEventcode",
                 lua.CreateFunction<int()>([&] { return ped->eventCode; })
@@ -29,7 +29,7 @@ void registerEvents(Lua& lua)
         if(type == "Begin")
 		{
 			EventBegin* peb = new EventBegin();
-			LuaUserdata<EntityEvent> lud = lua.CreateUserdata<EntityEvent>(peb);
+                        LuaUserdata<EntityEvent> lud = lua.CreateUserdata<EntityEvent>(peb, nullptr);
             
             return lud;
 		}

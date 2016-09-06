@@ -1,18 +1,20 @@
 #include "entity.h"
 #include "entitypointer.h"
 #include <rapidjson/document.h>
+#include <string>
+#include <functional>
 
 EntityPointer::EntityPointer() :
-    private_lud(egg::getInstance().g_lua.CreateUserdata<EntityPointer>(this)),
-    null_lud(egg::getInstance().g_lua.CreateUserdata<Entity>(nullptr))
+    private_lud(egg::getInstance().g_lua.CreateUserdata<EntityPointer>(
+                    this, [](EntityPointer*){}))
 {
     penTarget = nullptr;
     enID = -1;
 }
 
 EntityPointer::EntityPointer(Entity* en) :
-    private_lud(egg::getInstance().g_lua.CreateUserdata<EntityPointer>(this)),
-    null_lud(egg::getInstance().g_lua.CreateUserdata<Entity>(nullptr))
+    private_lud(egg::getInstance().g_lua.CreateUserdata<EntityPointer>(
+                    this, [](EntityPointer*){}))
 {
     penTarget = en;
     enID = -1;
@@ -23,8 +25,8 @@ EntityPointer::EntityPointer(Entity* en) :
 }
 
 EntityPointer::EntityPointer(const EntityPointer& other) :
-    private_lud(egg::getInstance().g_lua.CreateUserdata<EntityPointer>(this)),
-    null_lud(egg::getInstance().g_lua.CreateUserdata<Entity>(nullptr))
+    private_lud(egg::getInstance().g_lua.CreateUserdata<EntityPointer>(
+                    this, [](EntityPointer*){}))
 {
     penTarget = other.penTarget;
     enID = other.enID;
@@ -101,10 +103,18 @@ Entity* EntityPointer::operator->() const
 void EntityPointer::registerLua()
 {
     Lua& lua = egg::getInstance().g_lua;
-    private_lud.Set("GetEntity", lua.CreateFunction<LuaUserdata<Entity>()>([&]() {
-        if(penTarget != nullptr) return penTarget->private_lud;
-        else return lua.CreateUserdata<Entity>(nullptr);
-    }));
+
+    // Getter
+    if(penTarget != nullptr)
+        private_lud.Set("GetEntity", lua.CreateFunction<LuaUserdata<Entity>()>([&]() {
+            return penTarget->private_lud;
+        }));
+    else
+        private_lud.Set("GetEntity", lua.CreateFunction<std::string()>([&]() {
+            return "Nothing";
+        }));
+
+    // Setter
     private_lud.Set("SetEntity", lua.CreateFunction<void(LuaUserdata<Entity>)>([&](LuaUserdata<Entity> arg) {
         penTarget = arg.GetPointer();
     }));

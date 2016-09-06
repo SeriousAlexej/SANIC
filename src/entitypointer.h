@@ -3,6 +3,7 @@
 
 #include <luacppinterface.h>
 #include "basic.h"
+#include <functional>
 
 class null_entitypointer : public std::exception
 {
@@ -17,6 +18,7 @@ class FromLua;
 
 class EntityPointer : public FromLua
 {
+    friend class Entity;
 public:
     EntityPointer();
     EntityPointer(Entity* en);
@@ -34,11 +36,10 @@ public:
 
     virtual void registerLua();
 
-    LuaUserdata<EntityPointer> private_lud;
-    LuaUserdata<Entity> null_lud;
 private:
     Entity*       penTarget;
     int           enID;
+    LuaUserdata<EntityPointer> private_lud;
 };
 
 #endif // ENTITYPOINTER_H
